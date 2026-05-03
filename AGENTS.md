@@ -1,0 +1,3 @@
+- for all functions, make sure to write conments on what they do
+- reuse existing functionality as far as possible. Look for existing functions to re-use before writing new ones
+- Make sure no files are greater than 600 lines
