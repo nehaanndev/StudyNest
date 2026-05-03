@@ -1,21 +1,41 @@
 import 'package:flutter/material.dart';
 
-// Starts the StudyNest Flutter application.
-void main() {
-  runApp(const StudyNestApp());
+import 'app/study_nest_scope.dart';
+import 'app/study_nest_state.dart';
+import 'screens/home_screen.dart';
+import 'screens/notes_screen.dart';
+import 'screens/planner_screen.dart';
+import 'screens/shop_screen.dart';
+import 'screens/tasks_screen.dart';
+
+// Starts the StudyNest Flutter application with persisted local state.
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final appState = await StudyNestState.load();
+  runApp(StudyNestApp(appState: appState));
 }
 
 class StudyNestApp extends StatelessWidget {
-  const StudyNestApp({super.key});
+  const StudyNestApp({super.key, required this.appState});
 
-  // Builds the app shell with the global theme and starting screen.
+  final StudyNestState appState;
+
+  // Builds the app root and refreshes Material theming when themes change.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'StudyNest',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark(),
-      home: const MainScreen(),
+    return AnimatedBuilder(
+      animation: appState,
+      builder: (context, _) {
+        return StudyNestScope(
+          state: appState,
+          child: MaterialApp(
+            title: 'StudyNest',
+            debugShowCheckedModeBanner: false,
+            theme: appState.selectedTheme.toThemeData(),
+            home: const MainScreen(),
+          ),
+        );
+      },
     );
   }
 }
@@ -31,83 +51,33 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _index = 0;
 
-  final screens = [
-    const HomeScreen(),
-    const TasksScreen(),
-    const NotesScreen(),
-    const CalendarScreen(),
-    const ShopScreen(),
+  static const _screens = [
+    HomeScreen(),
+    TasksScreen(),
+    NotesScreen(),
+    PlannerScreen(),
+    ShopScreen(),
   ];
 
   // Builds the tabbed scaffold and changes screens when a tab is tapped.
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: screens[_index],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _index,
-        onTap: (i) => setState(() => _index = i),
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-          BottomNavigationBarItem(icon: Icon(Icons.check), label: "Tasks"),
-          BottomNavigationBarItem(icon: Icon(Icons.note), label: "Notes"),
-          BottomNavigationBarItem(
+      body: IndexedStack(index: _index, children: _screens),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _index,
+        onDestinationSelected: (index) => setState(() => _index = index),
+        destinations: const [
+          NavigationDestination(icon: Icon(Icons.home), label: 'Home'),
+          NavigationDestination(icon: Icon(Icons.check_circle), label: 'Tasks'),
+          NavigationDestination(icon: Icon(Icons.note_alt), label: 'Notes'),
+          NavigationDestination(
             icon: Icon(Icons.calendar_month),
-            label: "Calendar",
+            label: 'Planner',
           ),
-          BottomNavigationBarItem(icon: Icon(Icons.store), label: "Shop"),
+          NavigationDestination(icon: Icon(Icons.storefront), label: 'Shop'),
         ],
       ),
     );
-  }
-}
-
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
-
-  // Builds the home placeholder screen.
-  @override
-  Widget build(BuildContext context) {
-    return const Center(child: Text("🏠 Home"));
-  }
-}
-
-class TasksScreen extends StatelessWidget {
-  const TasksScreen({super.key});
-
-  // Builds the tasks placeholder screen.
-  @override
-  Widget build(BuildContext context) {
-    return const Center(child: Text("✅ Tasks"));
-  }
-}
-
-class NotesScreen extends StatelessWidget {
-  const NotesScreen({super.key});
-
-  // Builds the notes placeholder screen.
-  @override
-  Widget build(BuildContext context) {
-    return const Center(child: Text("📝 Notes"));
-  }
-}
-
-class CalendarScreen extends StatelessWidget {
-  const CalendarScreen({super.key});
-
-  // Builds the calendar placeholder screen.
-  @override
-  Widget build(BuildContext context) {
-    return const Center(child: Text("📅 Calendar"));
-  }
-}
-
-class ShopScreen extends StatelessWidget {
-  const ShopScreen({super.key});
-
-  // Builds the shop placeholder screen.
-  @override
-  Widget build(BuildContext context) {
-    return const Center(child: Text("🛒 Shop"));
   }
 }
