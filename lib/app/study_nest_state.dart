@@ -1,103 +1,70 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/study_models.dart';
 import '../theme/study_theme.dart';
+import 'study_nest_catalog.dart';
+import 'study_nest_storage.dart';
+
+part 'study_nest_space_state.dart';
 
 class StudyNestState extends ChangeNotifier {
   StudyNestState._({
-    required SharedPreferences? preferences,
+    required StudyNestStorage? storage,
     required List<StudyTask> tasks,
     required List<StudyNote> notes,
     required List<PlannerEvent> events,
     required List<CoinTransaction> coinLedger,
     required List<String> ownedShopItemIds,
+    required List<String> ownedDecorItemIds,
+    required List<String> appliedDecorItemIds,
+    required Map<String, Offset> decorPositions,
     required String selectedThemeId,
+    required String studySpaceStyleId,
     required StudySessionGoal sessionGoal,
-  }) : _preferences = preferences,
+  }) : _storage = storage,
        _tasks = tasks,
        _notes = notes,
        _events = events,
        _coinLedger = coinLedger,
        _ownedShopItemIds = ownedShopItemIds,
+       _ownedDecorItemIds = ownedDecorItemIds,
+       _appliedDecorItemIds = appliedDecorItemIds,
+       _decorPositions = decorPositions,
        _selectedThemeId = selectedThemeId,
+       _studySpaceStyleId = studySpaceStyleId,
        _sessionGoal = sessionGoal;
 
-  static const _storageKey = 'studynest_state_v1';
-
-  final SharedPreferences? _preferences;
+  final StudyNestStorage? _storage;
   List<StudyTask> _tasks;
   List<StudyNote> _notes;
   List<PlannerEvent> _events;
   List<CoinTransaction> _coinLedger;
   List<String> _ownedShopItemIds;
+  List<String> _ownedDecorItemIds;
+  List<String> _appliedDecorItemIds;
+  Map<String, Offset> _decorPositions;
   String _selectedThemeId;
+  String _studySpaceStyleId;
   StudySessionGoal _sessionGoal;
 
-  static const shopItems = [
-    ShopItem(
-      id: 'theme.rainyLibrary',
-      title: 'Rainy Library',
-      description: 'Bookish greens, brass lamps, and rainy-window focus.',
-      cost: 80,
-      themeId: 'rainyLibrary',
-      icon: '📚',
-    ),
-    ShopItem(
-      id: 'theme.midnightCity',
-      title: 'Midnight City',
-      description: 'Deep blues and warm desk-light accents for night work.',
-      cost: 100,
-      themeId: 'midnightCity',
-      icon: '🌃',
-    ),
-    ShopItem(
-      id: 'theme.gardenMatcha',
-      title: 'Garden Matcha',
-      description: 'Soft plant greens and cafe matcha colors.',
-      cost: 70,
-      themeId: 'gardenMatcha',
-      icon: '🍵',
-    ),
-  ];
+  static const shopItems = studyThemeShopItems;
 
   // Loads the saved app state, or creates a starter state on first launch.
-  static Future<StudyNestState> load() async {
-    final preferences = await SharedPreferences.getInstance();
-    final storedState = preferences.getString(_storageKey);
-    if (storedState == null) {
-      final state = _starterState(preferences);
-      await state._save();
-      return state;
-    }
-
+  static Future<StudyNestState> load({StudyNestStorage? storage}) async {
+    final activeStorage =
+        storage ?? await SharedPreferencesStudyNestStorage.create();
     try {
-      final decoded = jsonDecode(storedState) as Map<String, dynamic>;
-      return StudyNestState._(
-        preferences: preferences,
-        tasks: _decodeList(decoded['tasks'], StudyTask.fromJson),
-        notes: _decodeList(decoded['notes'], StudyNote.fromJson),
-        events: _decodeList(decoded['events'], PlannerEvent.fromJson),
-        coinLedger: _decodeList(
-          decoded['coinLedger'],
-          CoinTransaction.fromJson,
-        ),
-        ownedShopItemIds: (decoded['ownedShopItemIds'] as List<dynamic>? ?? [])
-            .map((itemId) => itemId as String)
-            .toList(),
-        selectedThemeId: decoded['selectedThemeId'] as String? ?? 'cozyCafe',
-        sessionGoal: decoded['sessionGoal'] == null
-            ? _defaultSessionGoal()
-            : StudySessionGoal.fromJson(
-                decoded['sessionGoal'] as Map<String, dynamic>,
-              ),
-      );
+      final storedState = await activeStorage.load();
+      if (storedState == null) {
+        final state = _starterState(activeStorage);
+        await state._save();
+        return state;
+      }
+      return _fromSnapshot(activeStorage, storedState);
     } on FormatException {
-      return _starterState(preferences);
+      return _starterState(activeStorage);
     } on TypeError {
-      return _starterState(preferences);
+      return _starterState(activeStorage);
     }
   }
 
@@ -388,12 +355,18 @@ class StudyNestState extends ChangeNotifier {
 
   // Saves the current state to local device storage when persistence is active.
   Future<void> _save() async {
-    final preferences = _preferences;
-    if (preferences == null) {
-      return;
-    }
+    await _storage?.save(_toSnapshot());
+  }
 
-    final encoded = jsonEncode({
+  // Notifies listeners and saves after extension-owned state changes.
+  Future<void> _commitChanges() async {
+    notifyListeners();
+    await _save();
+  }
+
+  // Converts the current app state into the local persistence snapshot.
+  Map<String, dynamic> _toSnapshot() {
+    return {
       'tasks': _tasks.map((task) => task.toJson()).toList(),
       'notes': _notes.map((note) => note.toJson()).toList(),
       'events': _events.map((event) => event.toJson()).toList(),
@@ -401,17 +374,56 @@ class StudyNestState extends ChangeNotifier {
           .map((transaction) => transaction.toJson())
           .toList(),
       'ownedShopItemIds': _ownedShopItemIds,
+      'ownedDecorItemIds': _ownedDecorItemIds,
+      'appliedDecorItemIds': _appliedDecorItemIds,
+      'decorPositions': _encodeDecorPositions(_decorPositions),
       'selectedThemeId': _selectedThemeId,
+      'studySpaceStyleId': _studySpaceStyleId,
       'sessionGoal': _sessionGoal.toJson(),
-    });
-    await preferences.setString(_storageKey, encoded);
+    };
+  }
+
+  // Rebuilds app state from a storage snapshot without exposing storage details.
+  static StudyNestState _fromSnapshot(
+    StudyNestStorage storage,
+    Map<String, dynamic> snapshot,
+  ) {
+    return StudyNestState._(
+      storage: storage,
+      tasks: _decodeList(snapshot['tasks'], StudyTask.fromJson),
+      notes: _decodeList(snapshot['notes'], StudyNote.fromJson),
+      events: _decodeList(snapshot['events'], PlannerEvent.fromJson),
+      coinLedger: _decodeList(snapshot['coinLedger'], CoinTransaction.fromJson),
+      ownedShopItemIds: (snapshot['ownedShopItemIds'] as List<dynamic>? ?? [])
+          .map((itemId) => itemId as String)
+          .toList(),
+      ownedDecorItemIds:
+          (snapshot['ownedDecorItemIds'] as List<dynamic>? ??
+                  _defaultOwnedDecorItemIds())
+              .map((itemId) => itemId as String)
+              .toList(),
+      appliedDecorItemIds:
+          (snapshot['appliedDecorItemIds'] as List<dynamic>? ??
+                  _defaultAppliedDecorItemIds())
+              .map((itemId) => itemId as String)
+              .toList(),
+      decorPositions: _decodeDecorPositions(snapshot['decorPositions']),
+      selectedThemeId: snapshot['selectedThemeId'] as String? ?? 'cozyCafe',
+      studySpaceStyleId:
+          snapshot['studySpaceStyleId'] as String? ?? 'reference',
+      sessionGoal: snapshot['sessionGoal'] == null
+          ? _defaultSessionGoal()
+          : StudySessionGoal.fromJson(
+              snapshot['sessionGoal'] as Map<String, dynamic>,
+            ),
+    );
   }
 
   // Creates a starter state that makes the app useful before user data exists.
-  static StudyNestState _starterState(SharedPreferences? preferences) {
+  static StudyNestState _starterState(StudyNestStorage? storage) {
     final now = DateTime.now();
     return StudyNestState._(
-      preferences: preferences,
+      storage: storage,
       tasks: [
         StudyTask(
           id: 'task.seed.read',
@@ -474,7 +486,11 @@ class StudyNestState extends ChangeNotifier {
         ),
       ],
       ownedShopItemIds: const [],
+      ownedDecorItemIds: _defaultOwnedDecorItemIds(),
+      appliedDecorItemIds: _defaultAppliedDecorItemIds(),
+      decorPositions: _defaultDecorPositions(),
       selectedThemeId: 'cozyCafe',
+      studySpaceStyleId: 'reference',
       sessionGoal: _defaultSessionGoal(),
     );
   }
@@ -487,6 +503,59 @@ class StudyNestState extends ChangeNotifier {
       completedAt: null,
       updatedAt: DateTime.now(),
     );
+  }
+
+  // Returns starter decor ownership for first launch and older snapshots.
+  static List<String> _defaultOwnedDecorItemIds() {
+    return const ['decor.cozyCafe.mug'];
+  }
+
+  // Returns starter applied decor for first launch and older snapshots.
+  static List<String> _defaultAppliedDecorItemIds() {
+    return const ['decor.cozyCafe.mug'];
+  }
+
+  // Returns starter decor positions for first launch and older snapshots.
+  static Map<String, Offset> _defaultDecorPositions() {
+    return {
+      for (final item in studyDecorItems)
+        item.id: defaultDecorPositionFor(item.id),
+    };
+  }
+
+  // Converts persisted decor coordinates into normalized Offsets.
+  static Map<String, Offset> _decodeDecorPositions(Object? source) {
+    final fallback = _defaultDecorPositions();
+    final decoded = source as Map<String, dynamic>? ?? const {};
+    return {
+      ...fallback,
+      for (final entry in decoded.entries)
+        entry.key: _decodeDecorPosition(entry.value, fallback[entry.key]),
+    };
+  }
+
+  // Converts one persisted coordinate pair into a normalized Offset.
+  static Offset _decodeDecorPosition(Object? source, Offset? fallback) {
+    final map = source as Map<String, dynamic>?;
+    if (map == null) {
+      return fallback ?? const Offset(0.5, 0.6);
+    }
+    final x = (map['x'] as num?)?.toDouble() ?? fallback?.dx ?? 0.5;
+    final y = (map['y'] as num?)?.toDouble() ?? fallback?.dy ?? 0.6;
+    return Offset(
+      x.clamp(0.08, 0.92).toDouble(),
+      y.clamp(0.12, 0.88).toDouble(),
+    );
+  }
+
+  // Converts decor positions into JSON-safe coordinate pairs.
+  static Map<String, Map<String, double>> _encodeDecorPositions(
+    Map<String, Offset> positions,
+  ) {
+    return {
+      for (final entry in positions.entries)
+        entry.key: {'x': entry.value.dx, 'y': entry.value.dy},
+    };
   }
 
   // Decodes a list from persisted JSON using the provided item parser.

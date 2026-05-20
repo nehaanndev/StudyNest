@@ -4,6 +4,7 @@ import '../app/study_nest_scope.dart';
 import '../models/study_models.dart';
 import '../utils/date_labels.dart';
 import '../widgets/cozy_widgets.dart';
+import '../widgets/study_station_banner.dart';
 
 class NotesScreen extends StatelessWidget {
   const NotesScreen({super.key});
@@ -13,7 +14,8 @@ class NotesScreen extends StatelessWidget {
   // Builds the notes board and note creation controls.
   @override
   Widget build(BuildContext context) {
-    final notes = StudyNestScope.watch(context).notes;
+    final state = StudyNestScope.watch(context);
+    final notes = state.notes;
 
     return CozyPage(
       title: 'Notes',
@@ -23,13 +25,23 @@ class NotesScreen extends StatelessWidget {
         onPressed: () => _showNoteDialog(context),
         icon: const Icon(Icons.add),
       ),
-      child: notes.isEmpty
-          ? const EmptyState(
+      child: Column(
+        children: [
+          StudyStationBanner(
+            title: 'Notes shelf',
+            detail: 'Pin recaps, formulas, and cafe-table study thoughts.',
+            metric: '${state.notes.length} notes',
+            icon: Icons.note_alt,
+          ),
+          const SizedBox(height: 14),
+          if (notes.isEmpty)
+            const EmptyState(
               icon: '📝',
               title: 'No notes yet',
               body: 'Save quick study thoughts before they disappear.',
             )
-          : LayoutBuilder(
+          else
+            LayoutBuilder(
               builder: (context, constraints) {
                 final twoColumns = constraints.maxWidth > 520;
                 return Wrap(
@@ -47,6 +59,8 @@ class NotesScreen extends StatelessWidget {
                 );
               },
             ),
+        ],
+      ),
     );
   }
 
@@ -192,10 +206,10 @@ class _NoteCard extends StatelessWidget {
   // Maps the selected note color name to a theme-aware card color.
   Color _colorForNote(Color fallback, String colorName) {
     return switch (colorName) {
-      'honey' => const Color(0xFF5A3B24),
-      'matcha' => const Color(0xFF344B36),
-      'rose' => const Color(0xFF58343B),
-      'ink' => const Color(0xFF273544),
+      'honey' => const Color(0xFFFFF0CC),
+      'matcha' => const Color(0xFFE6EBCB),
+      'rose' => const Color(0xFFF3D4CD),
+      'ink' => const Color(0xFFDDE7ED),
       _ => fallback,
     };
   }

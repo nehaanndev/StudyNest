@@ -29,11 +29,17 @@ class StudyVisualTheme {
   final Color text;
   final Color muted;
 
+  // Reports whether this palette should use dark Material defaults.
+  bool get isDark {
+    return background.computeLuminance() < 0.45;
+  }
+
   // Builds the Material theme that matches this StudyNest visual theme.
   ThemeData toThemeData() {
+    final baseTheme = ThemeData.light();
     final scheme = ColorScheme.fromSeed(
       seedColor: primary,
-      brightness: Brightness.dark,
+      brightness: Brightness.light,
       surface: surface,
     );
 
@@ -48,29 +54,49 @@ class StudyVisualTheme {
       ),
       scaffoldBackgroundColor: background,
       fontFamily: 'Arial',
-      textTheme: ThemeData.dark().textTheme.apply(
-        bodyColor: text,
-        displayColor: text,
+      textTheme: baseTheme.textTheme.apply(bodyColor: text, displayColor: text),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: surface.withValues(alpha: 0.98),
+        indicatorColor: accent.withValues(alpha: 0.22),
+        height: 76,
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          final selected = states.contains(WidgetState.selected);
+          return TextStyle(
+            color: selected ? text : muted,
+            fontSize: 12,
+            fontWeight: selected ? FontWeight.w900 : FontWeight.w700,
+          );
+        }),
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          final selected = states.contains(WidgetState.selected);
+          return IconThemeData(color: selected ? accent : muted);
+        }),
       ),
-      bottomNavigationBarTheme: BottomNavigationBarThemeData(
-        backgroundColor: surface,
-        selectedItemColor: accent,
-        unselectedItemColor: muted,
-        type: BottomNavigationBarType.fixed,
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: primary,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      ),
+      iconButtonTheme: IconButtonThemeData(
+        style: IconButton.styleFrom(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: surfaceAlt,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide(color: primary.withValues(alpha: 0.35)),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide(color: primary.withValues(alpha: 0.24)),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide(color: accent, width: 1.5),
         ),
       ),
@@ -84,56 +110,56 @@ const studyThemes = [
     name: 'Cozy Cafe',
     description: 'Warm wood, latte foam, and soft lamps.',
     emoji: '☕',
-    background: Color(0xFF19130F),
-    surface: Color(0xFF2A1D17),
-    surfaceAlt: Color(0xFF3A2820),
-    primary: Color(0xFFB77B4E),
-    secondary: Color(0xFF6F8A63),
-    accent: Color(0xFFFFC56E),
-    text: Color(0xFFFFF4E7),
-    muted: Color(0xFFCDB8A3),
+    background: Color(0xFFF6D8B4),
+    surface: Color(0xFFFFF8EC),
+    surfaceAlt: Color(0xFFFFE9C8),
+    primary: Color(0xFFB97145),
+    secondary: Color(0xFF73985E),
+    accent: Color(0xFFF0A72C),
+    text: Color(0xFF352013),
+    muted: Color(0xFF7E6653),
   ),
   StudyVisualTheme(
     id: 'rainyLibrary',
     name: 'Rainy Library',
-    description: 'Book stacks, green lamps, and quiet rain.',
+    description: 'Mahogany shelves, green lamps, and quiet rain.',
     emoji: '📚',
-    background: Color(0xFF111818),
-    surface: Color(0xFF1D2A28),
-    surfaceAlt: Color(0xFF263934),
-    primary: Color(0xFF7A9C7B),
-    secondary: Color(0xFFC09B67),
-    accent: Color(0xFFE8C76E),
-    text: Color(0xFFF1F2DF),
-    muted: Color(0xFFAAB7A7),
+    background: Color(0xFFD6C0A5),
+    surface: Color(0xFFFFF7E8),
+    surfaceAlt: Color(0xFFE4D1AF),
+    primary: Color(0xFF6F432B),
+    secondary: Color(0xFF3F6D54),
+    accent: Color(0xFFD6A34D),
+    text: Color(0xFF2D1D16),
+    muted: Color(0xFF705C4E),
   ),
   StudyVisualTheme(
     id: 'midnightCity',
     name: 'Midnight City',
-    description: 'Night skyline focus with soft neon glow.',
+    description: 'Blue glass skyline focus with warm desk light.',
     emoji: '🌃',
-    background: Color(0xFF09131D),
-    surface: Color(0xFF111F2E),
-    surfaceAlt: Color(0xFF1B2E41),
-    primary: Color(0xFF6D95B8),
-    secondary: Color(0xFFB78A68),
-    accent: Color(0xFFFFD37A),
-    text: Color(0xFFEAF4FF),
-    muted: Color(0xFFA9B6C4),
+    background: Color(0xFFB9C8D6),
+    surface: Color(0xFFF5F1E9),
+    surfaceAlt: Color(0xFFD8E4EE),
+    primary: Color(0xFF243C55),
+    secondary: Color(0xFF8D6B52),
+    accent: Color(0xFFE9A63D),
+    text: Color(0xFF1F252B),
+    muted: Color(0xFF5F6B73),
   ),
   StudyVisualTheme(
     id: 'gardenMatcha',
     name: 'Garden Matcha',
-    description: 'Soft plants, matcha, and morning study.',
+    description: 'Matcha greens, glass booths, and laptop glow.',
     emoji: '🍵',
-    background: Color(0xFF101811),
-    surface: Color(0xFF1C2A1F),
-    surfaceAlt: Color(0xFF293B2D),
-    primary: Color(0xFF8FAF70),
-    secondary: Color(0xFFD39B78),
-    accent: Color(0xFFF2D36E),
-    text: Color(0xFFF1F6E9),
-    muted: Color(0xFFB7C4AD),
+    background: Color(0xFFDCE6C4),
+    surface: Color(0xFFFFF8E9),
+    surfaceAlt: Color(0xFFC9DCA8),
+    primary: Color(0xFF607A45),
+    secondary: Color(0xFF9A7B4F),
+    accent: Color(0xFFD4A12F),
+    text: Color(0xFF26301E),
+    muted: Color(0xFF647052),
   ),
 ];
 

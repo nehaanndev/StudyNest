@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../app/study_nest_scope.dart';
+import '../app/study_nest_state.dart';
 import '../utils/date_labels.dart';
 import '../widgets/cozy_widgets.dart';
+import '../widgets/study_town_scene.dart';
+import 'study_space_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -15,66 +18,32 @@ class HomeScreen extends StatelessWidget {
     final todayEvents = state.eventsForDay(DateTime.now()).take(3).toList();
     final upcomingTasks = state.upcomingTasks();
 
+    final sessionComplete = state.sessionGoal.isCompleteOn(DateTime.now());
+
     return CozyPage(
       title: 'StudyNest',
-      subtitle: '${theme.emoji} ${theme.description}',
+      subtitle: '${theme.emoji} ${theme.name} study room',
       action: CoinBadge(coins: state.coinBalance),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CozyCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        'Current focus goal',
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w800),
-                      ),
-                    ),
-                    CozyTag(
-                      label: '+${state.sessionGoal.reward}',
-                      icon: Icons.savings,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  state.sessionGoal.title,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 14),
-                Row(
-                  children: [
-                    Expanded(
-                      child: FilledButton.icon(
-                        onPressed:
-                            state.sessionGoal.isCompleteOn(DateTime.now())
-                            ? null
-                            : () => _completeSessionGoal(context),
-                        icon: const Icon(Icons.check_circle),
-                        label: Text(
-                          state.sessionGoal.isCompleteOn(DateTime.now())
-                              ? 'Completed today'
-                              : 'Complete goal',
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    IconButton.filledTonal(
-                      tooltip: 'Edit goal',
-                      onPressed: () => _showSessionGoalDialog(context),
-                      icon: const Icon(Icons.edit),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+          StudyTownScene(
+            environmentName: theme.name,
+            focusTitle: state.sessionGoal.title,
+            reward: state.sessionGoal.reward,
+            isComplete: sessionComplete,
+            onComplete: () => _completeSessionGoal(context),
+            onEdit: () => _showSessionGoalDialog(context),
+            decorItems: state.appliedDecorItems,
+            styleId: state.studySpaceStyleId,
+            onExplore: () => _openStudySpace(context),
+          ),
+          const SectionHeader(title: 'Study stations'),
+          StudyFeatureStrip(
+            openTasks: state.openTaskCount,
+            notes: state.notes.length,
+            todayBlocks: todayEvents.length,
+            coins: state.coinBalance,
           ),
           const SizedBox(height: 14),
           Row(
@@ -151,6 +120,13 @@ class HomeScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  // Opens the full study-space viewer from the dashboard room scene.
+  void _openStudySpace(BuildContext context) {
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute<void>(builder: (_) => const StudySpaceScreen()));
   }
 
   // Completes the session goal and shows the awarded coin result.

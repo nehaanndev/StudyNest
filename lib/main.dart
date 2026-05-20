@@ -54,29 +54,68 @@ class _MainScreenState extends State<MainScreen> {
   static const _screens = [
     HomeScreen(),
     TasksScreen(),
-    NotesScreen(),
     PlannerScreen(),
+    NotesScreen(),
     ShopScreen(),
   ];
 
   // Builds the tabbed scaffold and changes screens when a tab is tapped.
   @override
   Widget build(BuildContext context) {
+    final theme = StudyNestScope.watch(context).selectedTheme;
+
     return Scaffold(
       body: IndexedStack(index: _index, children: _screens),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _index,
-        onDestinationSelected: (index) => setState(() => _index = index),
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.home), label: 'Home'),
-          NavigationDestination(icon: Icon(Icons.check_circle), label: 'Tasks'),
-          NavigationDestination(icon: Icon(Icons.note_alt), label: 'Notes'),
-          NavigationDestination(
-            icon: Icon(Icons.calendar_month),
-            label: 'Planner',
+      bottomNavigationBar: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              theme.background.withValues(alpha: 0.78),
+              theme.background,
+            ],
           ),
-          NavigationDestination(icon: Icon(Icons.storefront), label: 'Shop'),
-        ],
+        ),
+        child: SafeArea(
+          child: Center(
+            heightFactor: 1,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(22, 0, 22, 12),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(18),
+                  child: NavigationBar(
+                    selectedIndex: _index,
+                    onDestinationSelected: (index) =>
+                        setState(() => _index = index),
+                    destinations: const [
+                      NavigationDestination(
+                        icon: Icon(Icons.home),
+                        label: 'Home',
+                      ),
+                      NavigationDestination(
+                        icon: Icon(Icons.check_circle),
+                        label: 'Tasks',
+                      ),
+                      NavigationDestination(
+                        icon: Icon(Icons.calendar_month),
+                        label: 'Planner',
+                      ),
+                      NavigationDestination(
+                        icon: Icon(Icons.note_alt),
+                        label: 'Notes',
+                      ),
+                      NavigationDestination(
+                        icon: Icon(Icons.storefront),
+                        label: 'Shop',
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

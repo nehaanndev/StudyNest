@@ -4,6 +4,7 @@ import '../app/study_nest_scope.dart';
 import '../models/study_models.dart';
 import '../utils/date_labels.dart';
 import '../widgets/cozy_widgets.dart';
+import '../widgets/study_station_banner.dart';
 
 class PlannerScreen extends StatefulWidget {
   const PlannerScreen({super.key});
@@ -33,6 +34,13 @@ class _PlannerScreenState extends State<PlannerScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          StudyStationBanner(
+            title: 'Planner wall',
+            detail: 'Turn your day into study blocks, reviews, and breaks.',
+            metric: '${selectedEvents.length} blocks',
+            icon: Icons.calendar_month,
+          ),
+          const SizedBox(height: 14),
           _WeekStrip(
             selectedDay: _selectedDay,
             onSelected: (day) => setState(() => _selectedDay = day),
@@ -292,18 +300,24 @@ class _PlannerEventCard extends StatelessWidget {
     final theme = state.selectedTheme;
 
     return CozyCard(
+      padding: const EdgeInsets.all(10),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Container(
-            width: 6,
-            height: 76,
-            decoration: BoxDecoration(
-              color: theme.accent,
-              borderRadius: BorderRadius.circular(999),
+          SizedBox(
+            width: 48,
+            child: Text(
+              clockTime(event.startsAt).replaceFirst(' ', '\n'),
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontWeight: FontWeight.w900, height: 1.3),
             ),
           ),
-          const SizedBox(width: 14),
+          Container(
+            width: 3,
+            height: 82,
+            margin: const EdgeInsets.symmetric(horizontal: 10),
+            color: theme.accent,
+          ),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -315,26 +329,71 @@ class _PlannerEventCard extends StatelessWidget {
                     fontSize: 16,
                   ),
                 ),
+                const SizedBox(height: 5),
+                Text(
+                  timeRange(event.startsAt, event.endsAt),
+                  style: TextStyle(color: theme.muted, fontSize: 12),
+                ),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
                   children: [
-                    CozyTag(
-                      label: timeRange(event.startsAt, event.endsAt),
-                      icon: Icons.schedule,
-                    ),
                     CozyTag(label: event.category, icon: Icons.local_cafe),
                   ],
                 ),
               ],
             ),
           ),
+          const SizedBox(width: 10),
+          _PlannerThumbnail(category: event.category),
           IconButton(
             tooltip: 'Delete block',
             onPressed: () => state.deletePlannerEvent(event.id),
             icon: const Icon(Icons.delete_outline),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PlannerThumbnail extends StatelessWidget {
+  const _PlannerThumbnail({required this.category});
+
+  final String category;
+
+  // Builds the small illustrated thumbnail on a planner event card.
+  @override
+  Widget build(BuildContext context) {
+    final theme = StudyNestScope.watch(context).selectedTheme;
+    final icon = switch (category) {
+      'Review' => Icons.menu_book,
+      'Break' => Icons.local_cafe,
+      'Plan' => Icons.edit_calendar,
+      _ => Icons.energy_savings_leaf,
+    };
+
+    return Container(
+      width: 68,
+      height: 68,
+      decoration: BoxDecoration(
+        color: theme.surfaceAlt.withValues(alpha: 0.78),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Positioned(
+            right: 8,
+            top: 7,
+            child: Icon(
+              Icons.wb_sunny,
+              color: theme.accent.withValues(alpha: 0.28),
+              size: 38,
+            ),
+          ),
+          Icon(icon, color: theme.primary, size: 28),
         ],
       ),
     );

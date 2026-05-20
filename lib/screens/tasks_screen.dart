@@ -4,6 +4,7 @@ import '../app/study_nest_scope.dart';
 import '../models/study_models.dart';
 import '../utils/date_labels.dart';
 import '../widgets/cozy_widgets.dart';
+import '../widgets/study_station_banner.dart';
 
 class TasksScreen extends StatelessWidget {
   const TasksScreen({super.key});
@@ -22,13 +23,25 @@ class TasksScreen extends StatelessWidget {
         onPressed: () => _showTaskDialog(context),
         icon: const Icon(Icons.add),
       ),
-      child: tasks.isEmpty
-          ? const EmptyState(
+      child: Column(
+        children: [
+          StudyStationBanner(
+            title: 'Task desk',
+            detail: 'Your checklist is the coin engine for the whole room.',
+            metric: '${state.openTaskCount} open',
+            icon: Icons.checklist,
+          ),
+          const SizedBox(height: 14),
+          const _TaskFilterBar(),
+          const SizedBox(height: 14),
+          if (tasks.isEmpty)
+            const EmptyState(
               icon: '✅',
               title: 'No tasks yet',
               body: 'Create a goal, finish it, and collect coins.',
             )
-          : Column(
+          else
+            Column(
               children: [
                 for (final task in tasks) ...[
                   _TaskCard(task: task),
@@ -36,6 +49,8 @@ class TasksScreen extends StatelessWidget {
                 ],
               ],
             ),
+        ],
+      ),
     );
   }
 
@@ -148,6 +163,51 @@ class TasksScreen extends StatelessWidget {
           },
         );
       },
+    );
+  }
+}
+
+class _TaskFilterBar extends StatelessWidget {
+  const _TaskFilterBar();
+
+  static const _filters = ['All', 'Today', 'Upcoming', 'Completed'];
+
+  // Builds the mockup-style filter pills for task views.
+  @override
+  Widget build(BuildContext context) {
+    final theme = StudyNestScope.watch(context).selectedTheme;
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          for (final filter in _filters) ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+              decoration: BoxDecoration(
+                color: filter == 'All'
+                    ? theme.accent.withValues(alpha: 0.16)
+                    : theme.surface.withValues(alpha: 0.82),
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(
+                  color: filter == 'All'
+                      ? theme.accent.withValues(alpha: 0.7)
+                      : theme.primary.withValues(alpha: 0.12),
+                ),
+              ),
+              child: Text(
+                filter,
+                style: TextStyle(
+                  color: theme.text,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+          ],
+        ],
+      ),
     );
   }
 }

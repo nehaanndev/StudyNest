@@ -37,35 +37,57 @@ class CozyPage extends StatelessWidget {
         ),
       ),
       child: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(18, 18, 18, 28),
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: Theme.of(context).textTheme.headlineMedium
-                            ?.copyWith(fontWeight: FontWeight.w800),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        subtitle,
-                        style: TextStyle(color: theme.muted, height: 1.3),
-                      ),
-                    ],
-                  ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final pageWidth = constraints.maxWidth > 470
+                ? 420.0
+                : double.infinity;
+
+            return Align(
+              alignment: Alignment.topCenter,
+              child: SizedBox(
+                width: pageWidth,
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(22, 26, 22, 28),
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                title,
+                                style: Theme.of(context).textTheme.headlineSmall
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.w900,
+                                      height: 1,
+                                    ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                subtitle,
+                                style: TextStyle(
+                                  color: theme.muted,
+                                  height: 1.3,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        ?action,
+                      ],
+                    ),
+                    const SizedBox(height: 18),
+                    child,
+                  ],
                 ),
-                ?action,
-              ],
-            ),
-            const SizedBox(height: 18),
-            child,
-          ],
+              ),
+            );
+          },
         ),
       ),
     );
@@ -84,26 +106,26 @@ class CozyCard extends StatelessWidget {
   final EdgeInsetsGeometry padding;
   final VoidCallback? onTap;
 
-  // Builds a rounded content card with subtle cafe-style contrast.
+  // Builds a compact content card with low-poly room contrast.
   @override
   Widget build(BuildContext context) {
     final theme = StudyNestScope.watch(context).selectedTheme;
 
     return Material(
-      color: theme.surface.withValues(alpha: 0.88),
-      borderRadius: BorderRadius.circular(22),
+      color: theme.surface.withValues(alpha: 0.94),
+      borderRadius: BorderRadius.circular(14),
       child: InkWell(
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(14),
         onTap: onTap,
         child: Container(
           padding: padding,
           decoration: BoxDecoration(
-            border: Border.all(color: theme.primary.withValues(alpha: 0.20)),
-            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: theme.primary.withValues(alpha: 0.12)),
+            borderRadius: BorderRadius.circular(14),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.18),
-                blurRadius: 24,
+                color: theme.primary.withValues(alpha: 0.10),
+                blurRadius: 22,
                 offset: const Offset(0, 12),
               ),
             ],
@@ -160,15 +182,33 @@ class CoinBadge extends StatelessWidget {
     final theme = StudyNestScope.watch(context).selectedTheme;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
       decoration: BoxDecoration(
-        color: theme.accent.withValues(alpha: 0.16),
+        color: theme.surface.withValues(alpha: 0.88),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: theme.accent.withValues(alpha: 0.35)),
+        border: Border.all(color: theme.accent.withValues(alpha: 0.42)),
+        boxShadow: [
+          BoxShadow(
+            color: theme.primary.withValues(alpha: 0.10),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
-      child: Text(
-        '🪙 $coins',
-        style: TextStyle(color: theme.text, fontWeight: FontWeight.w800),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CircleAvatar(
+            radius: 10,
+            backgroundColor: theme.accent,
+            child: const Icon(Icons.savings, color: Colors.white, size: 12),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            '$coins',
+            style: TextStyle(color: theme.text, fontWeight: FontWeight.w900),
+          ),
+        ],
       ),
     );
   }
@@ -188,7 +228,7 @@ class CozyTag extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
-        color: theme.surfaceAlt,
+        color: theme.surfaceAlt.withValues(alpha: 0.78),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Row(
