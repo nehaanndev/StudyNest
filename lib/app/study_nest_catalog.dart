@@ -10,6 +10,8 @@ class StudyDecorItem {
     required this.cost,
     required this.themeId,
     required this.icon,
+    required this.assetPath,
+    required this.baseScale,
   });
 
   final String id;
@@ -18,6 +20,8 @@ class StudyDecorItem {
   final int cost;
   final String themeId;
   final IconData icon;
+  final String assetPath;
+  final double baseScale;
 }
 
 class StudySpaceLookOption {
@@ -34,11 +38,7 @@ class StudySpaceLookOption {
 
 const studySpaceLookOptions = [
   StudySpaceLookOption(id: 'simple', title: 'Simple', icon: Icons.crop_square),
-  StudySpaceLookOption(
-    id: 'reference',
-    title: 'Reference',
-    icon: Icons.photo_library,
-  ),
+  StudySpaceLookOption(id: 'detail', title: 'Detail', icon: Icons.photo),
 ];
 
 const studyThemeShopItems = [
@@ -76,6 +76,8 @@ const studyDecorItems = [
     cost: 25,
     themeId: 'cozyCafe',
     icon: Icons.coffee,
+    assetPath: 'assets/decor/cozy_mug.svg',
+    baseScale: 0.17,
   ),
   StudyDecorItem(
     id: 'decor.cozyCafe.brassLamp',
@@ -84,6 +86,8 @@ const studyDecorItems = [
     cost: 40,
     themeId: 'cozyCafe',
     icon: Icons.light,
+    assetPath: 'assets/decor/brass_lamp.svg',
+    baseScale: 0.23,
   ),
   StudyDecorItem(
     id: 'decor.cozyCafe.pastryTray',
@@ -92,6 +96,8 @@ const studyDecorItems = [
     cost: 35,
     themeId: 'cozyCafe',
     icon: Icons.bakery_dining,
+    assetPath: 'assets/decor/pastry_tray.svg',
+    baseScale: 0.21,
   ),
   StudyDecorItem(
     id: 'decor.rainyLibrary.greenLamp',
@@ -100,6 +106,8 @@ const studyDecorItems = [
     cost: 45,
     themeId: 'rainyLibrary',
     icon: Icons.lightbulb,
+    assetPath: 'assets/decor/green_lamp.svg',
+    baseScale: 0.20,
   ),
   StudyDecorItem(
     id: 'decor.rainyLibrary.velvetChair',
@@ -108,6 +116,8 @@ const studyDecorItems = [
     cost: 55,
     themeId: 'rainyLibrary',
     icon: Icons.chair,
+    assetPath: 'assets/decor/velvet_chair.svg',
+    baseScale: 0.25,
   ),
   StudyDecorItem(
     id: 'decor.rainyLibrary.bookStack',
@@ -116,6 +126,8 @@ const studyDecorItems = [
     cost: 30,
     themeId: 'rainyLibrary',
     icon: Icons.menu_book,
+    assetPath: 'assets/decor/book_stack.svg',
+    baseScale: 0.22,
   ),
   StudyDecorItem(
     id: 'decor.midnightCity.neonSign',
@@ -124,6 +136,8 @@ const studyDecorItems = [
     cost: 50,
     themeId: 'midnightCity',
     icon: Icons.signpost,
+    assetPath: 'assets/decor/neon_sign.svg',
+    baseScale: 0.23,
   ),
   StudyDecorItem(
     id: 'decor.midnightCity.dualMonitor',
@@ -132,6 +146,8 @@ const studyDecorItems = [
     cost: 60,
     themeId: 'midnightCity',
     icon: Icons.desktop_windows,
+    assetPath: 'assets/decor/dual_monitor.svg',
+    baseScale: 0.25,
   ),
   StudyDecorItem(
     id: 'decor.midnightCity.deskCar',
@@ -140,6 +156,8 @@ const studyDecorItems = [
     cost: 30,
     themeId: 'midnightCity',
     icon: Icons.directions_car,
+    assetPath: 'assets/decor/toy_car.svg',
+    baseScale: 0.18,
   ),
   StudyDecorItem(
     id: 'decor.gardenMatcha.fern',
@@ -148,6 +166,8 @@ const studyDecorItems = [
     cost: 35,
     themeId: 'gardenMatcha',
     icon: Icons.local_florist,
+    assetPath: 'assets/decor/fern_plant.svg',
+    baseScale: 0.23,
   ),
   StudyDecorItem(
     id: 'decor.gardenMatcha.matchaCup',
@@ -156,6 +176,8 @@ const studyDecorItems = [
     cost: 25,
     themeId: 'gardenMatcha',
     icon: Icons.local_drink,
+    assetPath: 'assets/decor/matcha_cup.svg',
+    baseScale: 0.18,
   ),
   StudyDecorItem(
     id: 'decor.gardenMatcha.earbuds',
@@ -164,6 +186,8 @@ const studyDecorItems = [
     cost: 30,
     themeId: 'gardenMatcha',
     icon: Icons.earbuds,
+    assetPath: 'assets/decor/earbuds_case.svg',
+    baseScale: 0.16,
   ),
 ];
 
@@ -171,28 +195,35 @@ const studyDecorItems = [
 Offset defaultDecorPositionFor(String itemId) {
   switch (itemId) {
     case 'decor.cozyCafe.brassLamp':
-      return const Offset(0.30, 0.30);
+      return const Offset(0.20, 0.18);
+    case 'decor.cozyCafe.mug':
+      return const Offset(0.57, 0.66);
     case 'decor.cozyCafe.pastryTray':
-      return const Offset(0.35, 0.72);
+      return const Offset(0.24, 0.74);
     case 'decor.rainyLibrary.greenLamp':
-      return const Offset(0.48, 0.58);
+      return const Offset(0.46, 0.53);
     case 'decor.rainyLibrary.velvetChair':
-      return const Offset(0.25, 0.72);
+      return const Offset(0.18, 0.76);
     case 'decor.rainyLibrary.bookStack':
-      return const Offset(0.66, 0.64);
+      return const Offset(0.68, 0.67);
     case 'decor.midnightCity.neonSign':
-      return const Offset(0.76, 0.26);
+      return const Offset(0.76, 0.20);
     case 'decor.midnightCity.dualMonitor':
-      return const Offset(0.45, 0.48);
+      return const Offset(0.46, 0.52);
     case 'decor.midnightCity.deskCar':
-      return const Offset(0.22, 0.70);
-    case 'decor.gardenMatcha.fern':
-      return const Offset(0.78, 0.48);
-    case 'decor.gardenMatcha.matchaCup':
-      return const Offset(0.38, 0.65);
-    case 'decor.gardenMatcha.earbuds':
       return const Offset(0.28, 0.72);
+    case 'decor.gardenMatcha.fern':
+      return const Offset(0.80, 0.55);
+    case 'decor.gardenMatcha.matchaCup':
+      return const Offset(0.42, 0.67);
+    case 'decor.gardenMatcha.earbuds':
+      return const Offset(0.30, 0.72);
     default:
       return const Offset(0.62, 0.70);
   }
+}
+
+// Finds one decor item by id for previews, overlays, and persistence helpers.
+StudyDecorItem decorItemById(String itemId) {
+  return studyDecorItems.firstWhere((item) => item.id == itemId);
 }

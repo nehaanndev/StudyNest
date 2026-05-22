@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../app/study_nest_scope.dart';
+import '../app/study_nest_visuals.dart';
 import '../models/study_models.dart';
 import '../utils/date_labels.dart';
 import '../widgets/cozy_widgets.dart';
@@ -30,6 +31,8 @@ class TasksScreen extends StatelessWidget {
             detail: 'Your checklist is the coin engine for the whole room.',
             metric: '${state.openTaskCount} open',
             icon: Icons.checklist,
+            imagePath: screenBannerAsset('tasks', state.selectedTheme.id),
+            imageAlignment: Alignment.center,
           ),
           const SizedBox(height: 14),
           const _TaskFilterBar(),
@@ -146,12 +149,21 @@ class TasksScreen extends StatelessWidget {
                     if (title.isEmpty) {
                       return;
                     }
-                    await state.addTask(
+                    final result = await state.addTask(
                       title: title,
                       details: detailsController.text,
                       dueAt: dueAt,
                       reward: reward.clamp(1, 500),
                     );
+                    if (!dialogContext.mounted) {
+                      return;
+                    }
+                    ScaffoldMessenger.of(
+                      dialogContext,
+                    ).showSnackBar(SnackBar(content: Text(result.message)));
+                    if (!result.applied) {
+                      return;
+                    }
                     if (dialogContext.mounted) {
                       Navigator.of(dialogContext).pop();
                     }

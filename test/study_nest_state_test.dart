@@ -1,7 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:studynest/app/study_nest_catalog.dart';
+import 'package:studynest/app/study_nest_session.dart';
 import 'package:studynest/app/study_nest_state.dart';
 import 'package:studynest/app/study_nest_storage.dart';
+import 'package:studynest/app/study_nest_sync_service.dart';
 
 // Verifies the local-first app state behaviors that power the phone MVP.
 void main() {
@@ -9,7 +11,7 @@ void main() {
     final storage = InMemoryStudyNestStorage();
     final state = await StudyNestState.load(storage: storage);
 
-    await state.addNote(
+    final result = await state.addNote(
       title: 'Local storage note',
       body: 'This should survive a reload.',
       colorName: 'honey',
@@ -17,6 +19,7 @@ void main() {
 
     final reloaded = await StudyNestState.load(storage: storage);
 
+    expect(result.applied, isTrue);
     expect(storage.snapshot, isNotNull);
     expect(
       reloaded.notes.any((note) => note.title == 'Local storage note'),
@@ -85,12 +88,12 @@ void main() {
     });
 
     await state.setStudySpaceStyle('simple');
-    final purchased = await state.buyDecorItem(decor);
+    final purchaseResult = await state.buyDecorItem(decor);
     await state.setDecorPosition(decor.id, const Offset(0.22, 0.44));
 
     final reloaded = await StudyNestState.load(storage: storage);
 
-    expect(purchased, isTrue);
+    expect(purchaseResult.applied, isTrue);
     expect(reloaded.studySpaceStyleId, 'simple');
     expect(reloaded.ownsDecorItem(decor.id), isTrue);
     expect(reloaded.isDecorItemApplied(decor.id), isTrue);
@@ -100,4 +103,214 @@ void main() {
     );
     expect(reloaded.decorPositionFor(decor.id), const Offset(0.22, 0.44));
   });
+
+  test('migrates legacy reference style snapshots to detail', () async {
+    final storage = InMemoryStudyNestStorage(
+      snapshot: {
+        'studySpaceStyleId': 'reference',
+        'tasks': const [],
+        'notes': const [],
+        'events': const [],
+        'coinLedger': const [],
+        'ownedShopItemIds': const [],
+        'ownedDecorItemIds': const ['decor.cozyCafe.mug'],
+        'appliedDecorItemIds': const ['decor.cozyCafe.mug'],
+        'decorPositions': const {},
+        'selectedThemeId': 'cozyCafe',
+        'sessionGoal': {
+          'title': 'Finish one focused study block',
+          'reward': 25,
+          'completedAt': null,
+          'updatedAt': '2026-05-21T20:30:00.000Z',
+        },
+      },
+    );
+
+    final state = await StudyNestState.load(storage: storage);
+
+    expect(state.studySpaceStyleId, 'detail');
+    expect(storage.snapshot?['studySpaceStyleId'], 'detail');
+    expect(storage.snapshot?['schemaVersion'], 2);
+  });
+
+  test(
+    'enforces anonymous note limits when cloud auth stays anonymous',
+    () async {
+      final syncService = _FakeSyncService(
+        session: const StudyNestSessionState(
+          authStatus: StudyNestAuthStatus.ready,
+          syncStatus: StudyNestSyncStatus.idle,
+          cloudEnabled: true,
+          isAnonymous: true,
+          hasPendingSync: false,
+          userId: 'anon-123',
+        ),
+      );
+      final state = await StudyNestState.load(
+        storage: InMemoryStudyNestStorage(),
+        syncService: syncService,
+      );
+
+      for (var index = state.notes.length; index < 10; index++) {
+        final result = await state.addNote(
+          title: 'Note $index',
+          body: 'Body $index',
+          colorName: 'matcha',
+        );
+        expect(result.applied, isTrue);
+      }
+
+      final blocked = await state.addNote(
+        title: 'Too many',
+        body: 'Blocked',
+        colorName: 'matcha',
+      );
+
+      expect(blocked.applied, isFalse);
+      expect(blocked.requiresLoginUpgrade, isTrue);
+    },
+  );
+
+  test(
+    'keeps pending sync state when the cloud adapter reports offline',
+    () async {
+      final syncService = _FakeSyncService(
+        session: const StudyNestSessionState(
+          authStatus: StudyNestAuthStatus.ready,
+          syncStatus: StudyNestSyncStatus.idle,
+          cloudEnabled: true,
+          isAnonymous: true,
+          hasPendingSync: false,
+          userId: 'anon-123',
+        ),
+        syncResolution: const StudyNestSyncResolution(
+          session: StudyNestSessionState(
+            authStatus: StudyNestAuthStatus.ready,
+            syncStatus: StudyNestSyncStatus.offline,
+            cloudEnabled: true,
+            isAnonymous: true,
+            hasPendingSync: true,
+            userId: 'anon-123',
+            message: 'Offline.',
+          ),
+        ),
+      );
+      final state = await StudyNestState.load(
+        storage: InMemoryStudyNestStorage(),
+        syncService: syncService,
+      );
+
+      await state.addTask(
+        title: 'Offline task',
+        details: '',
+        dueAt: DateTime.now(),
+        reward: 10,
+      );
+
+      expect(state.hasPendingSync, isTrue);
+      expect(state.syncStatus, StudyNestSyncStatus.offline);
+    },
+  );
+
+  test('hydrates from a newer cloud snapshot during initialization', () async {
+    final syncService = _FakeSyncService(
+      session: const StudyNestSessionState(
+        authStatus: StudyNestAuthStatus.ready,
+        syncStatus: StudyNestSyncStatus.idle,
+        cloudEnabled: true,
+        isAnonymous: true,
+        hasPendingSync: false,
+        userId: 'anon-123',
+      ),
+      initializeResolution: StudyNestSyncResolution(
+        session: const StudyNestSessionState(
+          authStatus: StudyNestAuthStatus.ready,
+          syncStatus: StudyNestSyncStatus.idle,
+          cloudEnabled: true,
+          isAnonymous: true,
+          hasPendingSync: false,
+          userId: 'anon-123',
+        ),
+        snapshot: {
+          'schemaVersion': 2,
+          'updatedAt': '2026-05-21T20:30:00.000Z',
+          'tasks': const [],
+          'notes': [
+            {
+              'id': 'note.cloud',
+              'title': 'Cloud note',
+              'body': 'Loaded from Firebase',
+              'colorName': 'matcha',
+              'updatedAt': '2026-05-21T20:30:00.000Z',
+            },
+          ],
+          'events': const [],
+          'coinLedger': const [],
+          'ownedShopItemIds': const [],
+          'ownedDecorItemIds': const ['decor.cozyCafe.mug'],
+          'appliedDecorItemIds': const ['decor.cozyCafe.mug'],
+          'decorPositions': const {},
+          'selectedThemeId': 'cozyCafe',
+          'studySpaceStyleId': 'detail',
+          'sessionGoal': {
+            'title': 'Cloud focus goal',
+            'reward': 20,
+            'completedAt': null,
+            'updatedAt': '2026-05-21T20:30:00.000Z',
+          },
+        },
+      ),
+    );
+
+    final state = await StudyNestState.load(
+      storage: InMemoryStudyNestStorage(),
+      syncService: syncService,
+    );
+
+    expect(state.notes.single.title, 'Cloud note');
+    expect(state.sessionGoal.title, 'Cloud focus goal');
+  });
+}
+
+class _FakeSyncService implements StudyNestSyncService {
+  _FakeSyncService({
+    required this.session,
+    this.initializeResolution,
+    this.syncResolution,
+  });
+
+  final StudyNestSessionState session;
+  final StudyNestSyncResolution? initializeResolution;
+  final StudyNestSyncResolution? syncResolution;
+
+  @override
+  Stream<void> get retryEvents => const Stream<void>.empty();
+
+  // Returns the configured initialization result for deterministic state tests.
+  @override
+  Future<StudyNestSyncResolution> initialize(
+    Map<String, dynamic> localSnapshot,
+  ) async {
+    return initializeResolution ?? StudyNestSyncResolution(session: session);
+  }
+
+  // Returns the configured sync result for deterministic state tests.
+  @override
+  Future<StudyNestSyncResolution> sync(
+    Map<String, dynamic> localSnapshot,
+  ) async {
+    return syncResolution ?? StudyNestSyncResolution(session: session);
+  }
+
+  // Returns the configured link result for deterministic auth-upgrade tests.
+  @override
+  Future<StudyNestSyncResolution> linkWithGoogle(
+    Map<String, dynamic> localSnapshot,
+  ) async {
+    return StudyNestSyncResolution(session: session);
+  }
+
+  // Leaves nothing to clean up for the fake sync adapter.
+  @override
+  Future<void> dispose() async {}
 }

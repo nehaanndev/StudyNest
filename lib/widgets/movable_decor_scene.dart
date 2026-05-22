@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../app/study_nest_catalog.dart';
 import '../app/study_nest_scope.dart';
+import 'study_decor_layer.dart';
 import 'study_town_scene.dart';
 
 class MovableDecorScene extends StatefulWidget {
@@ -66,6 +67,7 @@ class _MovableDecorSceneState extends State<MovableDecorScene> {
                   onComplete: () {},
                   onEdit: () {},
                   decorItems: const [],
+                  decorPositions: const {},
                   styleId: widget.styleId,
                   showFocusPanel: false,
                 ),
@@ -143,18 +145,22 @@ class _MovableDecorToken extends StatelessWidget {
         onPanEnd: (_) => onMoveEnd(),
         child: DecoratedBox(
           decoration: BoxDecoration(
-            color: theme.surface.withValues(alpha: 0.88),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: theme.accent.withValues(alpha: 0.58)),
+            color: theme.surface.withValues(alpha: 0.55),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: theme.accent.withValues(alpha: 0.26)),
             boxShadow: [
               BoxShadow(
-                color: theme.primary.withValues(alpha: 0.22),
-                blurRadius: 12,
-                offset: const Offset(0, 6),
+                color: theme.primary.withValues(alpha: 0.14),
+                blurRadius: 16,
+                offset: const Offset(0, 8),
               ),
             ],
           ),
-          child: Icon(item.icon, color: theme.primary, size: 26),
+          child: StudyDecorPreview(
+            item: item,
+            size: tokenSize,
+            backgroundColor: Colors.transparent,
+          ),
         ),
       ),
     );

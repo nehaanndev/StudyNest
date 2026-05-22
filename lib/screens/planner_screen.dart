@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../app/study_nest_scope.dart';
+import '../app/study_nest_visuals.dart';
 import '../models/study_models.dart';
 import '../utils/date_labels.dart';
 import '../widgets/cozy_widgets.dart';
@@ -39,6 +40,8 @@ class _PlannerScreenState extends State<PlannerScreen> {
             detail: 'Turn your day into study blocks, reviews, and breaks.',
             metric: '${selectedEvents.length} blocks',
             icon: Icons.calendar_month,
+            imagePath: screenBannerAsset('planner', state.selectedTheme.id),
+            imageAlignment: Alignment.center,
           ),
           const SizedBox(height: 14),
           _WeekStrip(
@@ -172,12 +175,21 @@ class _PlannerScreenState extends State<PlannerScreen> {
                     if (title.isEmpty) {
                       return;
                     }
-                    await state.addPlannerEvent(
+                    final result = await state.addPlannerEvent(
                       title: title,
                       startsAt: startsAt,
                       endsAt: endsAt,
                       category: category,
                     );
+                    if (!dialogContext.mounted) {
+                      return;
+                    }
+                    ScaffoldMessenger.of(
+                      dialogContext,
+                    ).showSnackBar(SnackBar(content: Text(result.message)));
+                    if (!result.applied) {
+                      return;
+                    }
                     if (dialogContext.mounted) {
                       Navigator.of(dialogContext).pop();
                     }

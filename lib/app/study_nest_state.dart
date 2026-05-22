@@ -1,15 +1,24 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../models/study_models.dart';
 import '../theme/study_theme.dart';
+import 'study_nest_action_result.dart';
+import 'study_nest_anonymous_limits.dart';
 import 'study_nest_catalog.dart';
+import 'study_nest_session.dart';
 import 'study_nest_storage.dart';
+import 'study_nest_sync_service.dart';
 
 part 'study_nest_space_state.dart';
+part 'study_nest_mutations_state.dart';
+part 'study_nest_sync_state.dart';
 
 class StudyNestState extends ChangeNotifier {
   StudyNestState._({
     required StudyNestStorage? storage,
+    required StudyNestSyncService syncService,
     required List<StudyTask> tasks,
     required List<StudyNote> notes,
     required List<PlannerEvent> events,
@@ -21,7 +30,10 @@ class StudyNestState extends ChangeNotifier {
     required String selectedThemeId,
     required String studySpaceStyleId,
     required StudySessionGoal sessionGoal,
+    required DateTime updatedAt,
+    required StudyNestSessionState session,
   }) : _storage = storage,
+       _syncService = syncService,
        _tasks = tasks,
        _notes = notes,
        _events = events,
@@ -32,9 +44,12 @@ class StudyNestState extends ChangeNotifier {
        _decorPositions = decorPositions,
        _selectedThemeId = selectedThemeId,
        _studySpaceStyleId = studySpaceStyleId,
-       _sessionGoal = sessionGoal;
+       _sessionGoal = sessionGoal,
+       _updatedAt = updatedAt,
+       _session = session;
 
   final StudyNestStorage? _storage;
+  final StudyNestSyncService _syncService;
   List<StudyTask> _tasks;
   List<StudyNote> _notes;
   List<PlannerEvent> _events;
@@ -46,31 +61,54 @@ class StudyNestState extends ChangeNotifier {
   String _selectedThemeId;
   String _studySpaceStyleId;
   StudySessionGoal _sessionGoal;
+  DateTime _updatedAt;
+  StudyNestSessionState _session;
+  StreamSubscription<void>? _retrySubscription;
 
   static const shopItems = studyThemeShopItems;
 
   // Loads the saved app state, or creates a starter state on first launch.
-  static Future<StudyNestState> load({StudyNestStorage? storage}) async {
+  static Future<StudyNestState> load({
+    StudyNestStorage? storage,
+    StudyNestSyncService? syncService,
+  }) async {
     final activeStorage =
         storage ?? await SharedPreferencesStudyNestStorage.create();
+    final activeSyncService =
+        syncService ??
+        (StudyNestFirebaseSync.isAvailable
+            ? FirebaseStudyNestSyncService()
+            : const DisabledStudyNestSyncService());
     try {
-      final storedState = await activeStorage.load();
+      final storedState = _migrateSnapshot(await activeStorage.load());
       if (storedState == null) {
-        final state = _starterState(activeStorage);
+        final state = _starterState(activeStorage, activeSyncService);
         await state._save();
+        await state._initializeCloudSync();
         return state;
       }
-      return _fromSnapshot(activeStorage, storedState);
+      await activeStorage.save(storedState);
+      final state = _fromSnapshot(
+        activeStorage,
+        activeSyncService,
+        storedState,
+      );
+      await state._initializeCloudSync();
+      return state;
     } on FormatException {
-      return _starterState(activeStorage);
+      final state = _starterState(activeStorage, activeSyncService);
+      await state._initializeCloudSync();
+      return state;
     } on TypeError {
-      return _starterState(activeStorage);
+      final state = _starterState(activeStorage, activeSyncService);
+      await state._initializeCloudSync();
+      return state;
     }
   }
 
   // Creates an in-memory state for tests and previews without platform storage.
   static StudyNestState preview() {
-    return _starterState(null);
+    return _starterState(null, const DisabledStudyNestSyncService());
   }
 
   // Returns a read-only view of all tasks.
@@ -159,214 +197,107 @@ class StudyNestState extends ChangeNotifier {
     return List.unmodifiable(openTasks.take(limit));
   }
 
-  // Adds a new task and saves the changed state.
-  Future<void> addTask({
+  // Adds a new task while preserving the public StudyNestState API.
+  Future<StudyNestActionResult> addTask({
     required String title,
     required String details,
     required DateTime dueAt,
     required int reward,
-  }) async {
-    _tasks = [
-      StudyTask(
-        id: _newId('task'),
-        title: title.trim(),
-        details: details.trim(),
-        dueAt: dueAt,
-        reward: reward,
-        completedAt: null,
-        rewardCollected: false,
-      ),
-      ..._tasks,
-    ];
-    notifyListeners();
-    await _save();
+  }) {
+    return StudyNestMutationsState(
+      this,
+    ).addTask(title: title, details: details, dueAt: dueAt, reward: reward);
   }
 
-  // Toggles completion and awards coins once when a task is completed.
-  Future<int> toggleTask(String taskId) async {
-    final taskIndex = _tasks.indexWhere((task) => task.id == taskId);
-    if (taskIndex == -1) {
-      return 0;
-    }
-
-    final task = _tasks[taskIndex];
-    final isCompleted = task.completedAt != null;
-    final now = DateTime.now();
-    var awardedCoins = 0;
-
-    if (isCompleted) {
-      _tasks[taskIndex] = task.copyWith(clearCompletedAt: true);
-    } else {
-      awardedCoins = task.rewardCollected ? 0 : task.reward;
-      _tasks[taskIndex] = task.copyWith(
-        completedAt: now,
-        rewardCollected: true,
-      );
-      if (awardedCoins > 0) {
-        _coinLedger = [
-          CoinTransaction(
-            id: _newId('coins'),
-            label: 'Completed: ${task.title}',
-            amount: awardedCoins,
-            createdAt: now,
-            sourceId: task.id,
-          ),
-          ..._coinLedger,
-        ];
-      }
-    }
-
-    notifyListeners();
-    await _save();
-    return awardedCoins;
+  // Toggles task completion while preserving the public StudyNestState API.
+  Future<int> toggleTask(String taskId) {
+    return StudyNestMutationsState(this).toggleTask(taskId);
   }
 
-  // Deletes a task without changing previously earned coin history.
-  Future<void> deleteTask(String taskId) async {
-    _tasks = _tasks.where((task) => task.id != taskId).toList();
-    notifyListeners();
-    await _save();
+  // Deletes a task while preserving the public StudyNestState API.
+  Future<void> deleteTask(String taskId) {
+    return StudyNestMutationsState(this).deleteTask(taskId);
   }
 
-  // Adds a new note and saves the changed state.
-  Future<void> addNote({
+  // Adds a new note while preserving the public StudyNestState API.
+  Future<StudyNestActionResult> addNote({
     required String title,
     required String body,
     required String colorName,
-  }) async {
-    _notes = [
-      StudyNote(
-        id: _newId('note'),
-        title: title.trim(),
-        body: body.trim(),
-        colorName: colorName,
-        updatedAt: DateTime.now(),
-      ),
-      ..._notes,
-    ];
-    notifyListeners();
-    await _save();
+  }) {
+    return StudyNestMutationsState(
+      this,
+    ).addNote(title: title, body: body, colorName: colorName);
   }
 
-  // Deletes a note by id and saves the changed state.
-  Future<void> deleteNote(String noteId) async {
-    _notes = _notes.where((note) => note.id != noteId).toList();
-    notifyListeners();
-    await _save();
+  // Deletes a note while preserving the public StudyNestState API.
+  Future<void> deleteNote(String noteId) {
+    return StudyNestMutationsState(this).deleteNote(noteId);
   }
 
-  // Adds a new planned schedule block to the calendar.
-  Future<void> addPlannerEvent({
+  // Adds a planner event while preserving the public StudyNestState API.
+  Future<StudyNestActionResult> addPlannerEvent({
     required String title,
     required DateTime startsAt,
     required DateTime endsAt,
     required String category,
-  }) async {
-    _events = [
-      ..._events,
-      PlannerEvent(
-        id: _newId('event'),
-        title: title.trim(),
-        startsAt: startsAt,
-        endsAt: endsAt,
-        category: category,
-      ),
-    ];
-    notifyListeners();
-    await _save();
-  }
-
-  // Deletes a planned schedule block by id.
-  Future<void> deletePlannerEvent(String eventId) async {
-    _events = _events.where((event) => event.id != eventId).toList();
-    notifyListeners();
-    await _save();
-  }
-
-  // Updates the current study session goal and resets today's completion.
-  Future<void> setSessionGoal(String title, int reward) async {
-    _sessionGoal = StudySessionGoal(
-      title: title.trim(),
-      reward: reward,
-      completedAt: null,
-      updatedAt: DateTime.now(),
+  }) {
+    return StudyNestMutationsState(this).addPlannerEvent(
+      title: title,
+      startsAt: startsAt,
+      endsAt: endsAt,
+      category: category,
     );
-    notifyListeners();
-    await _save();
   }
 
-  // Completes today's study session goal and awards coins once per day.
-  Future<int> completeSessionGoal() async {
-    final now = DateTime.now();
-    if (_sessionGoal.isCompleteOn(now)) {
-      return 0;
-    }
-
-    _sessionGoal = _sessionGoal.copyWith(completedAt: now, updatedAt: now);
-    _coinLedger = [
-      CoinTransaction(
-        id: _newId('coins'),
-        label: 'Study goal: ${_sessionGoal.title}',
-        amount: _sessionGoal.reward,
-        createdAt: now,
-        sourceId: 'session.${now.year}.${now.month}.${now.day}',
-      ),
-      ..._coinLedger,
-    ];
-    notifyListeners();
-    await _save();
-    return _sessionGoal.reward;
+  // Deletes a planner event while preserving the public StudyNestState API.
+  Future<void> deletePlannerEvent(String eventId) {
+    return StudyNestMutationsState(this).deletePlannerEvent(eventId);
   }
 
-  // Purchases a shop item when the user has enough coins.
-  Future<bool> buyShopItem(ShopItem item) async {
-    if (ownsShopItem(item.id) || coinBalance < item.cost) {
-      return false;
-    }
-
-    final now = DateTime.now();
-    _ownedShopItemIds = [..._ownedShopItemIds, item.id];
-    _selectedThemeId = item.themeId;
-    _coinLedger = [
-      CoinTransaction(
-        id: _newId('coins'),
-        label: 'Bought: ${item.title}',
-        amount: -item.cost,
-        createdAt: now,
-        sourceId: item.id,
-      ),
-      ..._coinLedger,
-    ];
-    notifyListeners();
-    await _save();
-    return true;
+  // Updates the focus goal while preserving the public StudyNestState API.
+  Future<StudyNestActionResult> setSessionGoal(String title, int reward) {
+    return StudyNestMutationsState(this).setSessionGoal(title, reward);
   }
 
-  // Applies an unlocked theme to the app.
-  Future<bool> applyTheme(String themeId) async {
-    if (!ownsTheme(themeId)) {
-      return false;
-    }
-    _selectedThemeId = themeId;
-    notifyListeners();
-    await _save();
-    return true;
+  // Completes today's focus goal while preserving the public StudyNestState API.
+  Future<int> completeSessionGoal() {
+    return StudyNestMutationsState(this).completeSessionGoal();
+  }
+
+  // Purchases a shop item while preserving the public StudyNestState API.
+  Future<bool> buyShopItem(ShopItem item) {
+    return StudyNestMutationsState(this).buyShopItem(item);
+  }
+
+  // Applies a theme while preserving the public StudyNestState API.
+  Future<bool> applyTheme(String themeId) {
+    return StudyNestMutationsState(this).applyTheme(themeId);
   }
 
   // Saves the current state to local device storage when persistence is active.
   Future<void> _save() async {
+    _updatedAt = DateTime.now();
     await _storage?.save(_toSnapshot());
+    await _syncLatestSnapshot();
   }
 
   // Notifies listeners and saves after extension-owned state changes.
   Future<void> _commitChanges() async {
-    notifyListeners();
+    _broadcastChange();
     await _save();
+  }
+
+  // Broadcasts a state change without re-saving the snapshot.
+  void _broadcastChange() {
+    notifyListeners();
   }
 
   // Converts the current app state into the local persistence snapshot.
   Map<String, dynamic> _toSnapshot() {
     return {
+      'schemaVersion': 2,
+      'updatedAt': _updatedAt.toIso8601String(),
       'tasks': _tasks.map((task) => task.toJson()).toList(),
       'notes': _notes.map((note) => note.toJson()).toList(),
       'events': _events.map((event) => event.toJson()).toList(),
@@ -386,10 +317,12 @@ class StudyNestState extends ChangeNotifier {
   // Rebuilds app state from a storage snapshot without exposing storage details.
   static StudyNestState _fromSnapshot(
     StudyNestStorage storage,
+    StudyNestSyncService syncService,
     Map<String, dynamic> snapshot,
   ) {
     return StudyNestState._(
       storage: storage,
+      syncService: syncService,
       tasks: _decodeList(snapshot['tasks'], StudyTask.fromJson),
       notes: _decodeList(snapshot['notes'], StudyNote.fromJson),
       events: _decodeList(snapshot['events'], PlannerEvent.fromJson),
@@ -409,21 +342,30 @@ class StudyNestState extends ChangeNotifier {
               .toList(),
       decorPositions: _decodeDecorPositions(snapshot['decorPositions']),
       selectedThemeId: snapshot['selectedThemeId'] as String? ?? 'cozyCafe',
-      studySpaceStyleId:
-          snapshot['studySpaceStyleId'] as String? ?? 'reference',
+      studySpaceStyleId: _normalizedStyleId(
+        snapshot['studySpaceStyleId'] as String?,
+      ),
       sessionGoal: snapshot['sessionGoal'] == null
           ? _defaultSessionGoal()
           : StudySessionGoal.fromJson(
               snapshot['sessionGoal'] as Map<String, dynamic>,
             ),
+      updatedAt:
+          DateTime.tryParse(snapshot['updatedAt'] as String? ?? '') ??
+          DateTime.now(),
+      session: StudyNestSessionState.disabled(),
     );
   }
 
   // Creates a starter state that makes the app useful before user data exists.
-  static StudyNestState _starterState(StudyNestStorage? storage) {
+  static StudyNestState _starterState(
+    StudyNestStorage? storage,
+    StudyNestSyncService syncService,
+  ) {
     final now = DateTime.now();
     return StudyNestState._(
       storage: storage,
+      syncService: syncService,
       tasks: [
         StudyTask(
           id: 'task.seed.read',
@@ -490,8 +432,10 @@ class StudyNestState extends ChangeNotifier {
       appliedDecorItemIds: _defaultAppliedDecorItemIds(),
       decorPositions: _defaultDecorPositions(),
       selectedThemeId: 'cozyCafe',
-      studySpaceStyleId: 'reference',
+      studySpaceStyleId: 'detail',
       sessionGoal: _defaultSessionGoal(),
+      updatedAt: now,
+      session: StudyNestSessionState.disabled(),
     );
   }
 
@@ -526,7 +470,7 @@ class StudyNestState extends ChangeNotifier {
   // Converts persisted decor coordinates into normalized Offsets.
   static Map<String, Offset> _decodeDecorPositions(Object? source) {
     final fallback = _defaultDecorPositions();
-    final decoded = source as Map<String, dynamic>? ?? const {};
+    final decoded = (source as Map?)?.cast<String, dynamic>() ?? const {};
     return {
       ...fallback,
       for (final entry in decoded.entries)
@@ -571,5 +515,31 @@ class StudyNestState extends ChangeNotifier {
   // Creates a simple unique id for locally generated app records.
   static String _newId(String prefix) {
     return '$prefix.${DateTime.now().microsecondsSinceEpoch}';
+  }
+
+  // Normalizes saved room-style ids after the reference-to-detail rename.
+  static String _normalizedStyleId(String? styleId) {
+    if (styleId == 'reference') {
+      return 'detail';
+    }
+    return styleId ?? 'detail';
+  }
+
+  // Migrates older snapshots forward before they are decoded into app state.
+  static Map<String, dynamic>? _migrateSnapshot(
+    Map<String, dynamic>? snapshot,
+  ) {
+    if (snapshot == null) {
+      return null;
+    }
+    return {
+      ...snapshot,
+      'schemaVersion': (snapshot['schemaVersion'] as int?) ?? 2,
+      'updatedAt':
+          snapshot['updatedAt'] as String? ?? DateTime.now().toIso8601String(),
+      'studySpaceStyleId': _normalizedStyleId(
+        snapshot['studySpaceStyleId'] as String?,
+      ),
+    };
   }
 }

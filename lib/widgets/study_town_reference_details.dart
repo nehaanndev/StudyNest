@@ -1,8 +1,9 @@
 part of 'study_town_scene.dart';
 
 extension _StudyTownReferenceDetails on _StudyTownPainter {
-  // Adds denser reference-photo details on top of the themed room base.
-  void _paintReferencePhotoDetails(Canvas canvas, Size size) {
+  // Adds denser detail-room finishes on top of the themed room base.
+  void _paintDetailRoomFinish(Canvas canvas, Size size) {
+    _paintRoomAtmosphere(canvas, size);
     switch (theme.id) {
       case 'rainyLibrary':
         _paintLibraryReferenceDetails(canvas, size);
@@ -15,11 +16,34 @@ extension _StudyTownReferenceDetails on _StudyTownPainter {
     }
   }
 
+  // Paints layered light falloff and a subtle floor vignette for detail mode.
+  void _paintRoomAtmosphere(Canvas canvas, Size size) {
+    final glowRect = Offset.zero & size;
+    canvas.drawRect(
+      glowRect,
+      Paint()
+        ..shader = RadialGradient(
+          center: const Alignment(0, -0.45),
+          radius: 1.08,
+          colors: [Colors.white.withValues(alpha: 0.18), Colors.transparent],
+        ).createShader(glowRect),
+    );
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: Offset(size.width * 0.5, size.height * 0.86),
+        width: size.width * 0.82,
+        height: size.height * 0.22,
+      ),
+      Paint()..color = Colors.black.withValues(alpha: 0.06),
+    );
+  }
+
   // Paints extra cafe shelves, menu marks, table objects, and window rain.
   void _paintCafeReferenceDetails(Canvas canvas, Size size) {
     _paintStringLights(canvas, size, size.height * 0.13);
     _paintSmallTableSet(canvas, Offset(size.width * 0.76, size.height * 0.70));
     _paintSmallTableSet(canvas, Offset(size.width * 0.22, size.height * 0.82));
+    _paintPastryTray(canvas, size);
     _paintMenuScribbles(
       canvas,
       Rect.fromLTWH(
@@ -62,6 +86,7 @@ extension _StudyTownReferenceDetails on _StudyTownPainter {
       Offset(size.width * 0.64, size.height * 0.59),
       0.58,
     );
+    _paintVelvetChair(canvas, Offset(size.width * 0.81, size.height * 0.73));
     _paintWindowStreaks(
       canvas,
       Rect.fromLTWH(
@@ -77,6 +102,7 @@ extension _StudyTownReferenceDetails on _StudyTownPainter {
   void _paintCityReferenceDetails(Canvas canvas, Size size) {
     _paintCityTraffic(canvas, size);
     _paintReflectionStreaks(canvas, size);
+    _paintNeonSign(canvas, size);
     _paintMonitor(
       canvas,
       Offset(size.width * 0.73, size.height * 0.42),

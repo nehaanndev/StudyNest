@@ -3,9 +3,12 @@ import 'package:flutter/material.dart';
 import '../app/study_nest_catalog.dart';
 import '../app/study_nest_scope.dart';
 import '../app/study_nest_state.dart';
+import '../app/study_nest_visuals.dart';
 import '../models/study_models.dart';
 import '../theme/study_theme.dart';
 import '../widgets/cozy_widgets.dart';
+import '../widgets/study_decor_layer.dart';
+import '../widgets/study_photo_widgets.dart';
 import '../widgets/study_station_banner.dart';
 
 class ShopScreen extends StatelessWidget {
@@ -28,12 +31,19 @@ class ShopScreen extends StatelessWidget {
             detail: 'Spend focus rewards on room styles and study spaces.',
             metric: '${state.coinBalance} coins',
             icon: Icons.storefront,
+            imagePath: screenBannerAsset('shop', state.selectedTheme.id),
+            imageAlignment: Alignment.topCenter,
           ),
           const SizedBox(height: 14),
           CozyCard(
             child: Row(
               children: [
-                const Text('☕', style: TextStyle(fontSize: 34)),
+                const StudyThemeThumbnail(
+                  themeId: 'cozyCafe',
+                  width: 52,
+                  height: 52,
+                  radius: 16,
+                ),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Column(
@@ -139,13 +149,17 @@ class _DecorCard extends StatelessWidget {
           children: [
             Center(
               child: Container(
-                width: 54,
-                height: 54,
+                width: 72,
+                height: 72,
                 decoration: BoxDecoration(
-                  color: theme.surfaceAlt.withValues(alpha: 0.72),
-                  borderRadius: BorderRadius.circular(12),
+                  color: theme.surfaceAlt.withValues(alpha: 0.32),
+                  borderRadius: BorderRadius.circular(18),
                 ),
-                child: Icon(item.icon, color: theme.primary, size: 30),
+                child: StudyDecorPreview(
+                  item: item,
+                  size: 72,
+                  backgroundColor: Colors.transparent,
+                ),
               ),
             ),
             const SizedBox(height: 10),
@@ -202,13 +216,13 @@ class _DecorCard extends StatelessWidget {
       ).showSnackBar(const SnackBar(content: Text('Not enough coins yet.')));
       return;
     }
-    final bought = await StudyNestScope.read(context).buyDecorItem(item);
+    final result = await StudyNestScope.read(context).buyDecorItem(item);
     if (!context.mounted) {
       return;
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(bought ? 'Decor applied.' : 'Purchase skipped.')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(result.message)));
   }
 }
 
@@ -235,10 +249,15 @@ class _ShopItemCard extends StatelessWidget {
             height: 52,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: visualTheme.primary.withValues(alpha: 0.28),
+              color: visualTheme.primary.withValues(alpha: 0.16),
               borderRadius: BorderRadius.circular(18),
             ),
-            child: Text(item.icon, style: const TextStyle(fontSize: 26)),
+            child: StudyThemeThumbnail(
+              themeId: item.themeId,
+              width: 52,
+              height: 52,
+              radius: 18,
+            ),
           ),
           const SizedBox(width: 14),
           Expanded(

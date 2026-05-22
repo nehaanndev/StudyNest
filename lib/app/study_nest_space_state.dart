@@ -58,9 +58,22 @@ extension StudyNestSpaceState on StudyNestState {
   }
 
   // Purchases a decor item and applies it immediately when affordable.
-  Future<bool> buyDecorItem(StudyDecorItem item) async {
+  Future<StudyNestActionResult> buyDecorItem(StudyDecorItem item) async {
     if (ownsDecorItem(item.id) || coinBalance < item.cost) {
-      return false;
+      return StudyNestActionResult.blocked('Purchase skipped.');
+    }
+    final purchasedDecorCount = _ownedDecorItemIds
+        .where(
+          (itemId) =>
+              !StudyNestState._defaultOwnedDecorItemIds().contains(itemId),
+        )
+        .length;
+    if (StudyNestAnonymousLimits.shouldEnforce(_session) &&
+        purchasedDecorCount >= StudyNestAnonymousLimits.maxDecorPurchases) {
+      return StudyNestActionResult.blocked(
+        StudyNestAnonymousLimits.decorMessage(),
+        requiresLoginUpgrade: true,
+      );
     }
 
     final now = DateTime.now();
@@ -77,7 +90,7 @@ extension StudyNestSpaceState on StudyNestState {
       ..._coinLedger,
     ];
     await _commitChanges();
-    return true;
+    return StudyNestActionResult.success('Decor applied.');
   }
 
   // Toggles an owned decor item on or off in the study space.

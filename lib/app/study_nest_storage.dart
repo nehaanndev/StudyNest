@@ -13,7 +13,8 @@ abstract class StudyNestStorage {
 class SharedPreferencesStudyNestStorage implements StudyNestStorage {
   const SharedPreferencesStudyNestStorage(this._preferences);
 
-  static const storageKey = 'studynest_state_v1';
+  static const storageKey = 'studynest_state_v2';
+  static const legacyStorageKey = 'studynest_state_v1';
 
   final SharedPreferences _preferences;
 
@@ -25,7 +26,9 @@ class SharedPreferencesStudyNestStorage implements StudyNestStorage {
 
   @override
   Future<Map<String, dynamic>?> load() async {
-    final encoded = _preferences.getString(storageKey);
+    final encoded =
+        _preferences.getString(storageKey) ??
+        _preferences.getString(legacyStorageKey);
     if (encoded == null) {
       return null;
     }

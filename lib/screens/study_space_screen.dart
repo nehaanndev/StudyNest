@@ -7,6 +7,8 @@ import '../models/study_models.dart';
 import '../theme/study_theme.dart';
 import '../widgets/cozy_widgets.dart';
 import '../widgets/movable_decor_scene.dart';
+import '../widgets/study_decor_layer.dart';
+import '../widgets/study_photo_widgets.dart';
 
 class StudySpaceScreen extends StatelessWidget {
   const StudySpaceScreen({super.key});
@@ -21,7 +23,7 @@ class StudySpaceScreen extends StatelessWidget {
           return option.id == state.studySpaceStyleId;
         })
         ? state.studySpaceStyleId
-        : 'reference';
+        : 'detail';
 
     return Scaffold(
       body: DecoratedBox(
@@ -54,6 +56,8 @@ class StudySpaceScreen extends StatelessWidget {
                     padding: const EdgeInsets.fromLTRB(22, 16, 22, 28),
                     children: [
                       _StudySpaceHeader(theme: theme, coins: state.coinBalance),
+                      const SizedBox(height: 12),
+                      StudySceneStrip(themeId: theme.id, height: 96),
                       const SizedBox(height: 16),
                       MovableDecorScene(
                         environmentName: theme.name,
@@ -180,7 +184,12 @@ class _CozyCafeThemeCard extends StatelessWidget {
 
     return CozyCard(
       child: _ShopControlRow(
-        icon: const Text('☕', style: TextStyle(fontSize: 28)),
+        icon: const StudyThemeThumbnail(
+          themeId: 'cozyCafe',
+          width: 66,
+          height: 66,
+          radius: 16,
+        ),
         title: 'Cozy Cafe',
         description: 'Warm bookstore cafe with wood tables and soft lamps.',
         trailing: FilledButton.tonal(
@@ -208,7 +217,12 @@ class _ThemeControlCard extends StatelessWidget {
 
     return CozyCard(
       child: _ShopControlRow(
-        icon: Text(item.icon, style: const TextStyle(fontSize: 28)),
+        icon: StudyThemeThumbnail(
+          themeId: item.themeId,
+          width: 66,
+          height: 66,
+          radius: 16,
+        ),
         title: item.title,
         description: item.description,
         previewColor: visualTheme.primary,
@@ -267,7 +281,11 @@ class _DecorControlCard extends StatelessWidget {
 
     return CozyCard(
       child: _ShopControlRow(
-        icon: Icon(item.icon, color: state.selectedTheme.primary, size: 28),
+        icon: StudyDecorPreview(
+          item: item,
+          size: 62,
+          backgroundColor: Colors.transparent,
+        ),
         title: item.title,
         description: item.description,
         tags: [
@@ -304,11 +322,11 @@ class _DecorControlCard extends StatelessWidget {
       _showSnack(context, 'Not enough coins yet.');
       return;
     }
-    final bought = await StudyNestScope.read(context).buyDecorItem(item);
+    final result = await StudyNestScope.read(context).buyDecorItem(item);
     if (!context.mounted) {
       return;
     }
-    _showSnack(context, bought ? 'Decor applied.' : 'Purchase skipped.');
+    _showSnack(context, result.message);
   }
 }
 
@@ -338,12 +356,12 @@ class _ShopControlRow extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          width: 52,
-          height: 52,
+          width: 66,
+          height: 66,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: (previewColor ?? theme.surfaceAlt).withValues(alpha: 0.36),
-            borderRadius: BorderRadius.circular(14),
+            color: (previewColor ?? theme.surfaceAlt).withValues(alpha: 0.18),
+            borderRadius: BorderRadius.circular(16),
           ),
           child: icon,
         ),
@@ -362,7 +380,7 @@ class _ShopControlRow extends StatelessWidget {
               const SizedBox(height: 6),
               Text(
                 description,
-                style: TextStyle(color: theme.muted, height: 1.28),
+                style: TextStyle(color: theme.muted, height: 1.3),
               ),
               if (tags.isNotEmpty) ...[
                 const SizedBox(height: 10),

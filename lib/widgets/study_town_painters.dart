@@ -4,20 +4,18 @@ class _StudyTownPainter extends CustomPainter {
   const _StudyTownPainter({
     required this.theme,
     required this.isComplete,
-    required this.decorItems,
     required this.styleId,
   });
 
   final StudyVisualTheme theme;
   final bool isComplete;
-  final List<StudyDecorItem> decorItems;
   final String styleId;
 
   // Paints the selected study room scene for the active theme.
   @override
   void paint(Canvas canvas, Size size) {
     _paintBaseWash(canvas, size);
-    if (styleId == 'minimal') {
+    if (styleId == 'simple') {
       _paintSimpleStudyRoom(canvas, size);
     } else {
       switch (theme.id) {
@@ -30,11 +28,10 @@ class _StudyTownPainter extends CustomPainter {
         default:
           _paintCafeBookstore(canvas, size);
       }
-      if (styleId == 'reference') {
-        _paintReferencePhotoDetails(canvas, size);
+      if (styleId == 'detail') {
+        _paintDetailRoomFinish(canvas, size);
       }
     }
-    _paintAppliedDecor(canvas, size);
     if (isComplete) {
       _paintCompletionGlow(canvas, size);
     }
@@ -45,7 +42,6 @@ class _StudyTownPainter extends CustomPainter {
   bool shouldRepaint(covariant _StudyTownPainter oldDelegate) {
     return oldDelegate.theme != theme ||
         oldDelegate.isComplete != isComplete ||
-        oldDelegate.decorItems != decorItems ||
         oldDelegate.styleId != styleId;
   }
 
@@ -66,42 +62,16 @@ class _StudyTownPainter extends CustomPainter {
 
   // Paints a calmer room variant for users who prefer simpler study spaces.
   void _paintSimpleStudyRoom(Canvas canvas, Size size) {
-    final wall = Rect.fromLTWH(0, 0, size.width, size.height * 0.62);
-    canvas.drawRect(
-      wall,
-      Paint()
-        ..color = Color.alphaBlend(
-          theme.surface.withValues(alpha: 0.62),
-          theme.background,
-        ),
-    );
-    _paintSimpleWindow(
-      canvas,
-      Rect.fromLTWH(
-        size.width * 0.14,
-        size.height * 0.14,
-        size.width * 0.26,
-        size.height * 0.24,
-      ),
-    );
-    _paintDeskSurface(canvas, size, theme.primary.withValues(alpha: 0.48));
-    _paintLaptop(
-      canvas,
-      Offset(size.width * 0.55, size.height * 0.54),
-      size.width * 0.28,
-      dark: theme.id == 'midnightCity',
-    );
-    _paintCup(
-      canvas,
-      Offset(size.width * 0.35, size.height * 0.58),
-      14,
-      theme.accent,
-    );
-    _paintPottedPlant(
-      canvas,
-      Offset(size.width * 0.82, size.height * 0.60),
-      0.8,
-    );
+    switch (theme.id) {
+      case 'rainyLibrary':
+        _paintSimpleRainyLibrary(canvas, size);
+      case 'midnightCity':
+        _paintSimpleMidnightCity(canvas, size);
+      case 'gardenMatcha':
+        _paintSimpleGardenMatcha(canvas, size);
+      default:
+        _paintSimpleCafeBookstore(canvas, size);
+    }
   }
 
   // Paints a simple theme-colored room window.
@@ -131,78 +101,6 @@ class _StudyTownPainter extends CustomPainter {
         ..color = theme.primary.withValues(alpha: 0.45)
         ..strokeWidth = 3,
     );
-  }
-
-  // Paints the user's applied decor on top of the current theme room.
-  void _paintAppliedDecor(Canvas canvas, Size size) {
-    for (final item in decorItems) {
-      switch (item.id) {
-        case 'decor.cozyCafe.mug':
-          _paintCup(
-            canvas,
-            Offset(size.width * 0.60, size.height * 0.70),
-            16,
-            theme.accent,
-          );
-        case 'decor.cozyCafe.brassLamp':
-          _paintPendantLamp(
-            canvas,
-            Offset(size.width * 0.22, size.height * 0.03),
-            34,
-          );
-        case 'decor.cozyCafe.pastryTray':
-          _paintPastryTray(canvas, size);
-        case 'decor.rainyLibrary.greenLamp':
-          _paintBankerLamp(
-            canvas,
-            Offset(size.width * 0.47, size.height * 0.48),
-            0.78,
-          );
-        case 'decor.rainyLibrary.velvetChair':
-          _paintVelvetChair(
-            canvas,
-            Offset(size.width * 0.20, size.height * 0.68),
-          );
-        case 'decor.rainyLibrary.bookStack':
-          _paintBookStack(
-            canvas,
-            Offset(size.width * 0.68, size.height * 0.60),
-            0.72,
-          );
-        case 'decor.midnightCity.neonSign':
-          _paintNeonSign(canvas, size);
-        case 'decor.midnightCity.dualMonitor':
-          _paintMonitor(
-            canvas,
-            Offset(size.width * 0.42, size.height * 0.43),
-            size.width * 0.23,
-          );
-        case 'decor.midnightCity.deskCar':
-          _paintToyCar(
-            canvas,
-            Offset(size.width * 0.20, size.height * 0.69),
-            0.72,
-          );
-        case 'decor.gardenMatcha.fern':
-          _paintPottedPlant(
-            canvas,
-            Offset(size.width * 0.78, size.height * 0.48),
-            0.9,
-          );
-        case 'decor.gardenMatcha.matchaCup':
-          _paintMatchaCup(
-            canvas,
-            Offset(size.width * 0.38, size.height * 0.62),
-            21,
-          );
-        case 'decor.gardenMatcha.earbuds':
-          _paintWirelessBuds(
-            canvas,
-            Offset(size.width * 0.28, size.height * 0.70),
-            0.86,
-          );
-      }
-    }
   }
 
   // Paints a small pastry plate for applied cafe decor.

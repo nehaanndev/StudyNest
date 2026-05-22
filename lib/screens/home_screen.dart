@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../app/study_nest_scope.dart';
+import '../app/study_nest_session.dart';
 import '../app/study_nest_state.dart';
 import '../utils/date_labels.dart';
 import '../widgets/cozy_widgets.dart';
@@ -35,9 +36,12 @@ class HomeScreen extends StatelessWidget {
             onComplete: () => _completeSessionGoal(context),
             onEdit: () => _showSessionGoalDialog(context),
             decorItems: state.appliedDecorItems,
+            decorPositions: state.decorPositions,
             styleId: state.studySpaceStyleId,
             onExplore: () => _openStudySpace(context),
           ),
+          const SizedBox(height: 14),
+          const _AccountStatusCard(),
           const SectionHeader(title: 'Study stations'),
           StudyFeatureStrip(
             openTasks: state.openTaskCount,
@@ -186,12 +190,136 @@ class HomeScreen extends StatelessWidget {
                 if (title.isEmpty) {
                   return;
                 }
-                await state.setSessionGoal(title, reward.clamp(1, 500));
+                final result = await state.setSessionGoal(
+                  title,
+                  reward.clamp(1, 500),
+                );
+                if (dialogContext.mounted) {
+                  ScaffoldMessenger.of(
+                    dialogContext,
+                  ).showSnackBar(SnackBar(content: Text(result.message)));
+                }
+                if (!result.applied) {
+                  return;
+                }
                 if (dialogContext.mounted) {
                   Navigator.of(dialogContext).pop();
                 }
               },
               child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _AccountStatusCard extends StatelessWidget {
+  const _AccountStatusCard();
+
+  // Builds the auth and sync summary card shown below the main room.
+  @override
+  Widget build(BuildContext context) {
+    final state = StudyNestScope.watch(context);
+    final syncLabel = switch (state.syncStatus) {
+      StudyNestSyncStatus.disabled => 'Local only',
+      StudyNestSyncStatus.idle => 'Synced',
+      StudyNestSyncStatus.syncing => 'Syncing',
+      StudyNestSyncStatus.offline => 'Offline',
+      StudyNestSyncStatus.error => 'Needs retry',
+    };
+    final accountLabel = !state.cloudSyncEnabled
+        ? 'Firebase not connected'
+        : state.isAnonymousUser
+        ? 'Anonymous cloud account'
+        : 'Google-linked cloud account';
+
+    return CozyCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.cloud_done_outlined),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  accountLabel,
+                  style: const TextStyle(fontWeight: FontWeight.w900),
+                ),
+              ),
+              CozyTag(label: syncLabel, icon: Icons.sync),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            state.sessionMessage ??
+                'Local state is always available first, then cloud sync catches up.',
+          ),
+          if (state.lastSyncedAt != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Last synced ${compactDate(state.lastSyncedAt!)}',
+              style: TextStyle(color: state.selectedTheme.muted, fontSize: 12),
+            ),
+          ],
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              if (state.cloudSyncEnabled && state.isAnonymousUser)
+                FilledButton.tonal(
+                  onPressed: () => _linkGoogle(context),
+                  child: const Text('Link Google'),
+                ),
+              if (!state.cloudSyncEnabled)
+                OutlinedButton(
+                  onPressed: () => _showFirebaseSetup(context),
+                  child: const Text('Connect Firebase'),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Starts the Google-link flow and reports the result back to the user.
+  Future<void> _linkGoogle(BuildContext context) async {
+    final result = await StudyNestScope.read(
+      context,
+    ).linkAnonymousAccountWithGoogle();
+    if (!context.mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(result.message)));
+  }
+
+  // Explains how to create or connect the Firebase project for this app.
+  Future<void> _showFirebaseSetup(BuildContext context) async {
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Connect Firebase'),
+          content: const SingleChildScrollView(
+            child: Text(
+              '1. Install FlutterFire CLI if needed: dart pub global activate flutterfire_cli\n\n'
+              '2. Run flutterfire configure in the project root.\n\n'
+              '3. Select an existing Firebase project or create a new one.\n\n'
+              '4. Register Android with package name com.studynest.app.\n\n'
+              '5. Enable Authentication, Anonymous sign-in, Google sign-in, and Cloud Firestore.\n\n'
+              '6. Replace the placeholder values in lib/firebase_options.dart with the generated values.',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Close'),
             ),
           ],
         );

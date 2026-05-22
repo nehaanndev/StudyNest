@@ -6,8 +6,10 @@ import '../app/study_nest_catalog.dart';
 import '../app/study_nest_scope.dart';
 import '../theme/study_theme.dart';
 import 'cozy_widgets.dart';
+import 'study_decor_layer.dart';
 
 part 'study_town_painters.dart';
+part 'study_town_simple_painter.dart';
 part 'study_town_cafe_painter.dart';
 part 'study_town_city_painter.dart';
 part 'study_town_library_painter.dart';
@@ -24,7 +26,8 @@ class StudyTownScene extends StatelessWidget {
     required this.onComplete,
     required this.onEdit,
     this.decorItems = const [],
-    this.styleId = 'reference',
+    this.decorPositions = const {},
+    this.styleId = 'detail',
     this.showFocusPanel = true,
     this.onExplore,
   });
@@ -36,6 +39,7 @@ class StudyTownScene extends StatelessWidget {
   final VoidCallback onComplete;
   final VoidCallback onEdit;
   final List<StudyDecorItem> decorItems;
+  final Map<String, Offset> decorPositions;
   final String styleId;
   final bool showFocusPanel;
   final VoidCallback? onExplore;
@@ -70,8 +74,32 @@ class StudyTownScene extends StatelessWidget {
                     painter: _StudyTownPainter(
                       theme: theme,
                       isComplete: isComplete,
-                      decorItems: decorItems,
                       styleId: styleId,
+                    ),
+                  ),
+                ),
+                if (styleId == 'detail')
+                  Positioned.fill(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.black.withValues(alpha: 0.12),
+                            Colors.transparent,
+                            Colors.black.withValues(alpha: 0.18),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: StudyDecorLayer(
+                      decorItems: decorItems,
+                      decorPositions: decorPositions,
+                      sceneHeight: sceneHeight,
                     ),
                   ),
                 ),

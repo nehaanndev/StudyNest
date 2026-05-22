@@ -40,7 +40,7 @@ class CozyPage extends StatelessWidget {
         child: LayoutBuilder(
           builder: (context, constraints) {
             final pageWidth = constraints.maxWidth > 470
-                ? 420.0
+                ? 430.0
                 : double.infinity;
 
             return Align(
@@ -48,7 +48,7 @@ class CozyPage extends StatelessWidget {
               child: SizedBox(
                 width: pageWidth,
                 child: ListView(
-                  padding: const EdgeInsets.fromLTRB(22, 26, 22, 28),
+                  padding: const EdgeInsets.fromLTRB(18, 20, 18, 28),
                   children: [
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -71,7 +71,7 @@ class CozyPage extends StatelessWidget {
                                 style: TextStyle(
                                   color: theme.muted,
                                   height: 1.3,
-                                  fontSize: 12,
+                                  fontSize: 13,
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
@@ -113,19 +113,19 @@ class CozyCard extends StatelessWidget {
 
     return Material(
       color: theme.surface.withValues(alpha: 0.94),
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(18),
       child: InkWell(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(18),
         onTap: onTap,
         child: Container(
           padding: padding,
           decoration: BoxDecoration(
-            border: Border.all(color: theme.primary.withValues(alpha: 0.12)),
-            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: theme.primary.withValues(alpha: 0.10)),
+            borderRadius: BorderRadius.circular(18),
             boxShadow: [
               BoxShadow(
-                color: theme.primary.withValues(alpha: 0.10),
-                blurRadius: 22,
+                color: theme.primary.withValues(alpha: 0.07),
+                blurRadius: 24,
                 offset: const Offset(0, 12),
               ),
             ],

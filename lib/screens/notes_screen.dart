@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../app/study_nest_scope.dart';
+import '../app/study_nest_visuals.dart';
 import '../models/study_models.dart';
 import '../utils/date_labels.dart';
 import '../widgets/cozy_widgets.dart';
@@ -32,6 +33,8 @@ class NotesScreen extends StatelessWidget {
             detail: 'Pin recaps, formulas, and cafe-table study thoughts.',
             metric: '${state.notes.length} notes',
             icon: Icons.note_alt,
+            imagePath: screenBannerAsset('notes', state.selectedTheme.id),
+            imageAlignment: Alignment.topCenter,
           ),
           const SizedBox(height: 14),
           if (notes.isEmpty)
@@ -121,11 +124,20 @@ class NotesScreen extends StatelessWidget {
                     if (title.isEmpty && body.isEmpty) {
                       return;
                     }
-                    await state.addNote(
+                    final result = await state.addNote(
                       title: title.isEmpty ? 'Untitled note' : title,
                       body: body,
                       colorName: selectedColor,
                     );
+                    if (!dialogContext.mounted) {
+                      return;
+                    }
+                    ScaffoldMessenger.of(
+                      dialogContext,
+                    ).showSnackBar(SnackBar(content: Text(result.message)));
+                    if (!result.applied) {
+                      return;
+                    }
                     if (dialogContext.mounted) {
                       Navigator.of(dialogContext).pop();
                     }
