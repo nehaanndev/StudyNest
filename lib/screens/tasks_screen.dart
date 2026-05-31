@@ -7,14 +7,22 @@ import '../utils/date_labels.dart';
 import '../widgets/cozy_widgets.dart';
 import '../widgets/study_station_banner.dart';
 
-class TasksScreen extends StatelessWidget {
+class TasksScreen extends StatefulWidget {
   const TasksScreen({super.key});
+
+  // Creates task screen state for active filters.
+  @override
+  State<TasksScreen> createState() => _TasksScreenState();
+}
+
+class _TasksScreenState extends State<TasksScreen> {
+  String _filter = 'All';
 
   // Builds the task list and task creation controls.
   @override
   Widget build(BuildContext context) {
     final state = StudyNestScope.watch(context);
-    final tasks = state.tasks;
+    final tasks = _filteredTasks(state.tasks);
 
     return CozyPage(
       title: 'Tasks',
@@ -35,7 +43,10 @@ class TasksScreen extends StatelessWidget {
             imageAlignment: Alignment.center,
           ),
           const SizedBox(height: 14),
-          const _TaskFilterBar(),
+          _TaskFilterBar(
+            selectedFilter: _filter,
+            onSelected: (filter) => setState(() => _filter = filter),
+          ),
           const SizedBox(height: 14),
           if (tasks.isEmpty)
             const EmptyState(
@@ -57,13 +68,28 @@ class TasksScreen extends StatelessWidget {
     );
   }
 
-  // Opens the task creation dialog and saves a new task when valid.
-  Future<void> _showTaskDialog(BuildContext context) async {
+  // Returns tasks matching the selected task filter.
+  List<StudyTask> _filteredTasks(List<StudyTask> tasks) {
+    final now = DateTime.now();
+    return tasks.where((task) {
+      return switch (_filter) {
+        'Today' => isSameCalendarDay(task.dueAt, now),
+        'Upcoming' => task.completedAt == null && task.dueAt.isAfter(now),
+        'Completed' => task.completedAt != null,
+        _ => true,
+      };
+    }).toList();
+  }
+
+  // Opens the task creation or edit dialog and saves valid changes.
+  Future<void> _showTaskDialog(BuildContext context, {StudyTask? task}) async {
     final state = StudyNestScope.read(context);
-    final titleController = TextEditingController();
-    final detailsController = TextEditingController();
-    final rewardController = TextEditingController(text: '20');
-    var dueAt = DateTime.now().add(const Duration(hours: 2));
+    final titleController = TextEditingController(text: task?.title ?? '');
+    final detailsController = TextEditingController(text: task?.details ?? '');
+    final rewardController = TextEditingController(
+      text: (task?.reward ?? 20).toString(),
+    );
+    var dueAt = task?.dueAt ?? DateTime.now().add(const Duration(hours: 2));
 
     await showDialog<void>(
       context: context,
@@ -71,7 +97,7 @@ class TasksScreen extends StatelessWidget {
         return StatefulBuilder(
           builder: (dialogContext, setDialogState) {
             return AlertDialog(
-              title: const Text('New task'),
+              title: Text(task == null ? 'New task' : 'Edit task'),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -149,26 +175,39 @@ class TasksScreen extends StatelessWidget {
                     if (title.isEmpty) {
                       return;
                     }
-                    final result = await state.addTask(
-                      title: title,
-                      details: detailsController.text,
-                      dueAt: dueAt,
-                      reward: reward.clamp(1, 500),
-                    );
+                    final clampedReward = reward.clamp(1, 500);
+                    final result = task == null
+                        ? await state.addTask(
+                            title: title,
+                            details: detailsController.text,
+                            dueAt: dueAt,
+                            reward: clampedReward,
+                          )
+                        : null;
+                    if (task != null) {
+                      await state.updateTask(
+                        taskId: task.id,
+                        title: title,
+                        details: detailsController.text,
+                        dueAt: dueAt,
+                        reward: clampedReward,
+                      );
+                    }
                     if (!dialogContext.mounted) {
                       return;
                     }
+                    final message = result?.message ?? 'Task updated.';
                     ScaffoldMessenger.of(
                       dialogContext,
-                    ).showSnackBar(SnackBar(content: Text(result.message)));
-                    if (!result.applied) {
+                    ).showSnackBar(SnackBar(content: Text(message)));
+                    if (result != null && !result.applied) {
                       return;
                     }
                     if (dialogContext.mounted) {
                       Navigator.of(dialogContext).pop();
                     }
                   },
-                  child: const Text('Create'),
+                  child: Text(task == null ? 'Create' : 'Save'),
                 ),
               ],
             );
@@ -180,11 +219,17 @@ class TasksScreen extends StatelessWidget {
 }
 
 class _TaskFilterBar extends StatelessWidget {
-  const _TaskFilterBar();
+  const _TaskFilterBar({
+    required this.selectedFilter,
+    required this.onSelected,
+  });
+
+  final String selectedFilter;
+  final ValueChanged<String> onSelected;
 
   static const _filters = ['All', 'Today', 'Upcoming', 'Completed'];
 
-  // Builds the mockup-style filter pills for task views.
+  // Builds selectable filter pills for task views.
   @override
   Widget build(BuildContext context) {
     final theme = StudyNestScope.watch(context).selectedTheme;
@@ -194,25 +239,32 @@ class _TaskFilterBar extends StatelessWidget {
       child: Row(
         children: [
           for (final filter in _filters) ...[
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-              decoration: BoxDecoration(
-                color: filter == 'All'
-                    ? theme.accent.withValues(alpha: 0.16)
-                    : theme.surface.withValues(alpha: 0.82),
-                borderRadius: BorderRadius.circular(999),
-                border: Border.all(
-                  color: filter == 'All'
-                      ? theme.accent.withValues(alpha: 0.7)
-                      : theme.primary.withValues(alpha: 0.12),
+            InkWell(
+              borderRadius: BorderRadius.circular(999),
+              onTap: () => onSelected(filter),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 15,
+                  vertical: 10,
                 ),
-              ),
-              child: Text(
-                filter,
-                style: TextStyle(
-                  color: theme.text,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
+                decoration: BoxDecoration(
+                  color: filter == selectedFilter
+                      ? theme.accent.withValues(alpha: 0.16)
+                      : theme.surface.withValues(alpha: 0.82),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(
+                    color: filter == selectedFilter
+                        ? theme.accent.withValues(alpha: 0.7)
+                        : theme.primary.withValues(alpha: 0.12),
+                  ),
+                ),
+                child: Text(
+                  filter,
+                  style: TextStyle(
+                    color: theme.text,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
             ),
@@ -229,7 +281,6 @@ class _TaskCard extends StatelessWidget {
 
   final StudyTask task;
 
-  // Builds an individual task row with completion and deletion actions.
   @override
   Widget build(BuildContext context) {
     final state = StudyNestScope.watch(context);
@@ -237,14 +288,25 @@ class _TaskCard extends StatelessWidget {
     final isComplete = task.completedAt != null;
 
     return CozyCard(
+      onTap: () => context
+          .findAncestorStateOfType<_TasksScreenState>()
+          ?._showTaskDialog(context, task: task),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Checkbox(
-            value: isComplete,
-            onChanged: (_) => _toggleTask(context, task.id),
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: SizedBox(
+              width: 24,
+              height: 24,
+              child: Checkbox(
+                value: isComplete,
+                visualDensity: VisualDensity.compact,
+                onChanged: (_) => _toggleTask(context, task.id),
+              ),
+            ),
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -253,25 +315,28 @@ class _TaskCard extends StatelessWidget {
                   task.title,
                   style: TextStyle(
                     fontWeight: FontWeight.w900,
+                    fontSize: 15,
                     decoration: isComplete ? TextDecoration.lineThrough : null,
+                    color: isComplete ? theme.muted : theme.text,
                   ),
                 ),
                 if (task.details.isNotEmpty) ...[
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 4),
                   Text(
                     task.details,
-                    style: TextStyle(color: theme.muted, height: 1.3),
+                    style: TextStyle(
+                        color: theme.muted, height: 1.3, fontSize: 13),
                   ),
                 ],
                 const SizedBox(height: 10),
                 Wrap(
                   spacing: 8,
-                  runSpacing: 8,
+                  runSpacing: 6,
                   children: [
                     CozyTag(label: compactDate(task.dueAt), icon: Icons.event),
                     CozyTag(label: '+${task.reward}', icon: Icons.savings),
                     if (task.rewardCollected)
-                      const CozyTag(label: 'Reward claimed', icon: Icons.lock),
+                      const CozyTag(label: 'Claimed', icon: Icons.lock),
                   ],
                 ),
               ],
@@ -279,8 +344,9 @@ class _TaskCard extends StatelessWidget {
           ),
           IconButton(
             tooltip: 'Delete task',
+            visualDensity: VisualDensity.compact,
             onPressed: () => state.deleteTask(task.id),
-            icon: const Icon(Icons.delete_outline),
+            icon: Icon(Icons.delete_outline, size: 18, color: theme.muted),
           ),
         ],
       ),

@@ -9,11 +9,13 @@ class StudyDecorPreview extends StatelessWidget {
     required this.item,
     this.size = 52,
     this.backgroundColor,
+    this.paddingFactor = 0.12,
   });
 
   final StudyDecorItem item;
   final double size;
   final Color? backgroundColor;
+  final double paddingFactor;
 
   // Builds a framed decor preview using the same asset shown inside the room.
   @override
@@ -21,12 +23,12 @@ class StudyDecorPreview extends StatelessWidget {
     return Container(
       width: size,
       height: size,
-      padding: EdgeInsets.all(size * 0.12),
+      padding: EdgeInsets.all(size * paddingFactor),
       decoration: BoxDecoration(
         color: backgroundColor ?? Colors.white.withValues(alpha: 0.78),
         borderRadius: BorderRadius.circular(14),
       ),
-      child: SvgPicture.asset(item.assetPath, fit: BoxFit.contain),
+      child: _DecorAssetImage(assetPath: item.assetPath),
     );
   }
 }
@@ -89,7 +91,7 @@ class _PositionedDecor extends StatelessWidget {
   // Builds one decor sprite at its normalized room position.
   @override
   Widget build(BuildContext context) {
-    final size = (sceneSize.width * item.baseScale).clamp(42.0, 108.0);
+    final size = (sceneSize.width * item.baseScale * 0.82).clamp(44.0, 88.0);
     final left = position.dx * sceneSize.width - size / 2;
     final top = position.dy * sceneSize.height - size * 0.72;
 
@@ -98,18 +100,22 @@ class _PositionedDecor extends StatelessWidget {
       top: top,
       width: size,
       height: size,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.12),
-              blurRadius: 12,
-              offset: const Offset(0, 7),
-            ),
-          ],
-        ),
-        child: SvgPicture.asset(item.assetPath, fit: BoxFit.contain),
-      ),
+      child: _DecorAssetImage(assetPath: item.assetPath),
     );
+  }
+}
+
+class _DecorAssetImage extends StatelessWidget {
+  const _DecorAssetImage({required this.assetPath});
+
+  final String assetPath;
+
+  // Builds either generated PNG decor or the older SVG fallback asset.
+  @override
+  Widget build(BuildContext context) {
+    if (assetPath.endsWith('.png')) {
+      return Image.asset(assetPath, fit: BoxFit.contain);
+    }
+    return SvgPicture.asset(assetPath, fit: BoxFit.contain);
   }
 }

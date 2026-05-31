@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../app/study_nest_catalog.dart';
 import '../app/study_nest_scope.dart';
+import '../app/study_nest_visuals.dart';
 import '../theme/study_theme.dart';
 import 'cozy_widgets.dart';
 import 'study_decor_layer.dart';
@@ -70,13 +71,7 @@ class StudyTownScene extends StatelessWidget {
             child: Stack(
               children: [
                 Positioned.fill(
-                  child: CustomPaint(
-                    painter: _StudyTownPainter(
-                      theme: theme,
-                      isComplete: isComplete,
-                      styleId: styleId,
-                    ),
-                  ),
+                  child: _StudyRoomImage(theme: theme, styleId: styleId),
                 ),
                 if (styleId == 'detail')
                   Positioned.fill(
@@ -86,9 +81,9 @@ class StudyTownScene extends StatelessWidget {
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                           colors: [
-                            Colors.black.withValues(alpha: 0.12),
+                            Colors.black.withValues(alpha: 0.06),
                             Colors.transparent,
-                            Colors.black.withValues(alpha: 0.18),
+                            Colors.black.withValues(alpha: 0.22),
                           ],
                         ),
                       ),
@@ -140,6 +135,28 @@ class StudyTownScene extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class _StudyRoomImage extends StatelessWidget {
+  const _StudyRoomImage({required this.theme, required this.styleId});
+
+  final StudyVisualTheme theme;
+  final String styleId;
+
+  // Builds the static room image for simple or detail study-space modes.
+  @override
+  Widget build(BuildContext context) {
+    final visuals = visualsForTheme(theme.id);
+    final imagePath = styleId == 'detail'
+        ? visuals.detailImagePath
+        : visuals.simpleImagePath;
+
+    return Image.asset(
+      imagePath,
+      fit: BoxFit.cover,
+      alignment: visuals.detailAlignment,
     );
   }
 }

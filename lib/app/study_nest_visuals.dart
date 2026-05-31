@@ -2,11 +2,13 @@ import 'package:flutter/widgets.dart';
 
 class StudyThemeVisuals {
   const StudyThemeVisuals({
+    required this.simpleImagePath,
     required this.detailImagePath,
     required this.cardImagePath,
     this.detailAlignment = Alignment.center,
   });
 
+  final String simpleImagePath;
   final String detailImagePath;
   final String cardImagePath;
   final Alignment detailAlignment;
@@ -14,23 +16,42 @@ class StudyThemeVisuals {
 
 const studyThemeVisuals = {
   'cozyCafe': StudyThemeVisuals(
-    detailImagePath: 'assets/reference/cozy_cafe_detail.jpg',
-    cardImagePath: 'assets/reference/cafe_counter_banner.jpg',
+    simpleImagePath:
+        'assets/reference/generated/cozy_cafe_simple_painterly_v1.png',
+    detailImagePath: 'assets/reference/generated/cozy_cafe_painterly_v1.png',
+    cardImagePath: 'assets/reference/generated/cozy_cafe_painterly_v1.png',
     detailAlignment: Alignment.center,
   ),
   'rainyLibrary': StudyThemeVisuals(
-    detailImagePath: 'assets/reference/rainy_library_detail.jpg',
-    cardImagePath: 'assets/reference/library_banner.jpg',
+    simpleImagePath:
+        'assets/reference/generated/rainy_library_simple_painterly_v1.png',
+    detailImagePath:
+        'assets/reference/generated/rainy_library_painterly_v1.png',
+    cardImagePath: 'assets/reference/generated/rainy_library_painterly_v1.png',
     detailAlignment: Alignment.topCenter,
   ),
   'midnightCity': StudyThemeVisuals(
-    detailImagePath: 'assets/reference/midnight_city_detail.jpg',
-    cardImagePath: 'assets/reference/city_day_banner.jpg',
+    simpleImagePath:
+        'assets/reference/generated/midnight_city_simple_painterly_v1.png',
+    detailImagePath:
+        'assets/reference/generated/midnight_city_painterly_v1.png',
+    cardImagePath: 'assets/reference/generated/midnight_city_painterly_v1.png',
     detailAlignment: Alignment.center,
   ),
   'gardenMatcha': StudyThemeVisuals(
-    detailImagePath: 'assets/reference/garden_matcha_detail.png',
-    cardImagePath: 'assets/reference/night_cafe_banner.jpg',
+    simpleImagePath:
+        'assets/reference/generated/garden_matcha_simple_painterly_v1.png',
+    detailImagePath:
+        'assets/reference/generated/garden_matcha_painterly_v1.png',
+    cardImagePath: 'assets/reference/generated/garden_matcha_painterly_v1.png',
+    detailAlignment: Alignment.center,
+  ),
+  'grandArchive': StudyThemeVisuals(
+    simpleImagePath:
+        'assets/reference/generated/grand_archive_simple_painterly_v1.png',
+    detailImagePath:
+        'assets/reference/generated/grand_archive_painterly_v1.png',
+    cardImagePath: 'assets/reference/generated/grand_archive_painterly_v1.png',
     detailAlignment: Alignment.center,
   ),
 };
@@ -46,11 +67,11 @@ String screenBannerAsset(String screenId, String themeId) {
     case 'tasks':
       return visualsForTheme(themeId).cardImagePath;
     case 'planner':
-      return 'assets/reference/city_day_banner.jpg';
+      return 'assets/reference/generated/midnight_city_painterly_v1.png';
     case 'notes':
-      return 'assets/reference/library_banner.jpg';
+      return 'assets/reference/generated/rainy_library_painterly_v1.png';
     case 'shop':
-      return 'assets/reference/cafe_counter_banner.jpg';
+      return 'assets/reference/generated/cozy_cafe_painterly_v1.png';
     default:
       return visualsForTheme(themeId).cardImagePath;
   }

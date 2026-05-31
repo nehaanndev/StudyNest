@@ -183,16 +183,12 @@ class _CozyCafeThemeCard extends StatelessWidget {
     final active = state.selectedTheme.id == 'cozyCafe';
 
     return CozyCard(
-      child: _ShopControlRow(
-        icon: const StudyThemeThumbnail(
-          themeId: 'cozyCafe',
-          width: 66,
-          height: 66,
-          radius: 16,
-        ),
-        title: 'Cozy Cafe',
-        description: 'Warm bookstore cafe with wood tables and soft lamps.',
-        trailing: FilledButton.tonal(
+      padding: EdgeInsets.zero,
+      child: StudyThemeShowcaseCard(
+        theme: themeById('cozyCafe'),
+        description: themeById('cozyCafe').description,
+        decorPreviewItems: _decorPreviewForTheme('cozyCafe'),
+        action: FilledButton.tonal(
           onPressed: active ? null : () => state.applyTheme('cozyCafe'),
           child: Text(active ? 'Active' : 'Apply'),
         ),
@@ -216,21 +212,16 @@ class _ThemeControlCard extends StatelessWidget {
     final canAfford = state.coinBalance >= item.cost;
 
     return CozyCard(
-      child: _ShopControlRow(
-        icon: StudyThemeThumbnail(
-          themeId: item.themeId,
-          width: 66,
-          height: 66,
-          radius: 16,
-        ),
-        title: item.title,
+      padding: EdgeInsets.zero,
+      child: StudyThemeShowcaseCard(
+        theme: visualTheme,
         description: item.description,
-        previewColor: visualTheme.primary,
+        decorPreviewItems: _decorPreviewForTheme(item.themeId),
         tags: [
           CozyTag(label: '${item.cost}', icon: Icons.savings),
           if (owned) const CozyTag(label: 'Owned', icon: Icons.lock_open),
         ],
-        trailing: FilledButton.tonal(
+        action: FilledButton.tonal(
           onPressed: active
               ? null
               : () => owned
@@ -336,7 +327,6 @@ class _ShopControlRow extends StatelessWidget {
     required this.title,
     required this.description,
     required this.trailing,
-    this.previewColor,
     this.tags = const [],
   });
 
@@ -344,7 +334,6 @@ class _ShopControlRow extends StatelessWidget {
   final String title;
   final String description;
   final Widget trailing;
-  final Color? previewColor;
   final List<Widget> tags;
 
   // Builds shared rows for theme and decor controls.
@@ -360,7 +349,7 @@ class _ShopControlRow extends StatelessWidget {
           height: 66,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: (previewColor ?? theme.surfaceAlt).withValues(alpha: 0.18),
+            color: theme.surfaceAlt.withValues(alpha: 0.18),
             borderRadius: BorderRadius.circular(16),
           ),
           child: icon,
@@ -399,4 +388,12 @@ class _ShopControlRow extends StatelessWidget {
 // Shows a short message for room customization actions.
 void _showSnack(BuildContext context, String message) {
   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+}
+
+// Returns a few collectible decor items for immersive theme card previews.
+List<StudyDecorItem> _decorPreviewForTheme(String themeId) {
+  return studyDecorItems
+      .where((item) => item.themeId == themeId)
+      .take(3)
+      .toList();
 }

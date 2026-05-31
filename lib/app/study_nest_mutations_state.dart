@@ -68,6 +68,27 @@ extension StudyNestMutationsState on StudyNestState {
     return awardedCoins;
   }
 
+  // Updates editable task fields without resetting completion or coin history.
+  Future<void> updateTask({
+    required String taskId,
+    required String title,
+    required String details,
+    required DateTime dueAt,
+    required int reward,
+  }) async {
+    final taskIndex = _tasks.indexWhere((task) => task.id == taskId);
+    if (taskIndex == -1) {
+      return;
+    }
+    _tasks[taskIndex] = _tasks[taskIndex].copyWith(
+      title: title.trim(),
+      details: details.trim(),
+      dueAt: dueAt,
+      reward: reward,
+    );
+    await _commitChanges();
+  }
+
   // Deletes a task without changing previously earned coin history.
   Future<void> deleteTask(String taskId) async {
     _tasks = _tasks.where((task) => task.id != taskId).toList();
@@ -79,6 +100,7 @@ extension StudyNestMutationsState on StudyNestState {
     required String title,
     required String body,
     required String colorName,
+    List<String> tags = const [],
   }) async {
     if (StudyNestAnonymousLimits.shouldEnforce(_session) &&
         _notes.length >= StudyNestAnonymousLimits.maxNotes) {
@@ -93,12 +115,35 @@ extension StudyNestMutationsState on StudyNestState {
         title: title.trim(),
         body: body.trim(),
         colorName: colorName,
+        tags: _normalizedTags(tags),
         updatedAt: DateTime.now(),
       ),
       ..._notes,
     ];
     await _commitChanges();
     return StudyNestActionResult.success('Note saved.');
+  }
+
+  // Updates note content, color, tags, and modified timestamp.
+  Future<void> updateNote({
+    required String noteId,
+    required String title,
+    required String body,
+    required String colorName,
+    required List<String> tags,
+  }) async {
+    final noteIndex = _notes.indexWhere((note) => note.id == noteId);
+    if (noteIndex == -1) {
+      return;
+    }
+    _notes[noteIndex] = _notes[noteIndex].copyWith(
+      title: title.trim(),
+      body: body.trim(),
+      colorName: colorName,
+      tags: _normalizedTags(tags),
+      updatedAt: DateTime.now(),
+    );
+    await _commitChanges();
   }
 
   // Deletes a note by id and saves the changed state.
@@ -135,10 +180,43 @@ extension StudyNestMutationsState on StudyNestState {
     return StudyNestActionResult.success('Planner block created.');
   }
 
+  // Updates an existing planned schedule block.
+  Future<void> updatePlannerEvent({
+    required String eventId,
+    required String title,
+    required DateTime startsAt,
+    required DateTime endsAt,
+    required String category,
+  }) async {
+    final eventIndex = _events.indexWhere((event) => event.id == eventId);
+    if (eventIndex == -1) {
+      return;
+    }
+    _events[eventIndex] = _events[eventIndex].copyWith(
+      title: title.trim(),
+      startsAt: startsAt,
+      endsAt: endsAt,
+      category: category,
+    );
+    await _commitChanges();
+  }
+
   // Deletes a planned schedule block by id.
   Future<void> deletePlannerEvent(String eventId) async {
     _events = _events.where((event) => event.id != eventId).toList();
     await _commitChanges();
+  }
+
+  // Normalizes custom note tags for storage and filtering.
+  List<String> _normalizedTags(List<String> tags) {
+    final normalized =
+        tags
+            .map((tag) => tag.trim().toLowerCase())
+            .where((tag) => tag.isNotEmpty)
+            .toSet()
+            .toList()
+          ..sort();
+    return normalized;
   }
 
   // Updates the current study session goal and resets today's completion.

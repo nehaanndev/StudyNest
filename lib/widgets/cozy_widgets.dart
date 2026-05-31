@@ -111,26 +111,26 @@ class CozyCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = StudyNestScope.watch(context).selectedTheme;
 
-    return Material(
-      color: theme.surface.withValues(alpha: 0.94),
-      borderRadius: BorderRadius.circular(18),
-      child: InkWell(
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.surface.withValues(alpha: 0.92),
         borderRadius: BorderRadius.circular(18),
-        onTap: onTap,
-        child: Container(
-          padding: padding,
-          decoration: BoxDecoration(
-            border: Border.all(color: theme.primary.withValues(alpha: 0.10)),
-            borderRadius: BorderRadius.circular(18),
-            boxShadow: [
-              BoxShadow(
-                color: theme.primary.withValues(alpha: 0.07),
-                blurRadius: 24,
-                offset: const Offset(0, 12),
-              ),
-            ],
+        border: Border.all(color: theme.primary.withValues(alpha: 0.10)),
+        boxShadow: [
+          BoxShadow(
+            color: theme.primary.withValues(alpha: 0.07),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
           ),
-          child: child,
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(18),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18),
+          onTap: onTap,
+          child: Padding(padding: padding, child: child),
         ),
       ),
     );
@@ -184,7 +184,7 @@ class CoinBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
       decoration: BoxDecoration(
-        color: theme.surface.withValues(alpha: 0.88),
+        color: theme.surface.withValues(alpha: 0.78),
         borderRadius: BorderRadius.circular(999),
         border: Border.all(color: theme.accent.withValues(alpha: 0.42)),
         boxShadow: [
@@ -228,7 +228,7 @@ class CozyTag extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
-        color: theme.surfaceAlt.withValues(alpha: 0.78),
+        color: theme.surfaceAlt.withValues(alpha: 0.70),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Row(

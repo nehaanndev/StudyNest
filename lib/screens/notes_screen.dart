@@ -7,16 +7,24 @@ import '../utils/date_labels.dart';
 import '../widgets/cozy_widgets.dart';
 import '../widgets/study_station_banner.dart';
 
-class NotesScreen extends StatelessWidget {
+class NotesScreen extends StatefulWidget {
   const NotesScreen({super.key});
 
+  // Creates notes screen state for tag and color filters.
+  @override
+  State<NotesScreen> createState() => _NotesScreenState();
+}
+
+class _NotesScreenState extends State<NotesScreen> {
   static const _noteColors = ['honey', 'matcha', 'rose', 'ink'];
+  String _selectedFilter = 'All';
 
   // Builds the notes board and note creation controls.
   @override
   Widget build(BuildContext context) {
     final state = StudyNestScope.watch(context);
-    final notes = state.notes;
+    final notes = _filteredNotes(state.notes);
+    final filters = _availableFilters(state.notes);
 
     return CozyPage(
       title: 'Notes',
@@ -35,6 +43,12 @@ class NotesScreen extends StatelessWidget {
             icon: Icons.note_alt,
             imagePath: screenBannerAsset('notes', state.selectedTheme.id),
             imageAlignment: Alignment.topCenter,
+          ),
+          const SizedBox(height: 14),
+          _NoteFilterBar(
+            filters: filters,
+            selectedFilter: _selectedFilter,
+            onSelected: (filter) => setState(() => _selectedFilter = filter),
           ),
           const SizedBox(height: 14),
           if (notes.isEmpty)
@@ -67,12 +81,32 @@ class NotesScreen extends StatelessWidget {
     );
   }
 
-  // Opens the note creation dialog and saves a new note when valid.
-  Future<void> _showNoteDialog(BuildContext context) async {
+  // Returns notes matching the selected color or custom tag filter.
+  List<StudyNote> _filteredNotes(List<StudyNote> notes) {
+    if (_selectedFilter == 'All') {
+      return notes;
+    }
+    return notes.where((note) {
+      return note.colorName == _selectedFilter ||
+          note.tags.contains(_selectedFilter);
+    }).toList();
+  }
+
+  // Builds a stable list of available note filters from colors and tags.
+  List<String> _availableFilters(List<StudyNote> notes) {
+    final tags = notes.expand((note) => note.tags).toSet().toList()..sort();
+    return ['All', ..._noteColors, ...tags];
+  }
+
+  // Opens the note creation or edit dialog and saves valid changes.
+  Future<void> _showNoteDialog(BuildContext context, {StudyNote? note}) async {
     final state = StudyNestScope.read(context);
-    final titleController = TextEditingController();
-    final bodyController = TextEditingController();
-    var selectedColor = _noteColors.first;
+    final titleController = TextEditingController(text: note?.title ?? '');
+    final bodyController = TextEditingController(text: note?.body ?? '');
+    final tagsController = TextEditingController(
+      text: note == null ? '' : note.tags.join(', '),
+    );
+    var selectedColor = note?.colorName ?? _noteColors.first;
 
     await showDialog<void>(
       context: context,
@@ -80,7 +114,7 @@ class NotesScreen extends StatelessWidget {
         return StatefulBuilder(
           builder: (dialogContext, setDialogState) {
             return AlertDialog(
-              title: const Text('New note'),
+              title: Text(note == null ? 'New note' : 'Edit note'),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -94,6 +128,14 @@ class NotesScreen extends StatelessWidget {
                       controller: bodyController,
                       maxLines: 5,
                       decoration: const InputDecoration(labelText: 'Note'),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: tagsController,
+                      decoration: const InputDecoration(
+                        labelText: 'Tags',
+                        hintText: 'exam, formulas, reading',
+                      ),
                     ),
                     const SizedBox(height: 14),
                     Wrap(
@@ -124,31 +166,95 @@ class NotesScreen extends StatelessWidget {
                     if (title.isEmpty && body.isEmpty) {
                       return;
                     }
-                    final result = await state.addNote(
-                      title: title.isEmpty ? 'Untitled note' : title,
-                      body: body,
-                      colorName: selectedColor,
-                    );
+                    final tags = _parseTags(tagsController.text);
+                    final result = note == null
+                        ? await state.addNote(
+                            title: title.isEmpty ? 'Untitled note' : title,
+                            body: body,
+                            colorName: selectedColor,
+                            tags: tags,
+                          )
+                        : null;
+                    if (note != null) {
+                      await state.updateNote(
+                        noteId: note.id,
+                        title: title.isEmpty ? 'Untitled note' : title,
+                        body: body,
+                        colorName: selectedColor,
+                        tags: tags,
+                      );
+                    }
                     if (!dialogContext.mounted) {
                       return;
                     }
+                    final message = result?.message ?? 'Note updated.';
                     ScaffoldMessenger.of(
                       dialogContext,
-                    ).showSnackBar(SnackBar(content: Text(result.message)));
-                    if (!result.applied) {
+                    ).showSnackBar(SnackBar(content: Text(message)));
+                    if (result != null && !result.applied) {
                       return;
                     }
                     if (dialogContext.mounted) {
                       Navigator.of(dialogContext).pop();
                     }
                   },
-                  child: const Text('Save'),
+                  child: Text(note == null ? 'Save' : 'Update'),
                 ),
               ],
             );
           },
         );
       },
+    );
+  }
+
+  // Parses comma-separated custom tags into lowercase unique labels.
+  List<String> _parseTags(String source) {
+    final tags =
+        source
+            .split(',')
+            .map((tag) => tag.trim().toLowerCase())
+            .where((tag) => tag.isNotEmpty)
+            .toSet()
+            .toList()
+          ..sort();
+    return tags;
+  }
+}
+
+class _NoteFilterBar extends StatelessWidget {
+  const _NoteFilterBar({
+    required this.filters,
+    required this.selectedFilter,
+    required this.onSelected,
+  });
+
+  final List<String> filters;
+  final String selectedFilter;
+  final ValueChanged<String> onSelected;
+
+  // Builds horizontal note filters for colors and custom tags.
+  @override
+  Widget build(BuildContext context) {
+    final theme = StudyNestScope.watch(context).selectedTheme;
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          for (final filter in filters) ...[
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: ChoiceChip(
+                label: Text(filter),
+                selected: selectedFilter == filter,
+                onSelected: (_) => onSelected(filter),
+                selectedColor: theme.accent.withValues(alpha: 0.18),
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }
@@ -170,6 +276,12 @@ class _NoteCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(20),
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
+        onTap: () {
+          context.findAncestorStateOfType<_NotesScreenState>()?._showNoteDialog(
+            context,
+            note: note,
+          );
+        },
         onLongPress: () => state.deleteNote(note.id),
         child: Container(
           padding: const EdgeInsets.all(16),
@@ -202,6 +314,17 @@ class _NoteCard extends StatelessWidget {
               if (note.body.isNotEmpty) ...[
                 const SizedBox(height: 8),
                 Text(note.body, style: const TextStyle(height: 1.35)),
+              ],
+              if (note.tags.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final tag in note.tags)
+                      CozyTag(label: tag, icon: Icons.sell_outlined),
+                  ],
+                ),
               ],
               const SizedBox(height: 14),
               Text(

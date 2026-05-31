@@ -75,6 +75,7 @@ class StudyNote {
     required this.title,
     required this.body,
     required this.colorName,
+    required this.tags,
     required this.updatedAt,
   });
 
@@ -82,6 +83,7 @@ class StudyNote {
   final String title;
   final String body;
   final String colorName;
+  final List<String> tags;
   final DateTime updatedAt;
 
   // Converts this note into JSON-safe values for local persistence.
@@ -91,6 +93,7 @@ class StudyNote {
       'title': title,
       'body': body,
       'colorName': colorName,
+      'tags': tags,
       'updatedAt': updatedAt.toIso8601String(),
     };
   }
@@ -102,6 +105,9 @@ class StudyNote {
       title: json['title'] as String,
       body: json['body'] as String? ?? '',
       colorName: json['colorName'] as String? ?? 'honey',
+      tags: (json['tags'] as List<dynamic>? ?? const [])
+          .map((tag) => tag as String)
+          .toList(),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
     );
   }
@@ -111,6 +117,7 @@ class StudyNote {
     String? title,
     String? body,
     String? colorName,
+    List<String>? tags,
     DateTime? updatedAt,
   }) {
     return StudyNote(
@@ -118,6 +125,7 @@ class StudyNote {
       title: title ?? this.title,
       body: body ?? this.body,
       colorName: colorName ?? this.colorName,
+      tags: tags ?? this.tags,
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }
@@ -157,6 +165,22 @@ class PlannerEvent {
       startsAt: DateTime.parse(json['startsAt'] as String),
       endsAt: DateTime.parse(json['endsAt'] as String),
       category: json['category'] as String? ?? 'Study',
+    );
+  }
+
+  // Creates an event copy while replacing only changed fields.
+  PlannerEvent copyWith({
+    String? title,
+    DateTime? startsAt,
+    DateTime? endsAt,
+    String? category,
+  }) {
+    return PlannerEvent(
+      id: id,
+      title: title ?? this.title,
+      startsAt: startsAt ?? this.startsAt,
+      endsAt: endsAt ?? this.endsAt,
+      category: category ?? this.category,
     );
   }
 }

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../app/study_nest_catalog.dart';
-import '../app/study_nest_scope.dart';
 import 'study_decor_layer.dart';
 import 'study_town_scene.dart';
 
@@ -95,21 +94,22 @@ class _MovableDecorSceneState extends State<MovableDecorScene> {
         defaultDecorPositionFor(itemId);
   }
 
-  // Updates local drag state while the user moves a decor item.
+  // Records the final dropped position from a token drag.
   void _moveItem(String itemId, Offset position) {
-    setState(() {
-      _workingPositions[itemId] = position;
-    });
+    _workingPositions[itemId] = position;
   }
 
   // Persists the final dropped position after a drag gesture.
   Future<void> _commitItem(String itemId) async {
     _draggingItemId = null;
+    // Trigger a rebuild so the token moves to its final slot.
+    setState(() {});
     await widget.onDecorMoved(itemId, _positionFor(itemId));
   }
 }
 
-class _MovableDecorToken extends StatelessWidget {
+// Stateful token so only the dragged sprite repaints — not the whole scene.
+class _MovableDecorToken extends StatefulWidget {
   const _MovableDecorToken({
     required this.item,
     required this.position,
@@ -126,13 +126,28 @@ class _MovableDecorToken extends StatelessWidget {
   final ValueChanged<Offset> onMoved;
   final VoidCallback onMoveEnd;
 
-  // Builds a draggable decor chip at a normalized room position.
+  @override
+  State<_MovableDecorToken> createState() => _MovableDecorTokenState();
+}
+
+class _MovableDecorTokenState extends State<_MovableDecorToken> {
+  late Offset _localPosition = widget.position;
+
+  @override
+  void didUpdateWidget(covariant _MovableDecorToken oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Accept parent position updates when not mid-drag.
+    if (!_dragging) _localPosition = widget.position;
+  }
+
+  bool _dragging = false;
+
   @override
   Widget build(BuildContext context) {
-    final theme = StudyNestScope.watch(context).selectedTheme;
-    const tokenSize = 48.0;
-    final left = position.dx * sceneSize.width - tokenSize / 2;
-    final top = position.dy * sceneSize.height - tokenSize / 2;
+    final tokenSize = (widget.sceneSize.width * widget.item.baseScale * 1.08)
+        .clamp(68.0, 118.0);
+    final left = _localPosition.dx * widget.sceneSize.width - tokenSize / 2;
+    final top = _localPosition.dy * widget.sceneSize.height - tokenSize / 2;
 
     return Positioned(
       left: left,
@@ -140,43 +155,37 @@ class _MovableDecorToken extends StatelessWidget {
       width: tokenSize,
       height: tokenSize,
       child: GestureDetector(
-        onPanStart: (_) => onMoveStart(),
+        behavior: HitTestBehavior.translucent,
+        onPanStart: (_) {
+          _dragging = true;
+          widget.onMoveStart();
+        },
         onPanUpdate: (details) => _handleDrag(details.delta),
-        onPanEnd: (_) => onMoveEnd(),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: theme.surface.withValues(alpha: 0.55),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: theme.accent.withValues(alpha: 0.26)),
-            boxShadow: [
-              BoxShadow(
-                color: theme.primary.withValues(alpha: 0.14),
-                blurRadius: 16,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: StudyDecorPreview(
-            item: item,
-            size: tokenSize,
-            backgroundColor: Colors.transparent,
-          ),
+        onPanEnd: (_) {
+          _dragging = false;
+          widget.onMoved(_localPosition);
+          widget.onMoveEnd();
+        },
+        child: StudyDecorPreview(
+          item: widget.item,
+          size: tokenSize,
+          backgroundColor: Colors.transparent,
+          paddingFactor: 0,
         ),
       ),
     );
   }
 
-  // Converts a drag delta into a clipped normalized room position.
   void _handleDrag(Offset delta) {
-    final next = Offset(
-      position.dx + delta.dx / sceneSize.width,
-      position.dy + delta.dy / sceneSize.height,
-    );
-    onMoved(
-      Offset(
-        next.dx.clamp(0.08, 0.92).toDouble(),
-        next.dy.clamp(0.12, 0.88).toDouble(),
-      ),
-    );
+    setState(() {
+      final next = Offset(
+        _localPosition.dx + delta.dx / widget.sceneSize.width,
+        _localPosition.dy + delta.dy / widget.sceneSize.height,
+      );
+      _localPosition = Offset(
+        next.dx.clamp(0.08, 0.92),
+        next.dy.clamp(0.12, 0.88),
+      );
+    });
   }
 }

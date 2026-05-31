@@ -214,6 +214,23 @@ class StudyNestState extends ChangeNotifier {
     return StudyNestMutationsState(this).toggleTask(taskId);
   }
 
+  // Updates an existing task while preserving reward collection history.
+  Future<void> updateTask({
+    required String taskId,
+    required String title,
+    required String details,
+    required DateTime dueAt,
+    required int reward,
+  }) {
+    return StudyNestMutationsState(this).updateTask(
+      taskId: taskId,
+      title: title,
+      details: details,
+      dueAt: dueAt,
+      reward: reward,
+    );
+  }
+
   // Deletes a task while preserving the public StudyNestState API.
   Future<void> deleteTask(String taskId) {
     return StudyNestMutationsState(this).deleteTask(taskId);
@@ -224,10 +241,28 @@ class StudyNestState extends ChangeNotifier {
     required String title,
     required String body,
     required String colorName,
+    List<String> tags = const [],
   }) {
     return StudyNestMutationsState(
       this,
-    ).addNote(title: title, body: body, colorName: colorName);
+    ).addNote(title: title, body: body, colorName: colorName, tags: tags);
+  }
+
+  // Updates an existing note while refreshing its modified timestamp.
+  Future<void> updateNote({
+    required String noteId,
+    required String title,
+    required String body,
+    required String colorName,
+    required List<String> tags,
+  }) {
+    return StudyNestMutationsState(this).updateNote(
+      noteId: noteId,
+      title: title,
+      body: body,
+      colorName: colorName,
+      tags: tags,
+    );
   }
 
   // Deletes a note while preserving the public StudyNestState API.
@@ -243,6 +278,23 @@ class StudyNestState extends ChangeNotifier {
     required String category,
   }) {
     return StudyNestMutationsState(this).addPlannerEvent(
+      title: title,
+      startsAt: startsAt,
+      endsAt: endsAt,
+      category: category,
+    );
+  }
+
+  // Updates an existing planner block.
+  Future<void> updatePlannerEvent({
+    required String eventId,
+    required String title,
+    required DateTime startsAt,
+    required DateTime endsAt,
+    required String category,
+  }) {
+    return StudyNestMutationsState(this).updatePlannerEvent(
+      eventId: eventId,
       title: title,
       startsAt: startsAt,
       endsAt: endsAt,
@@ -392,6 +444,7 @@ class StudyNestState extends ChangeNotifier {
           title: 'Study method',
           body: 'Use 45 minutes of focus, then write a tiny recap.',
           colorName: 'matcha',
+          tags: const ['focus', 'method'],
           updatedAt: now,
         ),
         StudyNote(
@@ -399,6 +452,7 @@ class StudyNestState extends ChangeNotifier {
           title: 'Cafe desk setup',
           body: 'Warm theme, soft cards, and a calm daily plan.',
           colorName: 'honey',
+          tags: const ['setup'],
           updatedAt: now.subtract(const Duration(minutes: 8)),
         ),
       ],
