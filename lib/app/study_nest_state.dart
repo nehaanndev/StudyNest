@@ -32,6 +32,7 @@ class StudyNestState extends ChangeNotifier {
     required StudySessionGoal sessionGoal,
     required DateTime updatedAt,
     required StudyNestSessionState session,
+    List<StudyHabit>? habits,
   }) : _storage = storage,
        _syncService = syncService,
        _tasks = tasks,
@@ -46,12 +47,14 @@ class StudyNestState extends ChangeNotifier {
        _studySpaceStyleId = studySpaceStyleId,
        _sessionGoal = sessionGoal,
        _updatedAt = updatedAt,
-       _session = session;
+       _session = session,
+       _habits = habits ?? [];
 
   final StudyNestStorage? _storage;
   final StudyNestSyncService _syncService;
   List<StudyTask> _tasks;
   List<StudyNote> _notes;
+  List<StudyHabit> _habits;
   List<PlannerEvent> _events;
   List<CoinTransaction> _coinLedger;
   List<String> _ownedShopItemIds;
@@ -110,6 +113,9 @@ class StudyNestState extends ChangeNotifier {
   static StudyNestState preview() {
     return _starterState(null, const DisabledStudyNestSyncService());
   }
+
+  // Returns a read-only view of all habits.
+  List<StudyHabit> get habits => List.unmodifiable(_habits);
 
   // Returns a read-only view of all tasks.
   List<StudyTask> get tasks {
@@ -197,16 +203,36 @@ class StudyNestState extends ChangeNotifier {
     return List.unmodifiable(openTasks.take(limit));
   }
 
+  // Adds a new habit while preserving the public StudyNestState API.
+  Future<void> addHabit({required String name, required String emoji}) {
+    return StudyNestMutationsState(this).addHabit(name: name, emoji: emoji);
+  }
+
+  // Toggles a habit day while preserving the public StudyNestState API.
+  Future<void> toggleHabitDay(String habitId, DateTime day) {
+    return StudyNestMutationsState(this).toggleHabitDay(habitId, day);
+  }
+
+  // Deletes a habit while preserving the public StudyNestState API.
+  Future<void> deleteHabit(String habitId) {
+    return StudyNestMutationsState(this).deleteHabit(habitId);
+  }
+
   // Adds a new task while preserving the public StudyNestState API.
   Future<StudyNestActionResult> addTask({
     required String title,
     required String details,
     required DateTime dueAt,
     required int reward,
+    String priority = 'Medium',
   }) {
-    return StudyNestMutationsState(
-      this,
-    ).addTask(title: title, details: details, dueAt: dueAt, reward: reward);
+    return StudyNestMutationsState(this).addTask(
+      title: title,
+      details: details,
+      dueAt: dueAt,
+      reward: reward,
+      priority: priority,
+    );
   }
 
   // Toggles task completion while preserving the public StudyNestState API.
@@ -221,6 +247,7 @@ class StudyNestState extends ChangeNotifier {
     required String details,
     required DateTime dueAt,
     required int reward,
+    String? priority,
   }) {
     return StudyNestMutationsState(this).updateTask(
       taskId: taskId,
@@ -228,6 +255,7 @@ class StudyNestState extends ChangeNotifier {
       details: details,
       dueAt: dueAt,
       reward: reward,
+      priority: priority,
     );
   }
 
@@ -363,6 +391,7 @@ class StudyNestState extends ChangeNotifier {
       'selectedThemeId': _selectedThemeId,
       'studySpaceStyleId': _studySpaceStyleId,
       'sessionGoal': _sessionGoal.toJson(),
+      'habits': _habits.map((h) => h.toJson()).toList(),
     };
   }
 
@@ -406,6 +435,7 @@ class StudyNestState extends ChangeNotifier {
           DateTime.tryParse(snapshot['updatedAt'] as String? ?? '') ??
           DateTime.now(),
       session: StudyNestSessionState.disabled(),
+      habits: _decodeList(snapshot['habits'], StudyHabit.fromJson),
     );
   }
 

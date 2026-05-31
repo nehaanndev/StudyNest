@@ -1,7 +1,8 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 
 import '../app/study_nest_scope.dart';
-import '../app/study_nest_session.dart';
 import '../app/study_nest_state.dart';
 import '../utils/date_labels.dart';
 import '../widgets/cozy_widgets.dart';
@@ -9,25 +10,48 @@ import '../widgets/study_town_scene.dart';
 import 'study_space_screen.dart';
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({super.key, this.onNavigate});
 
-  // Builds the StudyNest dashboard with focus goal, stats, and today's plan.
+  final ValueChanged<int>? onNavigate;
+
   @override
   Widget build(BuildContext context) {
     final state = StudyNestScope.watch(context);
     final theme = state.selectedTheme;
-    final todayEvents = state.eventsForDay(DateTime.now()).take(3).toList();
-    final upcomingTasks = state.upcomingTasks();
+    final now = DateTime.now();
 
-    final sessionComplete = state.sessionGoal.isCompleteOn(DateTime.now());
+    final allTasks = state.tasks;
+    final todayTasks = allTasks
+        .where((t) => isSameCalendarDay(t.dueAt, now))
+        .toList();
+    final completedToday = todayTasks.where((t) => t.completedAt != null).length;
+    final totalToday = todayTasks.length;
+
+    final completedTotal = state.completedTaskCount;
+    final level = completedTotal ~/ 5 + 1;
+    final upcomingTasks = state.upcomingTasks();
+    final sessionComplete = state.sessionGoal.isCompleteOn(now);
 
     return CozyPage(
       title: 'StudyNest',
-      subtitle: '${theme.emoji} ${theme.name} study room',
+      subtitle: '${theme.emoji} ${theme.name}',
       action: CoinBadge(coins: state.coinBalance),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Stats pills row
+          Row(
+            children: [
+              _StatPill(label: '🪙 ${state.coinBalance}', accentColor: theme.accent),
+              const SizedBox(width: 8),
+              _StatPill(label: '✅ $completedTotal done', accentColor: theme.accent),
+              const SizedBox(width: 8),
+              _StatPill(label: '⭐ Lv.$level', accentColor: theme.accent),
+            ],
+          ),
+          const SizedBox(height: 14),
+
+          // Room scene
           StudyTownScene(
             environmentName: theme.name,
             focusTitle: state.sessionGoal.title,
@@ -41,52 +65,131 @@ class HomeScreen extends StatelessWidget {
             onExplore: () => _openStudySpace(context),
           ),
           const SizedBox(height: 14),
-          const _AccountStatusCard(),
-          const SectionHeader(title: 'Study stations'),
-          StudyFeatureStrip(
-            openTasks: state.openTaskCount,
-            notes: state.notes.length,
-            todayBlocks: todayEvents.length,
-            coins: state.coinBalance,
+
+          // Daily Progress card
+          CozyCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Daily Progress',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w900,
+                          color: theme.text,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      completedToday >= totalToday && totalToday > 0
+                          ? 'Great job! 🎉'
+                          : 'Keep going!',
+                      style: TextStyle(color: theme.muted, fontSize: 13),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: LinearProgressIndicator(
+                    value: totalToday == 0
+                        ? 0
+                        : completedToday / totalToday,
+                    minHeight: 10,
+                    color: theme.accent,
+                    backgroundColor: theme.accent.withValues(alpha: 0.15),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '$completedToday / $totalToday tasks completed today',
+                  style: TextStyle(color: theme.muted, fontSize: 13),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 14),
-          Row(
+
+          // Quick nav 2x2 grid
+          const SectionHeader(title: 'Quick access'),
+          GridView.count(
+            crossAxisCount: 2,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 10,
+            childAspectRatio: 2.0,
             children: [
-              Expanded(
-                child: _StatCard(
-                  label: 'Open tasks',
-                  value: state.openTaskCount.toString(),
-                  icon: Icons.checklist,
-                ),
+              _QuickNavTile(
+                icon: Icons.checklist,
+                label: 'Tasks',
+                onTap: () => onNavigate?.call(1),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _StatCard(
-                  label: 'Completed',
-                  value: state.completedTaskCount.toString(),
-                  icon: Icons.done_all,
-                ),
+              _QuickNavTile(
+                icon: Icons.timer,
+                label: 'Pomodoro',
+                onTap: () => onNavigate?.call(2),
+              ),
+              _QuickNavTile(
+                icon: Icons.local_fire_department,
+                label: 'Habits',
+                onTap: () => onNavigate?.call(3),
+              ),
+              _QuickNavTile(
+                icon: Icons.calendar_month,
+                label: 'Planner',
+                onTap: () => onNavigate?.call(4),
               ),
             ],
           ),
-          SectionHeader(
-            title: "Today's schedule",
-            trailing: Text(compactDate(DateTime.now())),
+          const SizedBox(height: 14),
+
+          // Focus Time card
+          CozyCard(
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Focus Time',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w900,
+                          color: theme.text,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '25:00',
+                        style: Theme.of(context)
+                            .textTheme
+                            .headlineMedium
+                            ?.copyWith(
+                              fontWeight: FontWeight.w900,
+                              color: theme.accent,
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
+                FilledButton.icon(
+                  onPressed: () => onNavigate?.call(2),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: theme.accent,
+                    foregroundColor: Colors.black87,
+                  ),
+                  icon: const Icon(Icons.play_arrow),
+                  label: const Text('Start'),
+                ),
+              ],
+            ),
           ),
-          if (todayEvents.isEmpty)
-            const EmptyState(
-              icon: '🗓️',
-              title: 'No study blocks yet',
-              body: 'Add a calendar block to make the day feel organized.',
-            )
-          else
-            for (final event in todayEvents) ...[
-              _EventPreview(
-                eventTitle: event.title,
-                eventTime: timeRange(event.startsAt, event.endsAt),
-              ),
-              const SizedBox(height: 10),
-            ],
+          const SizedBox(height: 14),
+
+          // Next tasks
           const SectionHeader(title: 'Next tasks'),
           if (upcomingTasks.isEmpty)
             const EmptyState(
@@ -105,12 +208,15 @@ class HomeScreen extends StatelessWidget {
                         children: [
                           Text(
                             task.title,
-                            style: const TextStyle(fontWeight: FontWeight.w800),
+                            style: TextStyle(
+                              fontWeight: FontWeight.w800,
+                              color: theme.text,
+                            ),
                           ),
                           const SizedBox(height: 6),
                           Text(
                             'Due ${compactDate(task.dueAt)}',
-                            style: TextStyle(color: theme.muted),
+                            style: TextStyle(color: theme.muted, fontSize: 12),
                           ),
                         ],
                       ),
@@ -126,37 +232,29 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  // Opens the full study-space viewer from the dashboard room scene.
   void _openStudySpace(BuildContext context) {
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute<void>(builder: (_) => const StudySpaceScreen()));
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => const StudySpaceScreen()),
+    );
   }
 
-  // Completes the session goal and shows the awarded coin result.
   Future<void> _completeSessionGoal(BuildContext context) async {
     final state = StudyNestScope.read(context);
     final awarded = await state.completeSessionGoal();
-    if (!context.mounted) {
-      return;
-    }
+    if (!context.mounted) return;
     final message = awarded > 0
         ? 'Nice focus. You earned $awarded coins.'
         : 'That goal is already complete today.';
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
   }
 
-  // Opens a dialog for changing the current session goal.
   Future<void> _showSessionGoalDialog(BuildContext context) async {
     final state = StudyNestScope.read(context);
-    final titleController = TextEditingController(
-      text: state.sessionGoal.title,
-    );
-    final rewardController = TextEditingController(
-      text: state.sessionGoal.reward.toString(),
-    );
+    final titleController =
+        TextEditingController(text: state.sessionGoal.title);
+    final rewardController =
+        TextEditingController(text: state.sessionGoal.reward.toString());
 
     await showDialog<void>(
       context: context,
@@ -187,24 +285,15 @@ class HomeScreen extends StatelessWidget {
               onPressed: () async {
                 final title = titleController.text.trim();
                 final reward = int.tryParse(rewardController.text) ?? 25;
-                if (title.isEmpty) {
-                  return;
-                }
-                final result = await state.setSessionGoal(
-                  title,
-                  reward.clamp(1, 500),
-                );
+                if (title.isEmpty) return;
+                final result =
+                    await state.setSessionGoal(title, reward.clamp(1, 500));
                 if (dialogContext.mounted) {
-                  ScaffoldMessenger.of(
-                    dialogContext,
-                  ).showSnackBar(SnackBar(content: Text(result.message)));
+                  ScaffoldMessenger.of(dialogContext)
+                      .showSnackBar(SnackBar(content: Text(result.message)));
                 }
-                if (!result.applied) {
-                  return;
-                }
-                if (dialogContext.mounted) {
-                  Navigator.of(dialogContext).pop();
-                }
+                if (!result.applied) return;
+                if (dialogContext.mounted) Navigator.of(dialogContext).pop();
               },
               child: const Text('Save'),
             ),
@@ -215,184 +304,78 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-class _AccountStatusCard extends StatelessWidget {
-  const _AccountStatusCard();
-
-  // Builds the auth and sync summary card shown below the main room.
-  @override
-  Widget build(BuildContext context) {
-    final state = StudyNestScope.watch(context);
-    final syncLabel = switch (state.syncStatus) {
-      StudyNestSyncStatus.disabled => 'Local only',
-      StudyNestSyncStatus.idle => 'Synced',
-      StudyNestSyncStatus.syncing => 'Syncing',
-      StudyNestSyncStatus.offline => 'Offline',
-      StudyNestSyncStatus.error => 'Needs retry',
-    };
-    final accountLabel = !state.cloudSyncEnabled
-        ? 'Firebase not connected'
-        : state.isAnonymousUser
-        ? 'Anonymous cloud account'
-        : 'Google-linked cloud account';
-
-    return CozyCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.cloud_done_outlined),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  accountLabel,
-                  style: const TextStyle(fontWeight: FontWeight.w900),
-                ),
-              ),
-              CozyTag(label: syncLabel, icon: Icons.sync),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Text(
-            state.sessionMessage ??
-                'Local state is always available first, then cloud sync catches up.',
-          ),
-          if (state.lastSyncedAt != null) ...[
-            const SizedBox(height: 8),
-            Text(
-              'Last synced ${compactDate(state.lastSyncedAt!)}',
-              style: TextStyle(color: state.selectedTheme.muted, fontSize: 12),
-            ),
-          ],
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              if (state.cloudSyncEnabled && state.isAnonymousUser)
-                FilledButton.tonal(
-                  onPressed: () => _linkGoogle(context),
-                  child: const Text('Link Google'),
-                ),
-              if (!state.cloudSyncEnabled)
-                OutlinedButton(
-                  onPressed: () => _showFirebaseSetup(context),
-                  child: const Text('Connect Firebase'),
-                ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Starts the Google-link flow and reports the result back to the user.
-  Future<void> _linkGoogle(BuildContext context) async {
-    final result = await StudyNestScope.read(
-      context,
-    ).linkAnonymousAccountWithGoogle();
-    if (!context.mounted) {
-      return;
-    }
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(result.message)));
-  }
-
-  // Explains how to create or connect the Firebase project for this app.
-  Future<void> _showFirebaseSetup(BuildContext context) async {
-    await showDialog<void>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Connect Firebase'),
-          content: const SingleChildScrollView(
-            child: Text(
-              '1. Install FlutterFire CLI if needed: dart pub global activate flutterfire_cli\n\n'
-              '2. Run flutterfire configure in the project root.\n\n'
-              '3. Select an existing Firebase project or create a new one.\n\n'
-              '4. Register Android with package name com.studynest.app.\n\n'
-              '5. Enable Authentication, Anonymous sign-in, Google sign-in, and Cloud Firestore.\n\n'
-              '6. Replace the placeholder values in lib/firebase_options.dart with the generated values.',
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Close'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
-
-class _StatCard extends StatelessWidget {
-  const _StatCard({
-    required this.label,
-    required this.value,
-    required this.icon,
-  });
+class _StatPill extends StatelessWidget {
+  const _StatPill({required this.label, required this.accentColor});
 
   final String label;
-  final String value;
-  final IconData icon;
+  final Color accentColor;
 
-  // Builds a compact dashboard stat card.
   @override
   Widget build(BuildContext context) {
-    final theme = StudyNestScope.watch(context).selectedTheme;
-
-    return CozyCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: theme.accent),
-          const SizedBox(height: 12),
-          Text(
-            value,
-            style: Theme.of(
-              context,
-            ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w900),
-          ),
-          Text(label, style: TextStyle(color: theme.muted)),
-        ],
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.30),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: accentColor.withValues(alpha: 0.35)),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontWeight: FontWeight.w700,
+          fontSize: 12,
+          color: accentColor,
+        ),
       ),
     );
   }
 }
 
-class _EventPreview extends StatelessWidget {
-  const _EventPreview({required this.eventTitle, required this.eventTime});
+class _QuickNavTile extends StatelessWidget {
+  const _QuickNavTile({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
 
-  final String eventTitle;
-  final String eventTime;
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
 
-  // Builds a small preview row for a calendar event.
   @override
   Widget build(BuildContext context) {
     final theme = StudyNestScope.watch(context).selectedTheme;
-
-    return CozyCard(
-      child: Row(
-        children: [
-          Icon(Icons.schedule, color: theme.accent),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(14),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        child: GestureDetector(
+          onTap: onTap,
+          child: Container(
+            decoration: BoxDecoration(
+              color: theme.surface.withValues(alpha: 0.65),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: theme.accent.withValues(alpha: 0.25),
+              ),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            child: Row(
               children: [
+                Icon(icon, color: theme.accent, size: 24),
+                const SizedBox(width: 10),
                 Text(
-                  eventTitle,
-                  style: const TextStyle(fontWeight: FontWeight.w800),
+                  label,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 14,
+                    color: theme.text,
+                  ),
                 ),
-                const SizedBox(height: 4),
-                Text(eventTime, style: TextStyle(color: theme.muted)),
               ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }

@@ -7,6 +7,7 @@ class StudyTask {
     required this.reward,
     required this.completedAt,
     required this.rewardCollected,
+    this.priority = 'Medium',
   });
 
   final String id;
@@ -16,6 +17,7 @@ class StudyTask {
   final int reward;
   final DateTime? completedAt;
   final bool rewardCollected;
+  final String priority;
 
   // Converts this task into JSON-safe values for local persistence.
   Map<String, dynamic> toJson() {
@@ -27,6 +29,7 @@ class StudyTask {
       'reward': reward,
       'completedAt': completedAt?.toIso8601String(),
       'rewardCollected': rewardCollected,
+      'priority': priority,
     };
   }
 
@@ -42,6 +45,7 @@ class StudyTask {
           ? null
           : DateTime.parse(json['completedAt'] as String),
       rewardCollected: json['rewardCollected'] as bool? ?? false,
+      priority: json['priority'] as String? ?? 'Medium',
     );
   }
 
@@ -54,6 +58,7 @@ class StudyTask {
     DateTime? completedAt,
     bool? clearCompletedAt,
     bool? rewardCollected,
+    String? priority,
   }) {
     return StudyTask(
       id: id,
@@ -65,6 +70,7 @@ class StudyTask {
           ? null
           : completedAt ?? this.completedAt,
       rewardCollected: rewardCollected ?? this.rewardCollected,
+      priority: priority ?? this.priority,
     );
   }
 }
@@ -328,4 +334,56 @@ class StudySessionGoal {
         completed.month == day.month &&
         completed.day == day.day;
   }
+}
+
+bool isSameDay(DateTime a, DateTime b) =>
+    a.year == b.year && a.month == b.month && a.day == b.day;
+
+class StudyHabit {
+  const StudyHabit({
+    required this.id,
+    required this.name,
+    required this.emoji,
+    required this.streak,
+    required this.completions,
+  });
+
+  final String id;
+  final String name;
+  final String emoji;
+  final int streak;
+  final List<String> completions; // ISO date strings of completed days
+
+  bool isCompletedOn(DateTime day) =>
+      completions.any((c) => isSameDay(DateTime.parse(c), day));
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'emoji': emoji,
+        'streak': streak,
+        'completions': completions,
+      };
+
+  factory StudyHabit.fromJson(Map<String, dynamic> j) => StudyHabit(
+        id: j['id'] as String,
+        name: j['name'] as String,
+        emoji: j['emoji'] as String? ?? '✅',
+        streak: j['streak'] as int? ?? 0,
+        completions: (j['completions'] as List?)?.cast<String>() ?? [],
+      );
+
+  StudyHabit copyWith({
+    String? name,
+    String? emoji,
+    int? streak,
+    List<String>? completions,
+  }) =>
+      StudyHabit(
+        id: id,
+        name: name ?? this.name,
+        emoji: emoji ?? this.emoji,
+        streak: streak ?? this.streak,
+        completions: completions ?? this.completions,
+      );
 }

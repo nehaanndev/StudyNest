@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 
 import '../app/study_nest_scope.dart';
@@ -16,7 +18,7 @@ class CozyPage extends StatelessWidget {
   final Widget child;
   final Widget? action;
 
-  // Builds a full page with a warm gradient background and shared header.
+  // Builds a full page with a dark gradient background and shared header.
   @override
   Widget build(BuildContext context) {
     final theme = StudyNestScope.watch(context).selectedTheme;
@@ -24,14 +26,11 @@ class CozyPage extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
           colors: [
             theme.background,
-            Color.alphaBlend(
-              theme.primary.withValues(alpha: 0.16),
-              theme.background,
-            ),
+            Color.alphaBlend(theme.primary.withValues(alpha: 0.08), theme.background),
             theme.background,
           ],
         ),
@@ -106,31 +105,41 @@ class CozyCard extends StatelessWidget {
   final EdgeInsetsGeometry padding;
   final VoidCallback? onTap;
 
-  // Builds a compact content card with low-poly room contrast.
+  // Builds a glassmorphism content card floating over the dark background.
   @override
   Widget build(BuildContext context) {
     final theme = StudyNestScope.watch(context).selectedTheme;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.surface.withValues(alpha: 0.92),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: theme.primary.withValues(alpha: 0.10)),
-        boxShadow: [
-          BoxShadow(
-            color: theme.primary.withValues(alpha: 0.07),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(18),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+        child: Container(
+          decoration: BoxDecoration(
+            color: theme.surface.withValues(alpha: 0.72),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: theme.accent.withValues(alpha: 0.22),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.35),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(18),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(18),
-          onTap: onTap,
-          child: Padding(padding: padding, child: child),
+          child: Material(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(18),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(18),
+              onTap: onTap,
+              splashColor: theme.accent.withValues(alpha: 0.08),
+              child: Padding(padding: padding, child: child),
+            ),
+          ),
         ),
       ),
     );
@@ -189,7 +198,7 @@ class CoinBadge extends StatelessWidget {
         border: Border.all(color: theme.accent.withValues(alpha: 0.42)),
         boxShadow: [
           BoxShadow(
-            color: theme.primary.withValues(alpha: 0.10),
+            color: Colors.black.withValues(alpha: 0.25),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),
@@ -228,8 +237,9 @@ class CozyTag extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
-        color: theme.surfaceAlt.withValues(alpha: 0.70),
+        color: theme.surface.withValues(alpha: 0.55),
         borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: theme.accent.withValues(alpha: 0.30)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

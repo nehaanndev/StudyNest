@@ -37,8 +37,8 @@ class _NotesScreenState extends State<NotesScreen> {
       child: Column(
         children: [
           StudyStationBanner(
-            title: 'Notes shelf',
-            detail: 'Pin recaps, formulas, and cafe-table study thoughts.',
+            title: 'My Notes',
+            detail: 'Capture ideas, formulas, and study recaps.',
             metric: '${state.notes.length} notes',
             icon: Icons.note_alt,
             imagePath: screenBannerAsset('notes', state.selectedTheme.id),
@@ -269,7 +269,10 @@ class _NoteCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final state = StudyNestScope.watch(context);
     final theme = state.selectedTheme;
-    final noteColor = _colorForNote(theme.surfaceAlt, note.colorName);
+    final noteColor = _colorForNote(theme.surfaceAlt, note.colorName, theme.isDark);
+
+    final textColor = theme.isDark ? theme.text : const Color(0xFF1A110A);
+    final mutedColor = theme.isDark ? theme.muted : const Color(0xFF6B5040);
 
     return Material(
       color: noteColor,
@@ -287,7 +290,11 @@ class _NoteCard extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: theme.primary.withValues(alpha: 0.22)),
+            border: Border.all(
+              color: theme.isDark
+                  ? theme.accent.withValues(alpha: 0.25)
+                  : theme.primary.withValues(alpha: 0.18),
+            ),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -298,22 +305,26 @@ class _NoteCard extends StatelessWidget {
                   Expanded(
                     child: Text(
                       note.title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.w900,
                         fontSize: 16,
+                        color: textColor,
                       ),
                     ),
                   ),
                   IconButton(
                     tooltip: 'Delete note',
                     onPressed: () => state.deleteNote(note.id),
-                    icon: const Icon(Icons.close),
+                    icon: Icon(Icons.close, color: mutedColor, size: 18),
                   ),
                 ],
               ),
               if (note.body.isNotEmpty) ...[
                 const SizedBox(height: 8),
-                Text(note.body, style: const TextStyle(height: 1.35)),
+                Text(
+                  note.body,
+                  style: TextStyle(height: 1.35, color: textColor),
+                ),
               ],
               if (note.tags.isNotEmpty) ...[
                 const SizedBox(height: 12),
@@ -329,7 +340,7 @@ class _NoteCard extends StatelessWidget {
               const SizedBox(height: 14),
               Text(
                 'Updated ${compactDate(note.updatedAt)}',
-                style: TextStyle(color: theme.muted, fontSize: 12),
+                style: TextStyle(color: mutedColor, fontSize: 12),
               ),
             ],
           ),
@@ -339,7 +350,17 @@ class _NoteCard extends StatelessWidget {
   }
 
   // Maps the selected note color name to a theme-aware card color.
-  Color _colorForNote(Color fallback, String colorName) {
+  Color _colorForNote(Color fallback, String colorName, bool isDark) {
+    // Use darker tones when in dark theme so text stays readable.
+    if (isDark) {
+      return switch (colorName) {
+        'honey' => const Color(0xFF2A1F08),
+        'matcha' => const Color(0xFF141F10),
+        'rose'   => const Color(0xFF221018),
+        'ink'    => const Color(0xFF0E1825),
+        _        => fallback,
+      };
+    }
     return switch (colorName) {
       'honey' => const Color(0xFFFFF0CC),
       'matcha' => const Color(0xFFE6EBCB),

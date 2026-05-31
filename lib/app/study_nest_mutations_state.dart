@@ -1,12 +1,55 @@
 part of 'study_nest_state.dart';
 
 extension StudyNestMutationsState on StudyNestState {
+  // Adds a new habit and saves the changed state.
+  Future<void> addHabit({required String name, required String emoji}) async {
+    _habits = [
+      ..._habits,
+      StudyHabit(
+        id: StudyNestState._newId('habit'),
+        name: name,
+        emoji: emoji,
+        streak: 0,
+        completions: [],
+      ),
+    ];
+    await _commitChanges();
+  }
+
+  // Toggles a habit completion for a given day and recalculates streak.
+  Future<void> toggleHabitDay(String habitId, DateTime day) async {
+    final idx = _habits.indexWhere((h) => h.id == habitId);
+    if (idx == -1) return;
+    final habit = _habits[idx];
+    final dayStr = day.toIso8601String().split('T').first;
+    final already = habit.completions.any((c) => c.startsWith(dayStr));
+    final newCompletions = already
+        ? habit.completions.where((c) => !c.startsWith(dayStr)).toList()
+        : [...habit.completions, dayStr];
+    var streak = 0;
+    var check = DateTime.now();
+    while (newCompletions
+        .any((c) => c.startsWith(check.toIso8601String().split('T').first))) {
+      streak++;
+      check = check.subtract(const Duration(days: 1));
+    }
+    _habits[idx] = habit.copyWith(completions: newCompletions, streak: streak);
+    await _commitChanges();
+  }
+
+  // Deletes a habit and saves the changed state.
+  Future<void> deleteHabit(String habitId) async {
+    _habits = _habits.where((h) => h.id != habitId).toList();
+    await _commitChanges();
+  }
+
   // Adds a new task and saves the changed state.
   Future<StudyNestActionResult> addTask({
     required String title,
     required String details,
     required DateTime dueAt,
     required int reward,
+    String priority = 'Medium',
   }) async {
     if (StudyNestAnonymousLimits.shouldEnforce(_session) &&
         _tasks.length >= StudyNestAnonymousLimits.maxTasks) {
@@ -24,6 +67,7 @@ extension StudyNestMutationsState on StudyNestState {
         reward: reward,
         completedAt: null,
         rewardCollected: false,
+        priority: priority,
       ),
       ..._tasks,
     ];
@@ -75,6 +119,7 @@ extension StudyNestMutationsState on StudyNestState {
     required String details,
     required DateTime dueAt,
     required int reward,
+    String? priority,
   }) async {
     final taskIndex = _tasks.indexWhere((task) => task.id == taskId);
     if (taskIndex == -1) {
@@ -85,6 +130,7 @@ extension StudyNestMutationsState on StudyNestState {
       details: details.trim(),
       dueAt: dueAt,
       reward: reward,
+      priority: priority,
     );
     await _commitChanges();
   }

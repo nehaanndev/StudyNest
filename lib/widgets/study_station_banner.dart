@@ -21,7 +21,6 @@ class StudyStationBanner extends StatelessWidget {
   final String imagePath;
   final Alignment imageAlignment;
 
-  // Builds an image-led feature banner for non-home tabs.
   @override
   Widget build(BuildContext context) {
     final theme = StudyNestScope.watch(context).selectedTheme;
@@ -34,6 +33,7 @@ class StudyStationBanner extends StatelessWidget {
           height: 152,
           child: Stack(
             children: [
+              // Room illustration
               Positioned.fill(
                 child: Image.asset(
                   imagePath,
@@ -41,6 +41,7 @@ class StudyStationBanner extends StatelessWidget {
                   alignment: imageAlignment,
                 ),
               ),
+              // Gradient overlay — stronger on dark themes
               Positioned.fill(
                 child: DecoratedBox(
                   decoration: BoxDecoration(
@@ -48,73 +49,85 @@ class StudyStationBanner extends StatelessWidget {
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
-                        Colors.black.withValues(alpha: 0.12),
-                        Colors.black.withValues(alpha: 0.50),
+                        Colors.black.withValues(alpha: 0.20),
+                        Colors.black.withValues(alpha: 0.65),
                       ],
                     ),
                   ),
                 ),
               ),
+              // Metric pill — top left
               Positioned(
                 left: 14,
                 top: 14,
                 child: Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 12,
-                    vertical: 8,
+                    vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: theme.surface.withValues(alpha: 0.92),
+                    color: theme.surface.withValues(alpha: 0.90),
                     borderRadius: BorderRadius.circular(999),
+                    border: Border.all(
+                      color: theme.accent.withValues(alpha: 0.35),
+                    ),
                   ),
                   child: Text(
                     metric,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w900,
+                      color: theme.text,
                     ),
                   ),
                 ),
               ),
+              // Title + detail panel — bottom
               Positioned(
                 left: 14,
                 right: 14,
                 bottom: 14,
                 child: Container(
-                  padding: const EdgeInsets.all(14),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 14, vertical: 12),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.84),
-                    borderRadius: BorderRadius.circular(16),
+                    color: theme.surface.withValues(alpha: 0.90),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: theme.accent.withValues(alpha: 0.25),
+                    ),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
+                  child: Row(
                     children: [
-                      Row(
-                        children: [
-                          Icon(icon, size: 16, color: const Color(0xFFE0A134)),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
+                      Icon(icon, size: 18, color: theme.accent),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
                               title,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 17,
+                              style: TextStyle(
+                                fontSize: 16,
                                 fontWeight: FontWeight.w900,
+                                color: theme.text,
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        detail,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          height: 1.25,
-                          color: Color(0xFF6E5E52),
+                            const SizedBox(height: 3),
+                            Text(
+                              detail,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 12,
+                                height: 1.25,
+                                color: theme.muted,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],

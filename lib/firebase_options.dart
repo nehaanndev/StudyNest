@@ -63,20 +63,22 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: _placeholder,
-    appId: _placeholder,
-    messagingSenderId: _placeholder,
-    projectId: _placeholder,
-    storageBucket: _placeholder,
+    apiKey: 'AIzaSyAMtm12L5fDS8trMx5BMC2dsRX9AhP-rKo',
+    appId: '1:464139196474:android:c464749e512686a4c9bd03',
+    messagingSenderId: '464139196474',
+    projectId: 'studynest-e477d',
+    databaseURL: 'https://studynest-e477d-default-rtdb.firebaseio.com',
+    storageBucket: 'studynest-e477d.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: _placeholder,
-    appId: _placeholder,
-    messagingSenderId: _placeholder,
-    projectId: _placeholder,
-    iosBundleId: 'com.studynest.app',
-    storageBucket: _placeholder,
+    apiKey: 'AIzaSyB9-EfMvF4crVgkYG7wNDmJll-U3iqaF1k',
+    appId: '1:464139196474:ios:9613b16aa90e4796c9bd03',
+    messagingSenderId: '464139196474',
+    projectId: 'studynest-e477d',
+    databaseURL: 'https://studynest-e477d-default-rtdb.firebaseio.com',
+    storageBucket: 'studynest-e477d.firebasestorage.app',
+    iosBundleId: 'com.example.studynest',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(

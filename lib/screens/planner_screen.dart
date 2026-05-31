@@ -67,8 +67,8 @@ class _PlannerScreenState extends State<PlannerScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           StudyStationBanner(
-            title: 'Planner',
-            detail: 'Tap a day to see or add study blocks.',
+            title: 'Calendar',
+            detail: 'Tap any day to view or schedule study blocks.',
             metric: '${state.events.length} total blocks',
             icon: Icons.calendar_month,
             imagePath: screenBannerAsset('planner', state.selectedTheme.id),
@@ -657,8 +657,10 @@ class _AgendaRow extends StatelessWidget {
                   children: [
                     Text(
                       event.title,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.w900, fontSize: 15),
+                      style: TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 15,
+                          color: theme.text),
                     ),
                     const SizedBox(height: 3),
                     Text(

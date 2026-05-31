@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "464139196474",
+    "firebase_url": "https://studynest-e477d-default-rtdb.firebaseio.com",
+    "project_id": "studynest-e477d",
+    "storage_bucket": "studynest-e477d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:464139196474:android:c464749e512686a4c9bd03",
+        "android_client_info": {
+          "package_name": "com.studynest.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAMtm12L5fDS8trMx5BMC2dsRX9AhP-rKo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

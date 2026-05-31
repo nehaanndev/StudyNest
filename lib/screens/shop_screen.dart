@@ -27,8 +27,8 @@ class ShopScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           StudyStationBanner(
-            title: 'Coin shop',
-            detail: 'Spend focus rewards on room styles and study spaces.',
+            title: 'Shop',
+            detail: 'Spend your earned coins on themes and room decor.',
             metric: '${state.coinBalance} coins',
             icon: Icons.storefront,
             imagePath: screenBannerAsset('shop', state.selectedTheme.id),
