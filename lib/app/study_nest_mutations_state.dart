@@ -6,7 +6,7 @@ extension StudyNestMutationsState on StudyNestState {
     _habits = [
       ..._habits,
       StudyHabit(
-        id: StudyNestState._newId('habit'),
+        id: _newId('habit'),
         name: name,
         emoji: emoji,
         streak: 0,
@@ -28,8 +28,9 @@ extension StudyNestMutationsState on StudyNestState {
         : [...habit.completions, dayStr];
     var streak = 0;
     var check = DateTime.now();
-    while (newCompletions
-        .any((c) => c.startsWith(check.toIso8601String().split('T').first))) {
+    while (newCompletions.any(
+      (c) => c.startsWith(check.toIso8601String().split('T').first),
+    )) {
       streak++;
       check = check.subtract(const Duration(days: 1));
     }
@@ -60,7 +61,7 @@ extension StudyNestMutationsState on StudyNestState {
     }
     _tasks = [
       StudyTask(
-        id: StudyNestState._newId('task'),
+        id: _newId('task'),
         title: title.trim(),
         details: details.trim(),
         dueAt: dueAt,
@@ -97,7 +98,7 @@ extension StudyNestMutationsState on StudyNestState {
       if (awardedCoins > 0) {
         _coinLedger = [
           CoinTransaction(
-            id: StudyNestState._newId('coins'),
+            id: _newId('coins'),
             label: 'Completed: ${task.title}',
             amount: awardedCoins,
             createdAt: now,
@@ -161,7 +162,7 @@ extension StudyNestMutationsState on StudyNestState {
     final now = DateTime.now();
     _notes = [
       StudyNote(
-        id: StudyNestState._newId('note'),
+        id: _newId('note'),
         title: title.trim(),
         body: body.trim(),
         colorName: colorName,
@@ -227,7 +228,7 @@ extension StudyNestMutationsState on StudyNestState {
     _events = [
       ..._events,
       PlannerEvent(
-        id: StudyNestState._newId('event'),
+        id: _newId('event'),
         title: title.trim(),
         startsAt: startsAt,
         endsAt: endsAt,
@@ -279,7 +280,7 @@ extension StudyNestMutationsState on StudyNestState {
 
   // Updates the current study session goal and resets today's completion.
   Future<StudyNestActionResult> setSessionGoal(String title, int reward) async {
-    final defaultGoal = StudyNestState._defaultSessionGoal();
+    final defaultGoal = _defaultSessionGoal();
     final alreadyCustomized =
         _sessionGoal.title != defaultGoal.title ||
         _sessionGoal.reward != defaultGoal.reward;
@@ -308,7 +309,7 @@ extension StudyNestMutationsState on StudyNestState {
     _sessionGoal = _sessionGoal.copyWith(completedAt: now, updatedAt: now);
     _coinLedger = [
       CoinTransaction(
-        id: StudyNestState._newId('coins'),
+        id: _newId('coins'),
         label: 'Study goal: ${_sessionGoal.title}',
         amount: _sessionGoal.reward,
         createdAt: now,
@@ -330,7 +331,7 @@ extension StudyNestMutationsState on StudyNestState {
     _selectedThemeId = item.themeId;
     _coinLedger = [
       CoinTransaction(
-        id: StudyNestState._newId('coins'),
+        id: _newId('coins'),
         label: 'Bought: ${item.title}',
         amount: -item.cost,
         createdAt: now,

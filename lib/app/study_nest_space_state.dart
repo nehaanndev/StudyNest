@@ -63,10 +63,7 @@ extension StudyNestSpaceState on StudyNestState {
       return StudyNestActionResult.blocked('Purchase skipped.');
     }
     final purchasedDecorCount = _ownedDecorItemIds
-        .where(
-          (itemId) =>
-              !StudyNestState._defaultOwnedDecorItemIds().contains(itemId),
-        )
+        .where((itemId) => !_defaultOwnedDecorItemIds().contains(itemId))
         .length;
     if (StudyNestAnonymousLimits.shouldEnforce(_session) &&
         purchasedDecorCount >= StudyNestAnonymousLimits.maxDecorPurchases) {
@@ -81,7 +78,7 @@ extension StudyNestSpaceState on StudyNestState {
     _appliedDecorItemIds = {..._appliedDecorItemIds, item.id}.toList();
     _coinLedger = [
       CoinTransaction(
-        id: StudyNestState._newId('coins'),
+        id: _newId('coins'),
         label: 'Decor: ${item.title}',
         amount: -item.cost,
         createdAt: now,

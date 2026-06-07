@@ -9,6 +9,8 @@ import 'package:google_sign_in/google_sign_in.dart';
 import '../firebase_options.dart';
 import 'study_nest_session.dart';
 
+part 'study_nest_auth_errors.dart';
+
 class StudyNestFirebaseSync {
   const StudyNestFirebaseSync._();
 
@@ -56,9 +58,7 @@ abstract class StudyNestSyncService {
   );
 
   // Signs out the current user and returns to anonymous state.
-  Future<StudyNestSyncResolution> signOut(
-    Map<String, dynamic> localSnapshot,
-  );
+  Future<StudyNestSyncResolution> signOut(Map<String, dynamic> localSnapshot);
 
   // Sends a password reset email to the given address.
   Future<String?> sendPasswordResetEmail(String email);
@@ -138,13 +138,14 @@ class FirebaseStudyNestSyncService implements StudyNestSyncService {
     FirebaseFirestore? firestore,
     Connectivity? connectivity,
     GoogleSignIn? googleSignIn,
-  }) : _auth = auth ?? FirebaseAuth.instance,
+  }) : _authOverride = auth,
+       _firestoreOverride = firestore,
        _connectivity = connectivity ?? Connectivity(),
        _googleSignIn = googleSignIn ?? GoogleSignIn.instance,
-       _firestore = firestore ?? FirebaseFirestore.instance;
+       _firebaseInitialized = Firebase.apps.isNotEmpty;
 
-  final FirebaseAuth _auth;
-  final FirebaseFirestore _firestore;
+  final FirebaseAuth? _authOverride;
+  final FirebaseFirestore? _firestoreOverride;
   final Connectivity _connectivity;
   final GoogleSignIn _googleSignIn;
   final StreamController<void> _retryController = StreamController.broadcast();
@@ -155,6 +156,16 @@ class FirebaseStudyNestSyncService implements StudyNestSyncService {
 
   @override
   Stream<void> get retryEvents => _retryController.stream;
+
+  // Returns the FirebaseAuth instance after Firebase has been initialized.
+  FirebaseAuth get _auth {
+    return _authOverride ?? FirebaseAuth.instance;
+  }
+
+  // Returns the Firestore instance after Firebase has been initialized.
+  FirebaseFirestore get _firestore {
+    return _firestoreOverride ?? FirebaseFirestore.instance;
+  }
 
   // Boots Firebase, signs in anonymously, and resolves the first cloud snapshot.
   @override
@@ -189,22 +200,34 @@ class FirebaseStudyNestSyncService implements StudyNestSyncService {
     String password,
   ) async {
     final ready = await _ensureFirebaseReady();
-    if (!ready) return const DisabledStudyNestSyncService().initialize(localSnapshot);
+    if (!ready) {
+      return const DisabledStudyNestSyncService().initialize(localSnapshot);
+    }
     try {
       final currentUser = _auth.currentUser;
       if (currentUser != null && currentUser.isAnonymous) {
-        final credential = EmailAuthProvider.credential(email: email, password: password);
+        final credential = EmailAuthProvider.credential(
+          email: email,
+          password: password,
+        );
         try {
           await currentUser.linkWithCredential(credential);
         } on FirebaseAuthException catch (e) {
-          if (e.code == 'email-already-in-use' || e.code == 'credential-already-in-use') {
-            await _auth.signInWithEmailAndPassword(email: email, password: password);
+          if (e.code == 'email-already-in-use' ||
+              e.code == 'credential-already-in-use') {
+            await _auth.signInWithEmailAndPassword(
+              email: email,
+              password: password,
+            );
           } else {
             rethrow;
           }
         }
       } else {
-        await _auth.signInWithEmailAndPassword(email: email, password: password);
+        await _auth.signInWithEmailAndPassword(
+          email: email,
+          password: password,
+        );
       }
       return _resolveSnapshot(localSnapshot, preferRemoteOnConflict: true);
     } on FirebaseAuthException catch (e) {
@@ -226,11 +249,16 @@ class FirebaseStudyNestSyncService implements StudyNestSyncService {
     String password,
   ) async {
     final ready = await _ensureFirebaseReady();
-    if (!ready) return const DisabledStudyNestSyncService().initialize(localSnapshot);
+    if (!ready) {
+      return const DisabledStudyNestSyncService().initialize(localSnapshot);
+    }
     try {
       final currentUser = _auth.currentUser;
       if (currentUser != null && currentUser.isAnonymous) {
-        final credential = EmailAuthProvider.credential(email: email, password: password);
+        final credential = EmailAuthProvider.credential(
+          email: email,
+          password: password,
+        );
         try {
           await currentUser.linkWithCredential(credential);
         } on FirebaseAuthException catch (e) {
@@ -239,14 +267,18 @@ class FirebaseStudyNestSyncService implements StudyNestSyncService {
               session: _session(
                 authStatus: StudyNestAuthStatus.error,
                 syncStatus: StudyNestSyncStatus.error,
-                message: 'That email already has an account. Try signing in instead.',
+                message:
+                    'That email already has an account. Try signing in instead.',
               ),
             );
           }
           rethrow;
         }
       } else {
-        await _auth.createUserWithEmailAndPassword(email: email, password: password);
+        await _auth.createUserWithEmailAndPassword(
+          email: email,
+          password: password,
+        );
       }
       return _resolveSnapshot(localSnapshot, preferRemoteOnConflict: false);
     } on FirebaseAuthException catch (e) {
@@ -266,7 +298,9 @@ class FirebaseStudyNestSyncService implements StudyNestSyncService {
     Map<String, dynamic> localSnapshot,
   ) async {
     final ready = await _ensureFirebaseReady();
-    if (!ready) return const DisabledStudyNestSyncService().initialize(localSnapshot);
+    if (!ready) {
+      return const DisabledStudyNestSyncService().initialize(localSnapshot);
+    }
     await _auth.signOut();
     return _resolveSnapshot(localSnapshot, preferRemoteOnConflict: false);
   }
@@ -279,28 +313,6 @@ class FirebaseStudyNestSyncService implements StudyNestSyncService {
       return null;
     } on FirebaseAuthException catch (e) {
       return _friendlyAuthError(e);
-    }
-  }
-
-  // Converts Firebase auth error codes into readable user-facing messages.
-  String _friendlyAuthError(FirebaseAuthException e) {
-    switch (e.code) {
-      case 'invalid-email':
-        return 'That email address isn\'t valid.';
-      case 'user-not-found':
-      case 'wrong-password':
-      case 'invalid-credential':
-        return 'Email or password is incorrect.';
-      case 'weak-password':
-        return 'Password must be at least 6 characters.';
-      case 'email-already-in-use':
-        return 'That email already has an account.';
-      case 'too-many-requests':
-        return 'Too many attempts. Try again later.';
-      case 'network-request-failed':
-        return 'No internet connection.';
-      default:
-        return e.message ?? 'Authentication failed.';
     }
   }
 
@@ -338,11 +350,20 @@ class FirebaseStudyNestSyncService implements StudyNestSyncService {
       }
       final credential = GoogleAuthProvider.credential(idToken: idToken);
       if (currentUser.isAnonymous) {
-        await currentUser.linkWithCredential(credential);
+        try {
+          await currentUser.linkWithCredential(credential);
+        } on FirebaseAuthException catch (error) {
+          if (error.code == 'credential-already-in-use' ||
+              error.code == 'account-exists-with-different-credential') {
+            await _auth.signInWithCredential(credential);
+          } else {
+            rethrow;
+          }
+        }
       } else {
         await _auth.signInWithCredential(credential);
       }
-      return _resolveSnapshot(localSnapshot, preferRemoteOnConflict: true);
+      return _resolveSnapshot(localSnapshot, preferRemoteOnConflict: false);
     } on FirebaseAuthException catch (error) {
       return StudyNestSyncResolution(
         session: _session(

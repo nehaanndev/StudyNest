@@ -77,3 +77,47 @@ class AuthErrorBanner extends StatelessWidget {
     );
   }
 }
+
+class GoogleAuthButton extends StatelessWidget {
+  const GoogleAuthButton({
+    super.key,
+    required this.onPressed,
+    this.loading = false,
+  });
+
+  final VoidCallback? onPressed;
+  final bool loading;
+
+  // Builds the shared Google sign-in button used by auth entry screens.
+  @override
+  Widget build(BuildContext context) {
+    final theme = StudyNestScope.watch(context).selectedTheme;
+
+    return SizedBox(
+      width: double.infinity,
+      height: 52,
+      child: OutlinedButton.icon(
+        onPressed: loading ? null : onPressed,
+        icon: loading
+            ? SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.2,
+                  color: theme.primary,
+                ),
+              )
+            : Icon(Icons.g_mobiledata_rounded, color: theme.primary, size: 30),
+        label: Text(loading ? 'Connecting...' : 'Continue with Google'),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: theme.primary,
+          side: BorderSide(color: theme.primary.withValues(alpha: 0.35)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+          textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+        ),
+      ),
+    );
+  }
+}

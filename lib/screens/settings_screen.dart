@@ -1,7 +1,11 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../app/study_nest_scope.dart';
 import '../app/study_nest_session.dart';
+import '../app/study_nest_state.dart';
 import '../theme/study_theme.dart';
 import 'auth/welcome_screen.dart';
 
@@ -12,8 +16,8 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final state = StudyNestScope.watch(context);
     final theme = state.selectedTheme;
-    final isSignedIn = state.authStatus == StudyNestAuthStatus.ready &&
-        !state.isAnonymousUser;
+    final isSignedIn =
+        state.authStatus == StudyNestAuthStatus.ready && !state.isAnonymousUser;
 
     return Scaffold(
       body: DecoratedBox(
@@ -23,7 +27,10 @@ class SettingsScreen extends StatelessWidget {
             end: Alignment.bottomCenter,
             colors: [
               theme.background,
-              Color.alphaBlend(theme.primary.withValues(alpha: 0.06), theme.background),
+              Color.alphaBlend(
+                theme.primary.withValues(alpha: 0.06),
+                theme.background,
+              ),
             ],
           ),
         ),
@@ -38,14 +45,15 @@ class SettingsScreen extends StatelessWidget {
                     IconButton(
                       icon: const Icon(Icons.arrow_back),
                       onPressed: () => Navigator.of(context).pop(),
-                      style: IconButton.styleFrom(foregroundColor: theme.primary),
+                      style: IconButton.styleFrom(
+                        foregroundColor: theme.primary,
+                      ),
                     ),
                     const SizedBox(width: 4),
                     Text(
                       'Settings',
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w900,
-                      ),
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(fontWeight: FontWeight.w900),
                     ),
                   ],
                 ),
@@ -89,6 +97,12 @@ class SettingsScreen extends StatelessWidget {
 
                     const SizedBox(height: 8),
                     _SectionHeader(title: 'Data'),
+                    _SettingsTile(
+                      icon: Icons.copy_all_rounded,
+                      title: 'Copy Firestore Dump',
+                      subtitle: 'Copy local phone data as restore JSON',
+                      onTap: () => _copyFirestoreDump(context),
+                    ),
                     _SettingsTile(
                       icon: Icons.delete_outline,
                       title: 'Reset Progress',
@@ -134,12 +148,32 @@ class SettingsScreen extends StatelessWidget {
     }
   }
 
+  // Copies the current local snapshot as JSON for manual Firestore restore.
+  Future<void> _copyFirestoreDump(BuildContext context) async {
+    final dump = const JsonEncoder.withIndent(
+      '  ',
+    ).convert(StudyNestScope.read(context).createFirestoreRestoreDump());
+    await Clipboard.setData(ClipboardData(text: dump));
+    if (!context.mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Firestore dump copied. Paste it into users/{uid}/studyNest/state.',
+        ),
+      ),
+    );
+  }
+
   Future<void> _confirmSignOut(BuildContext context) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Sign out?'),
-        content: const Text('Your data is saved. You can sign back in anytime.'),
+        content: const Text(
+          'Your data is saved. You can sign back in anytime.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
@@ -246,7 +280,10 @@ class _SettingsTile extends StatelessWidget {
           style: TextStyle(fontWeight: FontWeight.w600, color: color),
         ),
         subtitle: subtitle != null
-            ? Text(subtitle!, style: TextStyle(color: theme.muted, fontSize: 12))
+            ? Text(
+                subtitle!,
+                style: TextStyle(color: theme.muted, fontSize: 12),
+              )
             : null,
         trailing: onTap != null
             ? Icon(Icons.chevron_right, color: theme.muted, size: 20)
@@ -370,7 +407,9 @@ class _ThemeChip extends StatelessWidget {
           color: theme.primary.withValues(alpha: selected ? 0.2 : 0.08),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: selected ? theme.primary : theme.primary.withValues(alpha: 0.2),
+            color: selected
+                ? theme.primary
+                : theme.primary.withValues(alpha: 0.2),
             width: selected ? 1.5 : 1,
           ),
         ),
