@@ -63,13 +63,13 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     final theme = StudyNestScope.watch(context).selectedTheme;
 
+    // 5 primary screens in the IndexedStack — More opens a sheet, not a screen.
     final screens = [
       HomeScreen(onNavigate: _navigate),  // 0
       const TasksScreen(),                // 1
       const PomodoroScreen(),             // 2
       const PlannerScreen(),              // 3
       const NotesScreen(),                // 4
-      const ShopScreen(),                 // 5
     ];
 
     return Scaffold(
@@ -93,8 +93,16 @@ class _MainScreenState extends State<MainScreen> {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(18),
                   child: NavigationBar(
+                    // Index 5 is the virtual "More" slot — tapping it shows a
+                    // bottom sheet instead of switching the IndexedStack.
                     selectedIndex: _index,
-                    onDestinationSelected: (i) => setState(() => _index = i),
+                    onDestinationSelected: (i) {
+                      if (i == 5) {
+                        _showMoreSheet(context);
+                      } else {
+                        setState(() => _index = i);
+                      }
+                    },
                     labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
                     destinations: const [
                       NavigationDestination(
@@ -123,9 +131,9 @@ class _MainScreenState extends State<MainScreen> {
                         label: 'Notes',
                       ),
                       NavigationDestination(
-                        icon: Icon(Icons.storefront_outlined),
-                        selectedIcon: Icon(Icons.storefront),
-                        label: 'Shop',
+                        icon: Icon(Icons.grid_view_outlined),
+                        selectedIcon: Icon(Icons.grid_view),
+                        label: 'More',
                       ),
                     ],
                   ),
@@ -135,33 +143,11 @@ class _MainScreenState extends State<MainScreen> {
           ),
         ),
       ),
-      // Floating "More" button gives access to Habits and Profile.
-      floatingActionButton: _MoreFab(parentContext: context),
-      floatingActionButtonLocation: FloatingActionButtonLocation.miniEndFloat,
-    );
-  }
-}
-
-// Small FAB that opens a sheet for Habits and Profile.
-class _MoreFab extends StatelessWidget {
-  const _MoreFab({required this.parentContext});
-  final BuildContext parentContext;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = StudyNestScope.watch(context).selectedTheme;
-    return FloatingActionButton.small(
-      heroTag: 'moreFab',
-      backgroundColor: theme.surface,
-      foregroundColor: theme.primary,
-      tooltip: 'More',
-      onPressed: () => _showMore(context),
-      child: const Icon(Icons.more_horiz),
     );
   }
 
-  // Presents a compact sheet for Habits, Profile, and any overflow screens.
-  void _showMore(BuildContext context) {
+  // Opens the More bottom sheet with Shop, Habits, and Profile.
+  void _showMoreSheet(BuildContext context) {
     final theme = StudyNestScope.read(context).selectedTheme;
     showModalBottomSheet(
       context: context,
@@ -177,8 +163,7 @@ class _MoreFab extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 36,
-              height: 4,
+              width: 36, height: 4,
               decoration: BoxDecoration(
                 color: theme.muted.withValues(alpha: 0.4),
                 borderRadius: BorderRadius.circular(2),
@@ -187,6 +172,16 @@ class _MoreFab extends StatelessWidget {
             const SizedBox(height: 20),
             Row(
               children: [
+                _MoreTile(
+                  emoji: '🛍️',
+                  label: 'Shop',
+                  onTap: () {
+                    Navigator.of(ctx).pop();
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const ShopScreen()),
+                    );
+                  },
+                ),
                 _MoreTile(
                   emoji: '🔥',
                   label: 'Habits',
