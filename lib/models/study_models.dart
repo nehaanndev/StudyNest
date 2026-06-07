@@ -85,6 +85,8 @@ class StudyNote {
     required this.updatedAt,
     this.folder = '',
     this.createdAt,
+    this.noteType = 'note',
+    this.contentJson,
   });
 
   final String id;
@@ -95,6 +97,10 @@ class StudyNote {
   final DateTime updatedAt;
   final String folder;
   final DateTime? createdAt;
+  // Type discriminator: 'note' | 'studyGuide' | 'flashcards' | 'quiz' | 'formula'
+  final String noteType;
+  // JSON-encoded structured content for non-plain-text types.
+  final String? contentJson;
 
   // Converts this note into JSON-safe values for local persistence.
   Map<String, dynamic> toJson() {
@@ -107,6 +113,8 @@ class StudyNote {
       'folder': folder,
       'createdAt': (createdAt ?? updatedAt).toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
+      'noteType': noteType,
+      if (contentJson != null) 'contentJson': contentJson,
     };
   }
 
@@ -125,6 +133,8 @@ class StudyNote {
       createdAt: json['createdAt'] == null
           ? null
           : DateTime.tryParse(json['createdAt'] as String),
+      noteType: json['noteType'] as String? ?? 'note',
+      contentJson: json['contentJson'] as String?,
     );
   }
 
@@ -136,6 +146,9 @@ class StudyNote {
     List<String>? tags,
     String? folder,
     DateTime? updatedAt,
+    String? noteType,
+    String? contentJson,
+    bool clearContentJson = false,
   }) {
     return StudyNote(
       id: id,
@@ -146,6 +159,8 @@ class StudyNote {
       folder: folder ?? this.folder,
       updatedAt: updatedAt ?? this.updatedAt,
       createdAt: createdAt,
+      noteType: noteType ?? this.noteType,
+      contentJson: clearContentJson ? null : contentJson ?? this.contentJson,
     );
   }
 }

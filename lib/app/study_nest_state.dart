@@ -271,6 +271,8 @@ class StudyNestState extends ChangeNotifier {
     required String colorName,
     List<String> tags = const [],
     String folder = '',
+    String noteType = 'note',
+    String? contentJson,
   }) {
     return StudyNestMutationsState(this).addNote(
       title: title,
@@ -278,6 +280,8 @@ class StudyNestState extends ChangeNotifier {
       colorName: colorName,
       tags: tags,
       folder: folder,
+      noteType: noteType,
+      contentJson: contentJson,
     );
   }
 
@@ -289,6 +293,7 @@ class StudyNestState extends ChangeNotifier {
     required String colorName,
     required List<String> tags,
     String? folder,
+    String? contentJson,
   }) {
     return StudyNestMutationsState(this).updateNote(
       noteId: noteId,
@@ -297,6 +302,7 @@ class StudyNestState extends ChangeNotifier {
       colorName: colorName,
       tags: tags,
       folder: folder,
+      contentJson: contentJson,
     );
   }
 
