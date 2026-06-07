@@ -83,6 +83,8 @@ class StudyNote {
     required this.colorName,
     required this.tags,
     required this.updatedAt,
+    this.folder = '',
+    this.createdAt,
   });
 
   final String id;
@@ -91,6 +93,8 @@ class StudyNote {
   final String colorName;
   final List<String> tags;
   final DateTime updatedAt;
+  final String folder;
+  final DateTime? createdAt;
 
   // Converts this note into JSON-safe values for local persistence.
   Map<String, dynamic> toJson() {
@@ -100,6 +104,8 @@ class StudyNote {
       'body': body,
       'colorName': colorName,
       'tags': tags,
+      'folder': folder,
+      'createdAt': (createdAt ?? updatedAt).toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
     };
   }
@@ -114,7 +120,11 @@ class StudyNote {
       tags: (json['tags'] as List<dynamic>? ?? const [])
           .map((tag) => tag as String)
           .toList(),
+      folder: json['folder'] as String? ?? '',
       updatedAt: DateTime.parse(json['updatedAt'] as String),
+      createdAt: json['createdAt'] == null
+          ? null
+          : DateTime.tryParse(json['createdAt'] as String),
     );
   }
 
@@ -124,6 +134,7 @@ class StudyNote {
     String? body,
     String? colorName,
     List<String>? tags,
+    String? folder,
     DateTime? updatedAt,
   }) {
     return StudyNote(
@@ -132,7 +143,9 @@ class StudyNote {
       body: body ?? this.body,
       colorName: colorName ?? this.colorName,
       tags: tags ?? this.tags,
+      folder: folder ?? this.folder,
       updatedAt: updatedAt ?? this.updatedAt,
+      createdAt: createdAt,
     );
   }
 }

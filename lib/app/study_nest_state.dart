@@ -270,10 +270,15 @@ class StudyNestState extends ChangeNotifier {
     required String body,
     required String colorName,
     List<String> tags = const [],
+    String folder = '',
   }) {
-    return StudyNestMutationsState(
-      this,
-    ).addNote(title: title, body: body, colorName: colorName, tags: tags);
+    return StudyNestMutationsState(this).addNote(
+      title: title,
+      body: body,
+      colorName: colorName,
+      tags: tags,
+      folder: folder,
+    );
   }
 
   // Updates an existing note while refreshing its modified timestamp.
@@ -283,6 +288,7 @@ class StudyNestState extends ChangeNotifier {
     required String body,
     required String colorName,
     required List<String> tags,
+    String? folder,
   }) {
     return StudyNestMutationsState(this).updateNote(
       noteId: noteId,
@@ -290,6 +296,7 @@ class StudyNestState extends ChangeNotifier {
       body: body,
       colorName: colorName,
       tags: tags,
+      folder: folder,
     );
   }
 

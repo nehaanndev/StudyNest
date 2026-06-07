@@ -54,7 +54,35 @@ class StudyVisualTheme {
       ),
       scaffoldBackgroundColor: background,
       fontFamily: 'Arial',
-      textTheme: baseTheme.textTheme.apply(bodyColor: text, displayColor: text),
+      // Explicitly remove decorations so text never inherits underlines.
+      textTheme: baseTheme.textTheme
+          .apply(bodyColor: text, displayColor: text, decorationColor: text)
+          .copyWith(
+            bodyLarge: baseTheme.textTheme.bodyLarge?.copyWith(
+              color: text,
+              decoration: TextDecoration.none,
+            ),
+            bodyMedium: baseTheme.textTheme.bodyMedium?.copyWith(
+              color: text,
+              decoration: TextDecoration.none,
+            ),
+            bodySmall: baseTheme.textTheme.bodySmall?.copyWith(
+              color: text,
+              decoration: TextDecoration.none,
+            ),
+            labelLarge: baseTheme.textTheme.labelLarge?.copyWith(
+              color: text,
+              decoration: TextDecoration.none,
+            ),
+            labelMedium: baseTheme.textTheme.labelMedium?.copyWith(
+              color: text,
+              decoration: TextDecoration.none,
+            ),
+            labelSmall: baseTheme.textTheme.labelSmall?.copyWith(
+              color: text,
+              decoration: TextDecoration.none,
+            ),
+          ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: surface.withValues(alpha: 0.85),
         indicatorColor: accent.withValues(alpha: 0.20),

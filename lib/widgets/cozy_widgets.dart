@@ -19,74 +19,81 @@ class CozyPage extends StatelessWidget {
   final Widget? action;
 
   // Builds a full page with a dark gradient background and shared header.
+  // Wraps in Scaffold to guarantee a Material ancestor for chips and dialogs
+  // even when this widget is pushed as a standalone route.
   @override
   Widget build(BuildContext context) {
     final theme = StudyNestScope.watch(context).selectedTheme;
 
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            theme.background,
-            Color.alphaBlend(theme.primary.withValues(alpha: 0.08), theme.background),
-            theme.background,
-          ],
+    return Scaffold(
+      backgroundColor: theme.background,
+      body: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              theme.background,
+              Color.alphaBlend(theme.primary.withValues(alpha: 0.08), theme.background),
+              theme.background,
+            ],
+          ),
         ),
-      ),
-      child: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final pageWidth = constraints.maxWidth > 470
-                ? 430.0
-                : double.infinity;
+        child: SafeArea(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final pageWidth = constraints.maxWidth > 470
+                  ? 430.0
+                  : double.infinity;
 
-            return Align(
-              alignment: Alignment.topCenter,
-              child: SizedBox(
-                width: pageWidth,
-                child: ListView(
-                  padding: const EdgeInsets.fromLTRB(18, 20, 18, 28),
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                title,
-                                style: Theme.of(context).textTheme.headlineSmall
-                                    ?.copyWith(
-                                      fontWeight: FontWeight.w900,
-                                      height: 1,
-                                    ),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                subtitle,
-                                style: TextStyle(
-                                  color: theme.muted,
-                                  height: 1.3,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
+              return Align(
+                alignment: Alignment.topCenter,
+                child: SizedBox(
+                  width: pageWidth,
+                  child: ListView(
+                    padding: const EdgeInsets.fromLTRB(18, 20, 18, 28),
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  title,
+                                  style: Theme.of(context).textTheme.headlineSmall
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.w900,
+                                        height: 1,
+                                        decoration: TextDecoration.none,
+                                      ),
                                 ),
-                              ),
-                            ],
+                                const SizedBox(height: 6),
+                                Text(
+                                  subtitle,
+                                  style: TextStyle(
+                                    color: theme.muted,
+                                    height: 1.3,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                    decoration: TextDecoration.none,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                        ?action,
-                      ],
-                    ),
-                    const SizedBox(height: 18),
-                    child,
-                  ],
+                          ?action,
+                        ],
+                      ),
+                      const SizedBox(height: 18),
+                      child,
+                    ],
+                  ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
       ),
     );
