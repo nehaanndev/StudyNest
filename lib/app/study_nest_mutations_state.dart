@@ -148,6 +148,8 @@ extension StudyNestMutationsState on StudyNestState {
     required String colorName,
     List<String> tags = const [],
     String folder = '',
+    String noteType = 'note',
+    String? contentJson,
   }) async {
     if (StudyNestAnonymousLimits.shouldEnforce(_session) &&
         _notes.length >= StudyNestAnonymousLimits.maxNotes) {
@@ -165,6 +167,8 @@ extension StudyNestMutationsState on StudyNestState {
         colorName: colorName,
         tags: _normalizedTags(tags),
         folder: folder,
+        noteType: noteType,
+        contentJson: contentJson,
         updatedAt: now,
         createdAt: now,
       ),
@@ -174,7 +178,7 @@ extension StudyNestMutationsState on StudyNestState {
     return StudyNestActionResult.success('Note saved.');
   }
 
-  // Updates note content, color, tags, folder, and modified timestamp.
+  // Updates note content, color, tags, folder, type, and modified timestamp.
   Future<void> updateNote({
     required String noteId,
     required String title,
@@ -182,6 +186,7 @@ extension StudyNestMutationsState on StudyNestState {
     required String colorName,
     required List<String> tags,
     String? folder,
+    String? contentJson,
   }) async {
     final noteIndex = _notes.indexWhere((note) => note.id == noteId);
     if (noteIndex == -1) {
@@ -193,6 +198,7 @@ extension StudyNestMutationsState on StudyNestState {
       colorName: colorName,
       tags: _normalizedTags(tags),
       folder: folder,
+      contentJson: contentJson,
       updatedAt: DateTime.now(),
     );
     await _commitChanges();

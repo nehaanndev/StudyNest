@@ -44,6 +44,8 @@ class StudyNestApp extends StatelessWidget {
   }
 }
 
+// Tab indices for the 6-item bottom nav bar.
+// 0=Home  1=Tasks  2=Focus  3=Calendar  4=Notes  5=Shop
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
 
@@ -52,21 +54,22 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  // Primary tabs: Home(0), Tasks(1), Focus(2), Planner(3), Profile(4)
   int _index = 0;
 
+  // Allows child screens (e.g. HomeScreen) to programmatically switch tabs.
   void _navigate(int index) => setState(() => _index = index);
 
   @override
   Widget build(BuildContext context) {
     final theme = StudyNestScope.watch(context).selectedTheme;
 
+    // 5 primary screens in the IndexedStack — More opens a sheet, not a screen.
     final screens = [
-      HomeScreen(onNavigate: _navigate),
-      const TasksScreen(),
-      const PomodoroScreen(),
-      const PlannerScreen(),
-      const ProfileScreen(),
+      HomeScreen(onNavigate: _navigate),  // 0
+      const TasksScreen(),                // 1
+      const PomodoroScreen(),             // 2
+      const PlannerScreen(),              // 3
+      const NotesScreen(),                // 4
     ];
 
     return Scaffold(
@@ -84,21 +87,23 @@ class _MainScreenState extends State<MainScreen> {
           child: Center(
             heightFactor: 1,
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
+              constraints: const BoxConstraints(maxWidth: 480),
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(22, 0, 22, 12),
+                padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(18),
                   child: NavigationBar(
+                    // Index 5 is the virtual "More" slot — tapping it shows a
+                    // bottom sheet instead of switching the IndexedStack.
                     selectedIndex: _index,
-                    onDestinationSelected: (index) {
-                      if (index == 4) {
-                        // "More" button — show bottom sheet
+                    onDestinationSelected: (i) {
+                      if (i == 5) {
                         _showMoreSheet(context);
                       } else {
-                        setState(() => _index = index);
+                        setState(() => _index = i);
                       }
                     },
+                    labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
                     destinations: const [
                       NavigationDestination(
                         icon: Icon(Icons.home_outlined),
@@ -118,7 +123,12 @@ class _MainScreenState extends State<MainScreen> {
                       NavigationDestination(
                         icon: Icon(Icons.calendar_month_outlined),
                         selectedIcon: Icon(Icons.calendar_month),
-                        label: 'Planner',
+                        label: 'Calendar',
+                      ),
+                      NavigationDestination(
+                        icon: Icon(Icons.note_alt_outlined),
+                        selectedIcon: Icon(Icons.note_alt),
+                        label: 'Notes',
                       ),
                       NavigationDestination(
                         icon: Icon(Icons.grid_view_outlined),
@@ -136,92 +146,72 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
+  // Opens the More bottom sheet with Shop, Habits, and Profile.
   void _showMoreSheet(BuildContext context) {
     final theme = StudyNestScope.read(context).selectedTheme;
-
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (ctx) {
-        return Container(
-          decoration: BoxDecoration(
-            color: theme.surface,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-            border: Border.all(color: theme.primary.withValues(alpha: 0.15)),
-          ),
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: theme.muted.withValues(alpha: 0.4),
-                  borderRadius: BorderRadius.circular(2),
+      builder: (ctx) => Container(
+        decoration: BoxDecoration(
+          color: theme.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          border: Border.all(color: theme.primary.withValues(alpha: 0.15)),
+        ),
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 36, height: 4,
+              decoration: BoxDecoration(
+                color: theme.muted.withValues(alpha: 0.4),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                _MoreTile(
+                  emoji: '🛍️',
+                  label: 'Shop',
+                  onTap: () {
+                    Navigator.of(ctx).pop();
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const ShopScreen()),
+                    );
+                  },
                 ),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                'More',
-                style: TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 18,
-                  color: theme.text,
+                _MoreTile(
+                  emoji: '🔥',
+                  label: 'Habits',
+                  onTap: () {
+                    Navigator.of(ctx).pop();
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const HabitsScreen()),
+                    );
+                  },
                 ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  _MoreTile(
-                    emoji: '🔥',
-                    label: 'Habits',
-                    onTap: () {
-                      Navigator.of(ctx).pop();
-                      Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => const HabitsScreen()),
-                      );
-                    },
-                  ),
-                  _MoreTile(
-                    emoji: '📝',
-                    label: 'Notes',
-                    onTap: () {
-                      Navigator.of(ctx).pop();
-                      Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => const NotesScreen()),
-                      );
-                    },
-                  ),
-                  _MoreTile(
-                    emoji: '🛍️',
-                    label: 'Shop',
-                    onTap: () {
-                      Navigator.of(ctx).pop();
-                      Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => const ShopScreen()),
-                      );
-                    },
-                  ),
-                  _MoreTile(
-                    emoji: '👤',
-                    label: 'Profile',
-                    onTap: () {
-                      Navigator.of(ctx).pop();
-                      setState(() => _index = 4);
-                    },
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-            ],
-          ),
-        );
-      },
+                _MoreTile(
+                  emoji: '👤',
+                  label: 'Profile',
+                  onTap: () {
+                    Navigator.of(ctx).pop();
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const ProfileScreen()),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
 
+// Tile used inside the More bottom sheet.
 class _MoreTile extends StatelessWidget {
   const _MoreTile({required this.emoji, required this.label, required this.onTap});
 
@@ -232,29 +222,24 @@ class _MoreTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = StudyNestScope.watch(context).selectedTheme;
-
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
         child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 5),
-          padding: const EdgeInsets.symmetric(vertical: 16),
+          margin: const EdgeInsets.symmetric(horizontal: 6),
+          padding: const EdgeInsets.symmetric(vertical: 18),
           decoration: BoxDecoration(
             color: theme.primary.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(color: theme.primary.withValues(alpha: 0.15)),
           ),
           child: Column(
             children: [
-              Text(emoji, style: const TextStyle(fontSize: 28)),
+              Text(emoji, style: const TextStyle(fontSize: 30)),
               const SizedBox(height: 6),
               Text(
                 label,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: theme.text,
-                ),
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: theme.text),
               ),
             ],
           ),

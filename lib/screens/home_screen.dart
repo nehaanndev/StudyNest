@@ -134,12 +134,12 @@ class HomeScreen extends StatelessWidget {
               ),
               _QuickNavTile(
                 icon: Icons.calendar_month,
-                label: 'Planner',
+                label: 'Calendar',
                 onTap: () => onNavigate?.call(3),
               ),
               _QuickNavTile(
-                icon: Icons.grid_view,
-                label: 'More',
+                icon: Icons.note_alt,
+                label: 'Notes',
                 onTap: () => onNavigate?.call(4),
               ),
             ],
