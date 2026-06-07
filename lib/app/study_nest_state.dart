@@ -355,6 +355,53 @@ class StudyNestState extends ChangeNotifier {
     return StudyNestMutationsState(this).applyTheme(themeId);
   }
 
+  // Signs in with email and password, linking anonymous data into the account.
+  Future<StudyNestActionResult> signInWithEmail(String email, String password) async {
+    final resolution = await _syncService.signInWithEmail(_toSnapshot(), email, password);
+    await _applySyncResolution(resolution);
+    if (resolution.session.authStatus == StudyNestAuthStatus.error) {
+      return StudyNestActionResult.blocked(resolution.session.message ?? 'Sign-in failed.');
+    }
+    return StudyNestActionResult.success('Signed in successfully.');
+  }
+
+  // Creates a new account with email and password.
+  Future<StudyNestActionResult> signUpWithEmail(String email, String password) async {
+    final resolution = await _syncService.signUpWithEmail(_toSnapshot(), email, password);
+    await _applySyncResolution(resolution);
+    if (resolution.session.authStatus == StudyNestAuthStatus.error) {
+      return StudyNestActionResult.blocked(resolution.session.message ?? 'Sign-up failed.');
+    }
+    return StudyNestActionResult.success('Account created successfully.');
+  }
+
+  // Signs out the current user and falls back to anonymous state.
+  Future<StudyNestActionResult> signOut() async {
+    final resolution = await _syncService.signOut(_toSnapshot());
+    await _applySyncResolution(resolution);
+    return StudyNestActionResult.success('Signed out.');
+  }
+
+  // Sends a password reset email; returns an error message or null on success.
+  Future<String?> sendPasswordResetEmail(String email) {
+    return _syncService.sendPasswordResetEmail(email);
+  }
+
+  // Returns the signed-in user's email when available.
+  String? get userEmail => _session.userEmail;
+
+  // Returns the signed-in user's display name when available.
+  String? get userDisplayName => _session.userDisplayName;
+
+  // Returns whether the Firebase identity is still anonymous.
+  bool get isAnonymousUser => _session.isAnonymous;
+
+  // Returns the current cloud-auth status.
+  StudyNestAuthStatus get authStatus => _session.authStatus;
+
+  // Returns the current cloud-sync status.
+  StudyNestSyncStatus get syncStatus => _session.syncStatus;
+
   // Saves the current state to local device storage when persistence is active.
   Future<void> _save() async {
     _updatedAt = DateTime.now();

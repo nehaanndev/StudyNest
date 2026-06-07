@@ -310,6 +310,34 @@ class _FakeSyncService implements StudyNestSyncService {
     return StudyNestSyncResolution(session: session);
   }
 
+  @override
+  Future<StudyNestSyncResolution> signInWithEmail(
+    Map<String, dynamic> localSnapshot,
+    String email,
+    String password,
+  ) async {
+    return StudyNestSyncResolution(session: session);
+  }
+
+  @override
+  Future<StudyNestSyncResolution> signUpWithEmail(
+    Map<String, dynamic> localSnapshot,
+    String email,
+    String password,
+  ) async {
+    return StudyNestSyncResolution(session: session);
+  }
+
+  @override
+  Future<StudyNestSyncResolution> signOut(
+    Map<String, dynamic> localSnapshot,
+  ) async {
+    return StudyNestSyncResolution(session: session);
+  }
+
+  @override
+  Future<String?> sendPasswordResetEmail(String email) async => null;
+
   // Leaves nothing to clean up for the fake sync adapter.
   @override
   Future<void> dispose() async {}

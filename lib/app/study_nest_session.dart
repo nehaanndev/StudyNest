@@ -11,6 +11,8 @@ class StudyNestSessionState {
     required this.hasPendingSync,
     this.lastSyncedAt,
     this.userId,
+    this.userEmail,
+    this.userDisplayName,
     this.message,
   });
 
@@ -21,6 +23,8 @@ class StudyNestSessionState {
   final bool hasPendingSync;
   final DateTime? lastSyncedAt;
   final String? userId;
+  final String? userEmail;
+  final String? userDisplayName;
   final String? message;
 
   // Returns the default session used before Firebase is configured.
@@ -53,6 +57,10 @@ class StudyNestSessionState {
     bool clearLastSyncedAt = false,
     String? userId,
     bool clearUserId = false,
+    String? userEmail,
+    bool clearUserEmail = false,
+    String? userDisplayName,
+    bool clearUserDisplayName = false,
     String? message,
     bool clearMessage = false,
   }) {
@@ -62,10 +70,10 @@ class StudyNestSessionState {
       cloudEnabled: cloudEnabled ?? this.cloudEnabled,
       isAnonymous: isAnonymous ?? this.isAnonymous,
       hasPendingSync: hasPendingSync ?? this.hasPendingSync,
-      lastSyncedAt: clearLastSyncedAt
-          ? null
-          : lastSyncedAt ?? this.lastSyncedAt,
+      lastSyncedAt: clearLastSyncedAt ? null : lastSyncedAt ?? this.lastSyncedAt,
       userId: clearUserId ? null : userId ?? this.userId,
+      userEmail: clearUserEmail ? null : userEmail ?? this.userEmail,
+      userDisplayName: clearUserDisplayName ? null : userDisplayName ?? this.userDisplayName,
       message: clearMessage ? null : message ?? this.message,
     );
   }
@@ -80,6 +88,8 @@ class StudyNestSessionState {
         other.hasPendingSync == hasPendingSync &&
         other.lastSyncedAt == lastSyncedAt &&
         other.userId == userId &&
+        other.userEmail == userEmail &&
+        other.userDisplayName == userDisplayName &&
         other.message == message;
   }
 
@@ -93,6 +103,8 @@ class StudyNestSessionState {
       hasPendingSync,
       lastSyncedAt,
       userId,
+      userEmail,
+      userDisplayName,
       message,
     );
   }

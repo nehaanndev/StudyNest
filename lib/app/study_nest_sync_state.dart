@@ -1,21 +1,6 @@
 part of 'study_nest_state.dart';
 
 extension StudyNestSyncState on StudyNestState {
-  // Returns the current cloud-auth status for the app session.
-  StudyNestAuthStatus get authStatus {
-    return _session.authStatus;
-  }
-
-  // Returns the current cloud-sync status for the app session.
-  StudyNestSyncStatus get syncStatus {
-    return _session.syncStatus;
-  }
-
-  // Reports whether the current Firebase identity is still anonymous.
-  bool get isAnonymousUser {
-    return _session.isAnonymous;
-  }
-
   // Reports whether a local change is still waiting for a cloud upload.
   bool get hasPendingSync {
     return _session.hasPendingSync;
@@ -35,6 +20,9 @@ extension StudyNestSyncState on StudyNestState {
   bool get cloudSyncEnabled {
     return _session.cloudEnabled;
   }
+
+  // Returns the current user's Firebase UID when available.
+  String? get userId => _session.userId;
 
   // Starts Firebase auth and subscribes to retry signals for offline sync.
   Future<void> _initializeCloudSync() async {

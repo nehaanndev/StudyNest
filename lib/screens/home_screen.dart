@@ -128,18 +128,18 @@ class HomeScreen extends StatelessWidget {
                 onTap: () => onNavigate?.call(1),
               ),
               _QuickNavTile(
-                icon: Icons.timer,
-                label: 'Pomodoro',
+                icon: Icons.hourglass_bottom_rounded,
+                label: 'Focus',
                 onTap: () => onNavigate?.call(2),
-              ),
-              _QuickNavTile(
-                icon: Icons.local_fire_department,
-                label: 'Habits',
-                onTap: () => onNavigate?.call(3),
               ),
               _QuickNavTile(
                 icon: Icons.calendar_month,
                 label: 'Planner',
+                onTap: () => onNavigate?.call(3),
+              ),
+              _QuickNavTile(
+                icon: Icons.grid_view,
+                label: 'More',
                 onTap: () => onNavigate?.call(4),
               ),
             ],

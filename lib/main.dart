@@ -9,10 +9,10 @@ import 'screens/home_screen.dart';
 import 'screens/notes_screen.dart';
 import 'screens/planner_screen.dart';
 import 'screens/pomodoro_screen.dart';
+import 'screens/profile_screen.dart';
 import 'screens/shop_screen.dart';
 import 'screens/tasks_screen.dart';
 
-// Starts the StudyNest Flutter application with persisted local state.
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
@@ -52,6 +52,7 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
+  // Primary tabs: Home(0), Tasks(1), Focus(2), Planner(3), Profile(4)
   int _index = 0;
 
   void _navigate(int index) => setState(() => _index = index);
@@ -60,15 +61,12 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     final theme = StudyNestScope.watch(context).selectedTheme;
 
-    // Build screens lazily with navigation callback for home
     final screens = [
       HomeScreen(onNavigate: _navigate),
       const TasksScreen(),
       const PomodoroScreen(),
-      const HabitsScreen(),
       const PlannerScreen(),
-      const NotesScreen(),
-      const ShopScreen(),
+      const ProfileScreen(),
     ];
 
     return Scaffold(
@@ -93,8 +91,14 @@ class _MainScreenState extends State<MainScreen> {
                   borderRadius: BorderRadius.circular(18),
                   child: NavigationBar(
                     selectedIndex: _index,
-                    onDestinationSelected: (index) =>
-                        setState(() => _index = index),
+                    onDestinationSelected: (index) {
+                      if (index == 4) {
+                        // "More" button — show bottom sheet
+                        _showMoreSheet(context);
+                      } else {
+                        setState(() => _index = index);
+                      }
+                    },
                     destinations: const [
                       NavigationDestination(
                         icon: Icon(Icons.home_outlined),
@@ -112,30 +116,147 @@ class _MainScreenState extends State<MainScreen> {
                         label: 'Focus',
                       ),
                       NavigationDestination(
-                        icon: Icon(Icons.local_fire_department_outlined),
-                        selectedIcon: Icon(Icons.local_fire_department),
-                        label: 'Habits',
-                      ),
-                      NavigationDestination(
                         icon: Icon(Icons.calendar_month_outlined),
                         selectedIcon: Icon(Icons.calendar_month),
-                        label: 'Calendar',
+                        label: 'Planner',
                       ),
                       NavigationDestination(
-                        icon: Icon(Icons.note_alt_outlined),
-                        selectedIcon: Icon(Icons.note_alt),
-                        label: 'Notes',
-                      ),
-                      NavigationDestination(
-                        icon: Icon(Icons.storefront_outlined),
-                        selectedIcon: Icon(Icons.storefront),
-                        label: 'Shop',
+                        icon: Icon(Icons.grid_view_outlined),
+                        selectedIcon: Icon(Icons.grid_view),
+                        label: 'More',
                       ),
                     ],
                   ),
                 ),
               ),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showMoreSheet(BuildContext context) {
+    final theme = StudyNestScope.read(context).selectedTheme;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Container(
+          decoration: BoxDecoration(
+            color: theme.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            border: Border.all(color: theme.primary.withValues(alpha: 0.15)),
+          ),
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: theme.muted.withValues(alpha: 0.4),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'More',
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 18,
+                  color: theme.text,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  _MoreTile(
+                    emoji: '🔥',
+                    label: 'Habits',
+                    onTap: () {
+                      Navigator.of(ctx).pop();
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const HabitsScreen()),
+                      );
+                    },
+                  ),
+                  _MoreTile(
+                    emoji: '📝',
+                    label: 'Notes',
+                    onTap: () {
+                      Navigator.of(ctx).pop();
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const NotesScreen()),
+                      );
+                    },
+                  ),
+                  _MoreTile(
+                    emoji: '🛍️',
+                    label: 'Shop',
+                    onTap: () {
+                      Navigator.of(ctx).pop();
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const ShopScreen()),
+                      );
+                    },
+                  ),
+                  _MoreTile(
+                    emoji: '👤',
+                    label: 'Profile',
+                    onTap: () {
+                      Navigator.of(ctx).pop();
+                      setState(() => _index = 4);
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _MoreTile extends StatelessWidget {
+  const _MoreTile({required this.emoji, required this.label, required this.onTap});
+
+  final String emoji;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = StudyNestScope.watch(context).selectedTheme;
+
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 5),
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          decoration: BoxDecoration(
+            color: theme.primary.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: theme.primary.withValues(alpha: 0.15)),
+          ),
+          child: Column(
+            children: [
+              Text(emoji, style: const TextStyle(fontSize: 28)),
+              const SizedBox(height: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: theme.text,
+                ),
+              ),
+            ],
           ),
         ),
       ),
