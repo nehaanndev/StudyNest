@@ -13,7 +13,20 @@
           "package_name": "com.studynest.app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "464139196474-jajbjuaa5ucv0qbgo59fkikv60s5ot7h.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.studynest.app",
+            "certificate_hash": "b133fd6e375f8efe97c292cfd5cf303d13675050"
+          }
+        },
+        {
+          "client_id": "464139196474-pf5f2vqp4kkg6kkfqhc5greoigieg494.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAMtm12L5fDS8trMx5BMC2dsRX9AhP-rKo"
@@ -21,7 +34,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "464139196474-pf5f2vqp4kkg6kkfqhc5greoigieg494.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "464139196474-7e87d4l9dqq8m9oqq9uh35g9mp5tl3l4.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.studynest"
+              }
+            }
+          ]
         }
       }
     }
