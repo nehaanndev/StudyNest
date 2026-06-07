@@ -48,6 +48,11 @@ extension StudyNestSyncState on StudyNestState {
     );
   }
 
+  // Creates a Firestore-ready dump of the current local phone snapshot.
+  Map<String, dynamic> createFirestoreRestoreDump() {
+    return _toSnapshot();
+  }
+
   // Pushes the latest local snapshot into the configured sync service.
   Future<void> _syncLatestSnapshot() async {
     final resolution = await _syncService.sync(_toSnapshot());
@@ -73,36 +78,28 @@ extension StudyNestSyncState on StudyNestState {
 
   // Replaces all domain fields from a resolved snapshot without changing storage.
   void _applySnapshot(Map<String, dynamic> snapshot) {
-    final migrated = StudyNestState._migrateSnapshot(snapshot)!;
-    _tasks = StudyNestState._decodeList(migrated['tasks'], StudyTask.fromJson);
-    _notes = StudyNestState._decodeList(migrated['notes'], StudyNote.fromJson);
-    _events = StudyNestState._decodeList(
-      migrated['events'],
-      PlannerEvent.fromJson,
-    );
-    _coinLedger = StudyNestState._decodeList(
-      migrated['coinLedger'],
-      CoinTransaction.fromJson,
-    );
+    final migrated = _migrateSnapshot(snapshot)!;
+    _tasks = _decodeList(migrated['tasks'], StudyTask.fromJson);
+    _notes = _decodeList(migrated['notes'], StudyNote.fromJson);
+    _events = _decodeList(migrated['events'], PlannerEvent.fromJson);
+    _coinLedger = _decodeList(migrated['coinLedger'], CoinTransaction.fromJson);
     _ownedShopItemIds = (migrated['ownedShopItemIds'] as List<dynamic>? ?? [])
         .cast<String>();
     _ownedDecorItemIds =
         (migrated['ownedDecorItemIds'] as List<dynamic>? ??
-                StudyNestState._defaultOwnedDecorItemIds())
+                _defaultOwnedDecorItemIds())
             .cast<String>();
     _appliedDecorItemIds =
         (migrated['appliedDecorItemIds'] as List<dynamic>? ??
-                StudyNestState._defaultAppliedDecorItemIds())
+                _defaultAppliedDecorItemIds())
             .cast<String>();
-    _decorPositions = StudyNestState._decodeDecorPositions(
-      migrated['decorPositions'],
-    );
+    _decorPositions = _decodeDecorPositions(migrated['decorPositions']);
     _selectedThemeId = migrated['selectedThemeId'] as String? ?? 'cozyCafe';
-    _studySpaceStyleId = StudyNestState._normalizedStyleId(
+    _studySpaceStyleId = _normalizedStyleId(
       migrated['studySpaceStyleId'] as String?,
     );
     _sessionGoal = migrated['sessionGoal'] == null
-        ? StudyNestState._defaultSessionGoal()
+        ? _defaultSessionGoal()
         : StudySessionGoal.fromJson(
             migrated['sessionGoal'] as Map<String, dynamic>,
           );

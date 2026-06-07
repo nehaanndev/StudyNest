@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:studynest/app/study_nest_state.dart';
@@ -10,10 +11,10 @@ void main() {
     await tester.pumpWidget(StudyNestApp(appState: StudyNestState.preview()));
 
     expect(find.text('Current focus goal'), findsOneWidget);
-    expect(find.text('Tasks'), findsOneWidget);
+    expect(find.byIcon(Icons.checklist_outlined), findsOneWidget);
 
     // Selects the Tasks tab and waits for the UI to settle.
-    await tester.tap(find.text('Tasks'));
+    await tester.tap(find.byIcon(Icons.checklist_outlined));
     await tester.pumpAndSettle();
 
     expect(

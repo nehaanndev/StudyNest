@@ -1,13 +1,44 @@
 import 'package:flutter/material.dart';
 
+import '../../app/study_nest_state.dart';
 import '../../app/study_nest_scope.dart';
+import 'auth_widgets.dart';
 import 'login_screen.dart';
 import 'register_screen.dart';
 
-class WelcomeScreen extends StatelessWidget {
+class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key, this.onDismiss});
 
   final VoidCallback? onDismiss;
+
+  // Creates the mutable state used for Google sign-in progress.
+  @override
+  State<WelcomeScreen> createState() => _WelcomeScreenState();
+}
+
+class _WelcomeScreenState extends State<WelcomeScreen> {
+  bool _loadingGoogle = false;
+  String? _error;
+
+  // Links the current local phone data to Google and closes the auth flow.
+  Future<void> _continueWithGoogle() async {
+    setState(() {
+      _loadingGoogle = true;
+      _error = null;
+    });
+    final result = await StudyNestScope.read(
+      context,
+    ).linkAnonymousAccountWithGoogle();
+    if (!mounted) {
+      return;
+    }
+    setState(() => _loadingGoogle = false);
+    if (result.applied) {
+      widget.onDismiss?.call();
+    } else {
+      setState(() => _error = result.message);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +53,10 @@ class WelcomeScreen extends StatelessWidget {
             end: Alignment.bottomCenter,
             colors: [
               theme.background,
-              Color.alphaBlend(theme.primary.withValues(alpha: 0.12), theme.background),
+              Color.alphaBlend(
+                theme.primary.withValues(alpha: 0.12),
+                theme.background,
+              ),
             ],
           ),
         ),
@@ -43,23 +77,24 @@ class WelcomeScreen extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: theme.primary.withValues(alpha: 0.15),
                         shape: BoxShape.circle,
-                        border: Border.all(color: theme.primary.withValues(alpha: 0.3), width: 2),
+                        border: Border.all(
+                          color: theme.primary.withValues(alpha: 0.3),
+                          width: 2,
+                        ),
                       ),
                       child: Center(
-                        child: Text(
-                          '🪺',
-                          style: TextStyle(fontSize: 48),
-                        ),
+                        child: Text('🪺', style: TextStyle(fontSize: 48)),
                       ),
                     ),
                     const SizedBox(height: 28),
                     Text(
                       'StudyNest',
-                      style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                        fontWeight: FontWeight.w900,
-                        color: theme.primary,
-                        letterSpacing: -0.5,
-                      ),
+                      style: Theme.of(context).textTheme.headlineLarge
+                          ?.copyWith(
+                            fontWeight: FontWeight.w900,
+                            color: theme.primary,
+                            letterSpacing: -0.5,
+                          ),
                     ),
                     const SizedBox(height: 10),
                     Text(
@@ -73,6 +108,15 @@ class WelcomeScreen extends StatelessWidget {
                       ),
                     ),
                     SizedBox(height: screenHeight * 0.08),
+                    GoogleAuthButton(
+                      loading: _loadingGoogle,
+                      onPressed: _continueWithGoogle,
+                    ),
+                    if (_error != null) ...[
+                      const SizedBox(height: 12),
+                      AuthErrorBanner(message: _error!),
+                    ],
+                    const SizedBox(height: 14),
                     // Sign Up button
                     SizedBox(
                       width: double.infinity,
@@ -102,7 +146,9 @@ class WelcomeScreen extends StatelessWidget {
                         onPressed: () => _pushLogin(context),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: theme.primary,
-                          side: BorderSide(color: theme.primary.withValues(alpha: 0.5)),
+                          side: BorderSide(
+                            color: theme.primary.withValues(alpha: 0.5),
+                          ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),
                           ),
@@ -115,10 +161,12 @@ class WelcomeScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    if (onDismiss != null)
+                    if (widget.onDismiss != null)
                       TextButton(
-                        onPressed: onDismiss,
-                        style: TextButton.styleFrom(foregroundColor: theme.muted),
+                        onPressed: widget.onDismiss,
+                        style: TextButton.styleFrom(
+                          foregroundColor: theme.muted,
+                        ),
                         child: const Text('Continue without an account'),
                       ),
                     const SizedBox(height: 20),
@@ -134,13 +182,19 @@ class WelcomeScreen extends StatelessWidget {
 
   void _pushLogin(BuildContext context) {
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => LoginScreen(onSuccess: () => Navigator.of(context).pop())),
+      MaterialPageRoute(
+        builder: (_) =>
+            LoginScreen(onSuccess: () => Navigator.of(context).pop()),
+      ),
     );
   }
 
   void _pushRegister(BuildContext context) {
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => RegisterScreen(onSuccess: () => Navigator.of(context).pop())),
+      MaterialPageRoute(
+        builder: (_) =>
+            RegisterScreen(onSuccess: () => Navigator.of(context).pop()),
+      ),
     );
   }
 }
