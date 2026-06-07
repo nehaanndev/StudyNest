@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../app/study_nest_scope.dart';
 import 'auth_widgets.dart';
 import 'forgot_password_screen.dart';
+import 'google_sign_in_button.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -171,6 +172,21 @@ class _LoginScreenState extends State<LoginScreen> {
                               )
                             : const Text('Sign In'),
                       ),
+                    ),
+                    const SizedBox(height: 20),
+                    // Google divider
+                    Row(children: [
+                      Expanded(child: Divider(color: theme.muted.withValues(alpha: 0.3))),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Text('or', style: TextStyle(color: theme.muted, fontSize: 13)),
+                      ),
+                      Expanded(child: Divider(color: theme.muted.withValues(alpha: 0.3))),
+                    ]),
+                    const SizedBox(height: 16),
+                    GoogleSignInButton(
+                      onSuccess: () => widget.onSuccess?.call(),
+                      onError: (msg) => setState(() => _error = msg),
                     ),
                     const SizedBox(height: 24),
                     Row(

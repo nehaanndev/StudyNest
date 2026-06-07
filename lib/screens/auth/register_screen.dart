@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../app/study_nest_scope.dart';
 import 'auth_widgets.dart';
+import 'google_sign_in_button.dart';
 import 'login_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -176,6 +177,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               )
                             : const Text('Create Account'),
                       ),
+                    ),
+                    const SizedBox(height: 20),
+                    Row(children: [
+                      Expanded(child: Divider(color: theme.muted.withValues(alpha: 0.3))),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Text('or', style: TextStyle(color: theme.muted, fontSize: 13)),
+                      ),
+                      Expanded(child: Divider(color: theme.muted.withValues(alpha: 0.3))),
+                    ]),
+                    const SizedBox(height: 16),
+                    GoogleSignInButton(
+                      label: 'Sign up with Google',
+                      onSuccess: () => widget.onSuccess?.call(),
+                      onError: (msg) => setState(() => _error = msg),
                     ),
                     const SizedBox(height: 24),
                     Row(

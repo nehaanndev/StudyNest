@@ -400,6 +400,22 @@ class StudyNestState extends ChangeNotifier {
     return _syncService.sendPasswordResetEmail(email);
   }
 
+  // Signs in with Google, linking anonymous data into the Google account.
+  // Works whether the user is currently anonymous, signed-in via email, or
+  // already signed in with a different Google account.
+  Future<StudyNestActionResult> signInWithGoogle() async {
+    final resolution = await _syncService.linkWithGoogle(_toSnapshot());
+    await _applySyncResolution(resolution);
+    if (resolution.session.authStatus == StudyNestAuthStatus.error) {
+      return StudyNestActionResult.blocked(
+        resolution.session.message ?? 'Google sign-in failed.',
+      );
+    }
+    return StudyNestActionResult.success(
+      resolution.session.message ?? 'Signed in with Google.',
+    );
+  }
+
   // Returns the signed-in user's email when available.
   String? get userEmail => _session.userEmail;
 

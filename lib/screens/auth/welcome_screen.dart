@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../app/study_nest_scope.dart';
+import 'google_sign_in_button.dart';
 import 'login_screen.dart';
 import 'register_screen.dart';
 
@@ -72,8 +73,26 @@ class WelcomeScreen extends StatelessWidget {
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-                    SizedBox(height: screenHeight * 0.08),
-                    // Sign Up button
+                    SizedBox(height: screenHeight * 0.07),
+                    // Google Sign-In (primary CTA)
+                    GoogleSignInButton(
+                      label: 'Continue with Google',
+                      onSuccess: () => Navigator.of(context).pop(),
+                      onError: (msg) => ScaffoldMessenger.of(context)
+                          .showSnackBar(SnackBar(content: Text(msg))),
+                    ),
+                    const SizedBox(height: 14),
+                    // Divider
+                    Row(children: [
+                      Expanded(child: Divider(color: theme.muted.withValues(alpha: 0.3))),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Text('or', style: TextStyle(color: theme.muted, fontSize: 13)),
+                      ),
+                      Expanded(child: Divider(color: theme.muted.withValues(alpha: 0.3))),
+                    ]),
+                    const SizedBox(height: 14),
+                    // Email sign-up
                     SizedBox(
                       width: double.infinity,
                       height: 52,
@@ -90,11 +109,11 @@ class WelcomeScreen extends StatelessWidget {
                             fontWeight: FontWeight.w700,
                           ),
                         ),
-                        child: const Text('Create Account'),
+                        child: const Text('Create Account with Email'),
                       ),
                     ),
-                    const SizedBox(height: 14),
-                    // Sign In button
+                    const SizedBox(height: 12),
+                    // Email sign-in
                     SizedBox(
                       width: double.infinity,
                       height: 52,
@@ -111,7 +130,7 @@ class WelcomeScreen extends StatelessWidget {
                             fontWeight: FontWeight.w700,
                           ),
                         ),
-                        child: const Text('Sign In'),
+                        child: const Text('Sign In with Email'),
                       ),
                     ),
                     const SizedBox(height: 20),

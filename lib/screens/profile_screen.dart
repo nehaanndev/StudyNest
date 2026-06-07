@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../app/study_nest_scope.dart';
 import '../app/study_nest_session.dart';
 import '../widgets/cozy_widgets.dart';
+import 'auth/google_sign_in_button.dart';
 import 'auth/welcome_screen.dart';
 import 'settings_screen.dart';
 
@@ -35,13 +36,21 @@ class ProfileScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          if (!isSignedIn)
+          if (!isSignedIn) ...[
+            // Google sign-in shown prominently for anonymous users
+            GoogleSignInButton(
+              label: 'Continue with Google',
+              onSuccess: () {},
+              onError: (msg) => ScaffoldMessenger.of(context)
+                  .showSnackBar(SnackBar(content: Text(msg))),
+            ),
+            const SizedBox(height: 10),
             _MenuTile(
-              icon: Icons.login_rounded,
-              label: 'Sign in / Create Account',
+              icon: Icons.email_outlined,
+              label: 'Sign in with Email',
               onTap: () => _showWelcome(context),
-            )
-          else
+            ),
+          ] else
             _MenuTile(
               icon: Icons.logout_rounded,
               label: 'Sign Out',

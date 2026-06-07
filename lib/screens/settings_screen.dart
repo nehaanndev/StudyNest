@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../app/study_nest_scope.dart';
 import '../app/study_nest_session.dart';
 import '../theme/study_theme.dart';
+import 'auth/google_sign_in_button.dart';
 import 'auth/welcome_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -56,10 +57,19 @@ class SettingsScreen extends StatelessWidget {
                   children: [
                     // Account section
                     _SectionHeader(title: 'Account'),
-                    if (!isSignedIn)
+                    if (!isSignedIn) ...[
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: GoogleSignInButton(
+                          label: 'Continue with Google',
+                          onSuccess: () {},
+                          onError: (msg) => ScaffoldMessenger.of(context)
+                              .showSnackBar(SnackBar(content: Text(msg))),
+                        ),
+                      ),
                       _SettingsTile(
-                        icon: Icons.login_rounded,
-                        title: 'Sign In or Create Account',
+                        icon: Icons.email_outlined,
+                        title: 'Sign In or Create Account with Email',
                         subtitle: 'Sync your data across devices',
                         onTap: () => Navigator.of(context).push(
                           MaterialPageRoute(
@@ -68,12 +78,12 @@ class SettingsScreen extends StatelessWidget {
                             ),
                           ),
                         ),
-                      )
-                    else ...[
+                      ),
+                    ] else ...[
                       _SettingsInfoTile(
                         icon: Icons.person_outline,
-                        title: 'Email',
-                        value: state.userEmail ?? '—',
+                        title: state.userEmail != null ? 'Email' : 'Account',
+                        value: state.userEmail ?? state.userDisplayName ?? '—',
                       ),
                       _SettingsTile(
                         icon: Icons.logout_rounded,
