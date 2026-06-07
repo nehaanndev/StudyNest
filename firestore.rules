@@ -1,0 +1,23 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Returns whether the request is made by a signed-in Firebase user.
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Returns whether the signed-in user is accessing their own user document tree.
+    function isCurrentUser(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    match /users/{uid}/studyNest/state {
+      allow read, write: if isCurrentUser(uid);
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
