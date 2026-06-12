@@ -6,8 +6,8 @@ import '../app/study_nest_state.dart';
 import '../models/study_models.dart';
 import '../theme/study_theme.dart';
 import '../widgets/cozy_widgets.dart';
+import '../widgets/decor_shop_widgets.dart';
 import '../widgets/movable_decor_scene.dart';
-import '../widgets/study_decor_layer.dart';
 import '../widgets/study_photo_widgets.dart';
 
 class StudySpaceScreen extends StatelessWidget {
@@ -73,16 +73,17 @@ class StudySpaceScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 14),
                       _StudySpaceStyleCard(selectedStyle: selectedStyle),
+                      const SectionHeader(title: 'Your collection'),
+                      const _DecorInventorySection(),
+                      SectionHeader(title: '${theme.name} decor shop'),
+                      const DecorCollectionProgressCard(),
+                      for (final shelf in state.decorShelvesByRarity.entries)
+                        DecorRarityShelf(rarity: shelf.key, items: shelf.value),
                       const SectionHeader(title: 'Room themes'),
                       const _CozyCafeThemeCard(),
                       const SizedBox(height: 12),
                       for (final item in StudyNestState.shopItems) ...[
                         _ThemeControlCard(item: item),
-                        const SizedBox(height: 12),
-                      ],
-                      SectionHeader(title: '${theme.name} decor'),
-                      for (final item in state.activeThemeDecorItems) ...[
-                        _DecorControlCard(item: item),
                         const SizedBox(height: 12),
                       ],
                     ],
@@ -93,6 +94,65 @@ class StudySpaceScreen extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _DecorInventorySection extends StatelessWidget {
+  const _DecorInventorySection();
+
+  // Builds the owned-decor inventory with placement toggles for this theme.
+  @override
+  Widget build(BuildContext context) {
+    final state = StudyNestScope.watch(context);
+    final ownedItems = state.ownedActiveThemeDecorItems;
+
+    if (ownedItems.isEmpty) {
+      return CozyCard(
+        child: Row(
+          children: [
+            Icon(Icons.inventory_2_outlined, color: state.selectedTheme.muted),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'No decorations collected for this room yet. Earn coins by studying, then unlock pieces below.',
+                style: TextStyle(
+                  color: state.selectedTheme.muted,
+                  height: 1.35,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              for (final item in ownedItems) ...[
+                DecorInventoryTile(item: item),
+                const SizedBox(width: 10),
+              ],
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(2, 8, 2, 0),
+          child: Text(
+            'Tap a piece to place or store it, then drag it around the room above. Small sprites have larger grab areas.',
+            style: TextStyle(
+              color: state.selectedTheme.muted,
+              fontSize: 12,
+              height: 1.3,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -254,134 +314,6 @@ class _ThemeControlCard extends StatelessWidget {
       return;
     }
     _showSnack(context, bought ? 'Theme unlocked.' : 'Purchase skipped.');
-  }
-}
-
-class _DecorControlCard extends StatelessWidget {
-  const _DecorControlCard({required this.item});
-
-  final StudyDecorItem item;
-
-  // Builds one decor purchase or apply control for the active room theme.
-  @override
-  Widget build(BuildContext context) {
-    final state = StudyNestScope.watch(context);
-    final owned = state.ownsDecorItem(item.id);
-    final applied = state.isDecorItemApplied(item.id);
-    final canAfford = state.coinBalance >= item.cost;
-
-    return CozyCard(
-      child: _ShopControlRow(
-        icon: StudyDecorPreview(
-          item: item,
-          size: 62,
-          backgroundColor: Colors.transparent,
-        ),
-        title: item.title,
-        description: item.description,
-        tags: [
-          CozyTag(label: '${item.cost}', icon: Icons.savings),
-          if (owned)
-            CozyTag(
-              label: applied ? 'Applied' : 'Owned',
-              icon: applied ? Icons.check_circle : Icons.lock_open,
-            ),
-        ],
-        trailing: FilledButton.tonal(
-          onPressed: () => owned
-              ? state.toggleDecorItem(item.id)
-              : _buyDecor(context, item, canAfford),
-          child: Text(
-            owned
-                ? applied
-                      ? 'Hide'
-                      : 'Apply'
-                : 'Buy',
-          ),
-        ),
-      ),
-    );
-  }
-
-  // Purchases a decor item from the room screen and reports the result.
-  Future<void> _buyDecor(
-    BuildContext context,
-    StudyDecorItem item,
-    bool canAfford,
-  ) async {
-    if (!canAfford) {
-      _showSnack(context, 'Not enough coins yet.');
-      return;
-    }
-    final result = await StudyNestScope.read(context).buyDecorItem(item);
-    if (!context.mounted) {
-      return;
-    }
-    _showSnack(context, result.message);
-  }
-}
-
-class _ShopControlRow extends StatelessWidget {
-  const _ShopControlRow({
-    required this.icon,
-    required this.title,
-    required this.description,
-    required this.trailing,
-    this.tags = const [],
-  });
-
-  final Widget icon;
-  final String title;
-  final String description;
-  final Widget trailing;
-  final List<Widget> tags;
-
-  // Builds shared rows for theme and decor controls.
-  @override
-  Widget build(BuildContext context) {
-    final theme = StudyNestScope.watch(context).selectedTheme;
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: 66,
-          height: 66,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: theme.surfaceAlt.withValues(alpha: 0.18),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: icon,
-        ),
-        const SizedBox(width: 14),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                description,
-                style: TextStyle(color: theme.muted, height: 1.3),
-              ),
-              if (tags.isNotEmpty) ...[
-                const SizedBox(height: 10),
-                Wrap(spacing: 8, runSpacing: 8, children: tags),
-              ],
-            ],
-          ),
-        ),
-        const SizedBox(width: 10),
-        trailing,
-      ],
-    );
   }
 }
 

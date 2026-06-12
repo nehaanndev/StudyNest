@@ -89,6 +89,10 @@ void main() {
     });
 
     await state.setStudySpaceStyle('simple');
+    // Completes the seeded tasks so the lamp purchase is affordable.
+    for (final task in state.tasks) {
+      await state.toggleTask(task.id);
+    }
     final purchaseResult = await state.buyDecorItem(decor);
     await state.setDecorPosition(decor.id, const Offset(0.22, 0.44));
 
