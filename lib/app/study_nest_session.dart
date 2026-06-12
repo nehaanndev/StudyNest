@@ -70,10 +70,14 @@ class StudyNestSessionState {
       cloudEnabled: cloudEnabled ?? this.cloudEnabled,
       isAnonymous: isAnonymous ?? this.isAnonymous,
       hasPendingSync: hasPendingSync ?? this.hasPendingSync,
-      lastSyncedAt: clearLastSyncedAt ? null : lastSyncedAt ?? this.lastSyncedAt,
+      lastSyncedAt: clearLastSyncedAt
+          ? null
+          : lastSyncedAt ?? this.lastSyncedAt,
       userId: clearUserId ? null : userId ?? this.userId,
       userEmail: clearUserEmail ? null : userEmail ?? this.userEmail,
-      userDisplayName: clearUserDisplayName ? null : userDisplayName ?? this.userDisplayName,
+      userDisplayName: clearUserDisplayName
+          ? null
+          : userDisplayName ?? this.userDisplayName,
       message: clearMessage ? null : message ?? this.message,
     );
   }

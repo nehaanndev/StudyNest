@@ -9,9 +9,8 @@ class StudyGuideContent {
   final List<StudyGuideSection> sections;
 
   // Encodes the content to a JSON string for storage in StudyNote.contentJson.
-  String toJson() => jsonEncode({
-        'sections': sections.map((s) => s.toMap()).toList(),
-      });
+  String toJson() =>
+      jsonEncode({'sections': sections.map((s) => s.toMap()).toList()});
 
   // Decodes a StudyGuideContent from a JSON string.
   factory StudyGuideContent.fromJson(String source) {
@@ -24,8 +23,7 @@ class StudyGuideContent {
   }
 
   // Returns an empty study guide with one blank section.
-  factory StudyGuideContent.empty() =>
-      const StudyGuideContent(sections: []);
+  factory StudyGuideContent.empty() => const StudyGuideContent(sections: []);
 }
 
 class StudyGuideSection {
@@ -41,10 +39,10 @@ class StudyGuideSection {
 
   // Converts this section to a JSON-safe map.
   Map<String, dynamic> toMap() => {
-        'title': title,
-        'notes': notes,
-        'keyTerms': keyTerms.map((k) => k.toMap()).toList(),
-      };
+    'title': title,
+    'notes': notes,
+    'keyTerms': keyTerms.map((k) => k.toMap()).toList(),
+  };
 
   // Rebuilds a section from a JSON-safe map.
   factory StudyGuideSection.fromMap(Map<String, dynamic> map) =>
@@ -61,12 +59,15 @@ class StudyGuideSection {
       const StudyGuideSection(title: '', notes: '', keyTerms: []);
 
   // Creates a copy with replaced fields.
-  StudyGuideSection copyWith({String? title, String? notes, List<KeyTerm>? keyTerms}) =>
-      StudyGuideSection(
-        title: title ?? this.title,
-        notes: notes ?? this.notes,
-        keyTerms: keyTerms ?? this.keyTerms,
-      );
+  StudyGuideSection copyWith({
+    String? title,
+    String? notes,
+    List<KeyTerm>? keyTerms,
+  }) => StudyGuideSection(
+    title: title ?? this.title,
+    notes: notes ?? this.notes,
+    keyTerms: keyTerms ?? this.keyTerms,
+  );
 }
 
 class KeyTerm {
@@ -79,13 +80,15 @@ class KeyTerm {
 
   // Rebuilds a key term from a JSON-safe map.
   factory KeyTerm.fromMap(Map<String, dynamic> map) => KeyTerm(
-        term: map['term'] as String? ?? '',
-        definition: map['definition'] as String? ?? '',
-      );
+    term: map['term'] as String? ?? '',
+    definition: map['definition'] as String? ?? '',
+  );
 
   // Creates a copy with replaced fields.
-  KeyTerm copyWith({String? term, String? definition}) =>
-      KeyTerm(term: term ?? this.term, definition: definition ?? this.definition);
+  KeyTerm copyWith({String? term, String? definition}) => KeyTerm(
+    term: term ?? this.term,
+    definition: definition ?? this.definition,
+  );
 }
 
 // ─── Flashcards ─────────────────────────────────────────────────────────────
@@ -95,9 +98,8 @@ class FlashcardSetContent {
   final List<Flashcard> cards;
 
   // Encodes the flashcard set to a JSON string.
-  String toJson() => jsonEncode({
-        'cards': cards.map((c) => c.toMap()).toList(),
-      });
+  String toJson() =>
+      jsonEncode({'cards': cards.map((c) => c.toMap()).toList()});
 
   // Decodes a FlashcardSetContent from a JSON string.
   factory FlashcardSetContent.fromJson(String source) {
@@ -110,8 +112,7 @@ class FlashcardSetContent {
   }
 
   // Returns an empty flashcard set.
-  factory FlashcardSetContent.empty() =>
-      const FlashcardSetContent(cards: []);
+  factory FlashcardSetContent.empty() => const FlashcardSetContent(cards: []);
 }
 
 class Flashcard {
@@ -124,9 +125,9 @@ class Flashcard {
 
   // Rebuilds a card from a JSON-safe map.
   factory Flashcard.fromMap(Map<String, dynamic> map) => Flashcard(
-        front: map['front'] as String? ?? '',
-        back: map['back'] as String? ?? '',
-      );
+    front: map['front'] as String? ?? '',
+    back: map['back'] as String? ?? '',
+  );
 
   // Creates a copy with replaced fields.
   Flashcard copyWith({String? front, String? back}) =>
@@ -140,9 +141,8 @@ class QuizContent {
   final List<QuizQuestion> questions;
 
   // Encodes the quiz to a JSON string.
-  String toJson() => jsonEncode({
-        'questions': questions.map((q) => q.toMap()).toList(),
-      });
+  String toJson() =>
+      jsonEncode({'questions': questions.map((q) => q.toMap()).toList()});
 
   // Decodes a QuizContent from a JSON string.
   factory QuizContent.fromJson(String source) {
@@ -171,32 +171,35 @@ class QuizQuestion {
 
   // Converts this question to a JSON-safe map.
   Map<String, dynamic> toMap() => {
-        'question': question,
-        'choices': choices,
-        'correctIndex': correctIndex,
-      };
+    'question': question,
+    'choices': choices,
+    'correctIndex': correctIndex,
+  };
 
   // Rebuilds a question from a JSON-safe map.
   factory QuizQuestion.fromMap(Map<String, dynamic> map) => QuizQuestion(
-        question: map['question'] as String? ?? '',
-        choices: (map['choices'] as List<dynamic>? ?? []).cast<String>(),
-        correctIndex: map['correctIndex'] as int? ?? 0,
-      );
+    question: map['question'] as String? ?? '',
+    choices: (map['choices'] as List<dynamic>? ?? []).cast<String>(),
+    correctIndex: map['correctIndex'] as int? ?? 0,
+  );
 
   // Creates a copy with replaced fields.
-  QuizQuestion copyWith({String? question, List<String>? choices, int? correctIndex}) =>
-      QuizQuestion(
-        question: question ?? this.question,
-        choices: choices ?? this.choices,
-        correctIndex: correctIndex ?? this.correctIndex,
-      );
+  QuizQuestion copyWith({
+    String? question,
+    List<String>? choices,
+    int? correctIndex,
+  }) => QuizQuestion(
+    question: question ?? this.question,
+    choices: choices ?? this.choices,
+    correctIndex: correctIndex ?? this.correctIndex,
+  );
 
   // Returns a blank question with 4 empty choices.
   factory QuizQuestion.blank() => const QuizQuestion(
-        question: '',
-        choices: ['', '', '', ''],
-        correctIndex: 0,
-      );
+    question: '',
+    choices: ['', '', '', ''],
+    correctIndex: 0,
+  );
 }
 
 // ─── Formula Sheet ───────────────────────────────────────────────────────────
@@ -206,9 +209,8 @@ class FormulaSheetContent {
   final List<FormulaEntry> formulas;
 
   // Encodes the formula sheet to a JSON string.
-  String toJson() => jsonEncode({
-        'formulas': formulas.map((f) => f.toMap()).toList(),
-      });
+  String toJson() =>
+      jsonEncode({'formulas': formulas.map((f) => f.toMap()).toList()});
 
   // Decodes a FormulaSheetContent from a JSON string.
   factory FormulaSheetContent.fromJson(String source) {
@@ -238,17 +240,17 @@ class FormulaEntry {
 
   // Converts this entry to a JSON-safe map.
   Map<String, dynamic> toMap() => {
-        'name': name,
-        'formula': formula,
-        'explanation': explanation,
-      };
+    'name': name,
+    'formula': formula,
+    'explanation': explanation,
+  };
 
   // Rebuilds an entry from a JSON-safe map.
   factory FormulaEntry.fromMap(Map<String, dynamic> map) => FormulaEntry(
-        name: map['name'] as String? ?? '',
-        formula: map['formula'] as String? ?? '',
-        explanation: map['explanation'] as String? ?? '',
-      );
+    name: map['name'] as String? ?? '',
+    formula: map['formula'] as String? ?? '',
+    explanation: map['explanation'] as String? ?? '',
+  );
 
   // Creates a copy with replaced fields.
   FormulaEntry copyWith({String? name, String? formula, String? explanation}) =>
@@ -274,28 +276,28 @@ class NoteType {
 
   // Returns the display label for a note type.
   static String label(String type) => switch (type) {
-        studyGuide => 'Study Guide',
-        flashcards => 'Flashcards',
-        quiz => 'Quiz',
-        formula => 'Formulas',
-        _ => 'Note',
-      };
+    studyGuide => 'Study Guide',
+    flashcards => 'Flashcards',
+    quiz => 'Quiz',
+    formula => 'Formulas',
+    _ => 'Note',
+  };
 
   // Returns the emoji icon for a note type.
   static String emoji(String type) => switch (type) {
-        studyGuide => '📖',
-        flashcards => '🃏',
-        quiz => '❓',
-        formula => '🔢',
-        _ => '📝',
-      };
+    studyGuide => '📖',
+    flashcards => '🃏',
+    quiz => '❓',
+    formula => '🔢',
+    _ => '📝',
+  };
 
   // Returns the Material icon for a note type.
   static IconData icon(String type) => switch (type) {
-        studyGuide => Icons.menu_book_outlined,
-        flashcards => Icons.style_outlined,
-        quiz => Icons.quiz_outlined,
-        formula => Icons.functions_outlined,
-        _ => Icons.note_alt_outlined,
-      };
+    studyGuide => Icons.menu_book_outlined,
+    flashcards => Icons.style_outlined,
+    quiz => Icons.quiz_outlined,
+    formula => Icons.functions_outlined,
+    _ => Icons.note_alt_outlined,
+  };
 }

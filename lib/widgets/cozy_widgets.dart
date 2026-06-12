@@ -34,7 +34,10 @@ class CozyPage extends StatelessWidget {
             end: Alignment.bottomCenter,
             colors: [
               theme.background,
-              Color.alphaBlend(theme.primary.withValues(alpha: 0.08), theme.background),
+              Color.alphaBlend(
+                theme.primary.withValues(alpha: 0.08),
+                theme.background,
+              ),
               theme.background,
             ],
           ),
@@ -62,7 +65,9 @@ class CozyPage extends StatelessWidget {
                               children: [
                                 Text(
                                   title,
-                                  style: Theme.of(context).textTheme.headlineSmall
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .headlineSmall
                                       ?.copyWith(
                                         fontWeight: FontWeight.w900,
                                         height: 1,

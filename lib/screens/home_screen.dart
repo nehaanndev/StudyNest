@@ -24,7 +24,9 @@ class HomeScreen extends StatelessWidget {
     final todayTasks = allTasks
         .where((t) => isSameCalendarDay(t.dueAt, now))
         .toList();
-    final completedToday = todayTasks.where((t) => t.completedAt != null).length;
+    final completedToday = todayTasks
+        .where((t) => t.completedAt != null)
+        .length;
     final totalToday = todayTasks.length;
 
     final completedTotal = state.completedTaskCount;
@@ -42,9 +44,15 @@ class HomeScreen extends StatelessWidget {
           // Stats pills row
           Row(
             children: [
-              _StatPill(label: '🪙 ${state.coinBalance}', accentColor: theme.accent),
+              _StatPill(
+                label: '🪙 ${state.coinBalance}',
+                accentColor: theme.accent,
+              ),
               const SizedBox(width: 8),
-              _StatPill(label: '✅ $completedTotal done', accentColor: theme.accent),
+              _StatPill(
+                label: '✅ $completedTotal done',
+                accentColor: theme.accent,
+              ),
               const SizedBox(width: 8),
               _StatPill(label: '⭐ Lv.$level', accentColor: theme.accent),
             ],
@@ -94,9 +102,7 @@ class HomeScreen extends StatelessWidget {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: LinearProgressIndicator(
-                    value: totalToday == 0
-                        ? 0
-                        : completedToday / totalToday,
+                    value: totalToday == 0 ? 0 : completedToday / totalToday,
                     minHeight: 10,
                     color: theme.accent,
                     backgroundColor: theme.accent.withValues(alpha: 0.15),
@@ -164,9 +170,7 @@ class HomeScreen extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(
                         '25:00',
-                        style: Theme.of(context)
-                            .textTheme
-                            .headlineMedium
+                        style: Theme.of(context).textTheme.headlineMedium
                             ?.copyWith(
                               fontWeight: FontWeight.w900,
                               color: theme.accent,
@@ -233,9 +237,9 @@ class HomeScreen extends StatelessWidget {
   }
 
   void _openStudySpace(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => const StudySpaceScreen()),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute<void>(builder: (_) => const StudySpaceScreen()));
   }
 
   Future<void> _completeSessionGoal(BuildContext context) async {
@@ -245,16 +249,19 @@ class HomeScreen extends StatelessWidget {
     final message = awarded > 0
         ? 'Nice focus. You earned $awarded coins.'
         : 'That goal is already complete today.';
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> _showSessionGoalDialog(BuildContext context) async {
     final state = StudyNestScope.read(context);
-    final titleController =
-        TextEditingController(text: state.sessionGoal.title);
-    final rewardController =
-        TextEditingController(text: state.sessionGoal.reward.toString());
+    final titleController = TextEditingController(
+      text: state.sessionGoal.title,
+    );
+    final rewardController = TextEditingController(
+      text: state.sessionGoal.reward.toString(),
+    );
 
     await showDialog<void>(
       context: context,
@@ -286,11 +293,14 @@ class HomeScreen extends StatelessWidget {
                 final title = titleController.text.trim();
                 final reward = int.tryParse(rewardController.text) ?? 25;
                 if (title.isEmpty) return;
-                final result =
-                    await state.setSessionGoal(title, reward.clamp(1, 500));
+                final result = await state.setSessionGoal(
+                  title,
+                  reward.clamp(1, 500),
+                );
                 if (dialogContext.mounted) {
-                  ScaffoldMessenger.of(dialogContext)
-                      .showSnackBar(SnackBar(content: Text(result.message)));
+                  ScaffoldMessenger.of(
+                    dialogContext,
+                  ).showSnackBar(SnackBar(content: Text(result.message)));
                 }
                 if (!result.applied) return;
                 if (dialogContext.mounted) Navigator.of(dialogContext).pop();
@@ -355,9 +365,7 @@ class _QuickNavTile extends StatelessWidget {
             decoration: BoxDecoration(
               color: theme.surface.withValues(alpha: 0.65),
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: theme.accent.withValues(alpha: 0.25),
-              ),
+              border: Border.all(color: theme.accent.withValues(alpha: 0.25)),
             ),
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             child: Row(

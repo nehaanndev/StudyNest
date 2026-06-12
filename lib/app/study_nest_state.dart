@@ -5,6 +5,8 @@ import '../models/study_models.dart';
 import '../theme/study_theme.dart';
 import 'study_nest_action_result.dart';
 import 'study_nest_anonymous_limits.dart';
+import 'study_nest_auth_debug.dart';
+import 'study_nest_auth_snapshot.dart';
 import 'study_nest_catalog.dart';
 import 'study_nest_session.dart';
 import 'study_nest_storage.dart';
@@ -83,10 +85,21 @@ class StudyNestState extends ChangeNotifier {
             ? FirebaseStudyNestSyncService()
             : const DisabledStudyNestSyncService());
     try {
-      final storedState = _migrateSnapshot(await activeStorage.load());
+      final shouldLoadLocalFirst =
+          activeSyncService is DisabledStudyNestSyncService;
+      final storedState = shouldLoadLocalFirst
+          ? _migrateSnapshot(await activeStorage.load())
+          : null;
+      if (!shouldLoadLocalFirst) {
+        logStudyNestAuthDebug(
+          'Deferring local cache load until Firebase UID is known',
+        );
+      }
       if (storedState == null) {
         final state = _starterState(activeStorage, activeSyncService);
-        await state._save();
+        if (shouldLoadLocalFirst) {
+          await state._save();
+        }
         await state._initializeCloudSync();
         return state;
       }
@@ -408,6 +421,12 @@ class StudyNestState extends ChangeNotifier {
 
   // Signs out the current user and falls back to anonymous state.
   Future<StudyNestActionResult> signOut() async {
+    await _syncLatestSnapshot();
+    await _storage?.clear();
+    logStudyNestAuthDebug('Clearing app state for logout');
+    _applySnapshot(emptyStudyNestSnapshot());
+    _session = StudyNestSessionState.disabled();
+    _broadcastChange();
     final resolution = await _syncService.signOut(_toSnapshot());
     await _applySyncResolution(resolution);
     return StudyNestActionResult.success('Signed out.');
@@ -455,6 +474,7 @@ class StudyNestState extends ChangeNotifier {
   Map<String, dynamic> _toSnapshot() {
     return {
       'schemaVersion': 2,
+      'ownerUserId': _session.userId,
       'updatedAt': _updatedAt.toIso8601String(),
       'tasks': _tasks.map((task) => task.toJson()).toList(),
       'notes': _notes.map((note) => note.toJson()).toList(),

@@ -59,7 +59,10 @@ class _FormulaSheetScreenState extends State<FormulaSheetScreen> {
   Future<void> _save() async {
     final state = StudyNestScope.read(context);
     final title = _titleCtrl.text.trim();
-    if (title.isEmpty && _formulas.every((f) => f.name.isEmpty && f.formula.isEmpty)) return;
+    if (title.isEmpty &&
+        _formulas.every((f) => f.name.isEmpty && f.formula.isEmpty)) {
+      return;
+    }
 
     final content = FormulaSheetContent(formulas: _formulas).toJson();
 
@@ -94,7 +97,11 @@ class _FormulaSheetScreenState extends State<FormulaSheetScreen> {
 
   // Adds a blank formula entry.
   void _addFormula() {
-    setState(() => _formulas.add(const FormulaEntry(name: '', formula: '', explanation: '')));
+    setState(
+      () => _formulas.add(
+        const FormulaEntry(name: '', formula: '', explanation: ''),
+      ),
+    );
     _scheduleAutoSave();
   }
 
@@ -126,18 +133,33 @@ class _FormulaSheetScreenState extends State<FormulaSheetScreen> {
           onPressed: () async {
             _saveTimer?.cancel();
             await _save();
-            if (mounted) Navigator.of(context).pop();
+            if (!context.mounted) {
+              return;
+            }
+            Navigator.of(context).pop();
           },
         ),
-        title: Row(children: [
-          const Text('🔢 ', style: TextStyle(fontSize: 18)),
-          Text('Formula Sheet', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: theme.text)),
-        ]),
+        title: Row(
+          children: [
+            const Text('🔢 ', style: TextStyle(fontSize: 18)),
+            Text(
+              'Formula Sheet',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: theme.text,
+              ),
+            ),
+          ],
+        ),
         actions: [
           if (_saved)
             Padding(
               padding: const EdgeInsets.only(right: 16),
-              child: Text('Saved', style: TextStyle(fontSize: 13, color: theme.muted)),
+              child: Text(
+                'Saved',
+                style: TextStyle(fontSize: 13, color: theme.muted),
+              ),
             ),
         ],
       ),
@@ -146,7 +168,12 @@ class _FormulaSheetScreenState extends State<FormulaSheetScreen> {
         children: [
           TextField(
             controller: _titleCtrl,
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: theme.text, decoration: TextDecoration.none),
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w900,
+              color: theme.text,
+              decoration: TextDecoration.none,
+            ),
             decoration: InputDecoration(
               hintText: 'Sheet title…',
               border: InputBorder.none,
@@ -156,8 +183,10 @@ class _FormulaSheetScreenState extends State<FormulaSheetScreen> {
               hintStyle: TextStyle(color: theme.muted),
             ),
           ),
-          Text('${_formulas.length} formula${_formulas.length == 1 ? '' : 's'}',
-              style: TextStyle(fontSize: 13, color: theme.muted)),
+          Text(
+            '${_formulas.length} formula${_formulas.length == 1 ? '' : 's'}',
+            style: TextStyle(fontSize: 13, color: theme.muted),
+          ),
           const SizedBox(height: 14),
           for (int i = 0; i < _formulas.length; i++)
             _FormulaCard(
@@ -174,7 +203,9 @@ class _FormulaSheetScreenState extends State<FormulaSheetScreen> {
             style: OutlinedButton.styleFrom(
               foregroundColor: theme.primary,
               side: BorderSide(color: theme.primary.withValues(alpha: 0.4)),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
           ),
         ],
@@ -219,11 +250,13 @@ class _FormulaCardState extends State<_FormulaCard> {
 
   // Emits updated entry to parent.
   void _notify() {
-    widget.onChanged(widget.entry.copyWith(
-      name: _nameCtrl.text,
-      formula: _formulaCtrl.text,
-      explanation: _explanationCtrl.text,
-    ));
+    widget.onChanged(
+      widget.entry.copyWith(
+        name: _nameCtrl.text,
+        formula: _formulaCtrl.text,
+        explanation: _explanationCtrl.text,
+      ),
+    );
   }
 
   @override
@@ -252,11 +285,22 @@ class _FormulaCardState extends State<_FormulaCard> {
             padding: const EdgeInsets.fromLTRB(16, 10, 8, 0),
             child: Row(
               children: [
-                Text('#${widget.index + 1}', style: TextStyle(fontSize: 11, color: theme.muted, fontWeight: FontWeight.w700)),
+                Text(
+                  '#${widget.index + 1}',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: theme.muted,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
                 const Spacer(),
                 if (widget.onRemove != null)
                   IconButton(
-                    icon: Icon(Icons.remove_circle_outline, size: 18, color: theme.muted),
+                    icon: Icon(
+                      Icons.remove_circle_outline,
+                      size: 18,
+                      color: theme.muted,
+                    ),
                     onPressed: widget.onRemove,
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
@@ -269,7 +313,12 @@ class _FormulaCardState extends State<_FormulaCard> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             child: TextField(
               controller: _nameCtrl,
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: theme.text, decoration: TextDecoration.none),
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
+                color: theme.text,
+                decoration: TextDecoration.none,
+              ),
               decoration: InputDecoration(
                 hintText: 'Formula name (e.g. Quadratic Formula)',
                 border: InputBorder.none,
@@ -313,7 +362,12 @@ class _FormulaCardState extends State<_FormulaCard> {
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
             child: TextField(
               controller: _explanationCtrl,
-              style: TextStyle(fontSize: 13, height: 1.5, color: theme.text, decoration: TextDecoration.none),
+              style: TextStyle(
+                fontSize: 13,
+                height: 1.5,
+                color: theme.text,
+                decoration: TextDecoration.none,
+              ),
               decoration: InputDecoration(
                 hintText: 'Explanation or example…',
                 border: InputBorder.none,

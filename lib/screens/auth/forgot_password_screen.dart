@@ -66,21 +66,25 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 400),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 28,
+                  vertical: 24,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     IconButton(
                       icon: const Icon(Icons.arrow_back),
                       onPressed: () => Navigator.of(context).pop(),
-                      style: IconButton.styleFrom(foregroundColor: theme.primary),
+                      style: IconButton.styleFrom(
+                        foregroundColor: theme.primary,
+                      ),
                     ),
                     const SizedBox(height: 16),
                     Text(
                       'Reset password',
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w900,
-                      ),
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(fontWeight: FontWeight.w900),
                     ),
                     const SizedBox(height: 6),
                     Text(
@@ -95,7 +99,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         decoration: BoxDecoration(
                           color: Colors.green.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
+                          border: Border.all(
+                            color: Colors.green.withValues(alpha: 0.3),
+                          ),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -110,7 +116,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                             const SizedBox(height: 4),
                             Text(
                               'A password reset link has been sent to ${_emailCtrl.text}.',
-                              style: const TextStyle(color: Colors.green, fontSize: 13),
+                              style: const TextStyle(
+                                color: Colors.green,
+                                fontSize: 13,
+                              ),
                             ),
                           ],
                         ),
@@ -123,8 +132,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           label: 'Email',
                           keyboardType: TextInputType.emailAddress,
                           validator: (v) {
-                            if (v == null || v.trim().isEmpty) return 'Enter your email';
-                            if (!v.contains('@')) return 'Enter a valid email';
+                            if (v == null || v.trim().isEmpty) {
+                              return 'Enter your email';
+                            }
+                            if (!v.contains('@')) {
+                              return 'Enter a valid email';
+                            }
                             return null;
                           },
                         ),

@@ -7,9 +7,12 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import '../firebase_options.dart';
+import 'study_nest_auth_debug.dart';
+import 'study_nest_auth_snapshot.dart';
 import 'study_nest_session.dart';
 
 part 'study_nest_auth_errors.dart';
+part 'study_nest_disabled_sync_service.dart';
 
 class StudyNestFirebaseSync {
   const StudyNestFirebaseSync._();
@@ -65,71 +68,6 @@ abstract class StudyNestSyncService {
 
   // Releases any connectivity listeners held by the sync service.
   Future<void> dispose();
-}
-
-class DisabledStudyNestSyncService implements StudyNestSyncService {
-  const DisabledStudyNestSyncService();
-
-  @override
-  Stream<void> get retryEvents => const Stream<void>.empty();
-
-  // Returns a disabled session when Firebase is not configured for the app.
-  @override
-  Future<StudyNestSyncResolution> initialize(
-    Map<String, dynamic> localSnapshot,
-  ) async {
-    return StudyNestSyncResolution(
-      session: StudyNestSessionState.disabled(
-        'Firebase is not configured yet. The app is saving locally until you connect a project.',
-      ),
-    );
-  }
-
-  // Returns the disabled session again because no cloud writes are available.
-  @override
-  Future<StudyNestSyncResolution> sync(
-    Map<String, dynamic> localSnapshot,
-  ) async {
-    return initialize(localSnapshot);
-  }
-
-  // Explains that Google linking is unavailable until Firebase is configured.
-  @override
-  Future<StudyNestSyncResolution> linkWithGoogle(
-    Map<String, dynamic> localSnapshot,
-  ) async {
-    return StudyNestSyncResolution(
-      session: StudyNestSessionState.disabled(
-        'Connect Firebase first, then Google sign-in can link onto the anonymous cloud account.',
-      ),
-    );
-  }
-
-  @override
-  Future<StudyNestSyncResolution> signInWithEmail(
-    Map<String, dynamic> localSnapshot,
-    String email,
-    String password,
-  ) async => initialize(localSnapshot);
-
-  @override
-  Future<StudyNestSyncResolution> signUpWithEmail(
-    Map<String, dynamic> localSnapshot,
-    String email,
-    String password,
-  ) async => initialize(localSnapshot);
-
-  @override
-  Future<StudyNestSyncResolution> signOut(
-    Map<String, dynamic> localSnapshot,
-  ) async => initialize(localSnapshot);
-
-  @override
-  Future<String?> sendPasswordResetEmail(String email) async => null;
-
-  // Leaves nothing to clean up for the disabled local-only sync adapter.
-  @override
-  Future<void> dispose() async {}
 }
 
 class FirebaseStudyNestSyncService implements StudyNestSyncService {
@@ -205,6 +143,7 @@ class FirebaseStudyNestSyncService implements StudyNestSyncService {
     }
     try {
       final currentUser = _auth.currentUser;
+      final shouldTransferLocalData = currentUser?.isAnonymous ?? false;
       if (currentUser != null && currentUser.isAnonymous) {
         final credential = EmailAuthProvider.credential(
           email: email,
@@ -229,7 +168,11 @@ class FirebaseStudyNestSyncService implements StudyNestSyncService {
           password: password,
         );
       }
-      return _resolveSnapshot(localSnapshot, preferRemoteOnConflict: true);
+      return _resolveSnapshot(
+        localSnapshot,
+        preferRemoteOnConflict: true,
+        allowCrossUserLocalSnapshot: shouldTransferLocalData,
+      );
     } on FirebaseAuthException catch (e) {
       return StudyNestSyncResolution(
         session: _session(
@@ -254,6 +197,7 @@ class FirebaseStudyNestSyncService implements StudyNestSyncService {
     }
     try {
       final currentUser = _auth.currentUser;
+      final shouldTransferLocalData = currentUser?.isAnonymous ?? false;
       if (currentUser != null && currentUser.isAnonymous) {
         final credential = EmailAuthProvider.credential(
           email: email,
@@ -280,7 +224,11 @@ class FirebaseStudyNestSyncService implements StudyNestSyncService {
           password: password,
         );
       }
-      return _resolveSnapshot(localSnapshot, preferRemoteOnConflict: false);
+      return _resolveSnapshot(
+        localSnapshot,
+        preferRemoteOnConflict: false,
+        allowCrossUserLocalSnapshot: shouldTransferLocalData,
+      );
     } on FirebaseAuthException catch (e) {
       return StudyNestSyncResolution(
         session: _session(
@@ -363,7 +311,11 @@ class FirebaseStudyNestSyncService implements StudyNestSyncService {
       } else {
         await _auth.signInWithCredential(credential);
       }
-      return _resolveSnapshot(localSnapshot, preferRemoteOnConflict: false);
+      return _resolveSnapshot(
+        localSnapshot,
+        preferRemoteOnConflict: false,
+        allowCrossUserLocalSnapshot: currentUser.isAnonymous,
+      );
     } on FirebaseAuthException catch (error) {
       return StudyNestSyncResolution(
         session: _session(
@@ -444,6 +396,7 @@ class FirebaseStudyNestSyncService implements StudyNestSyncService {
   Future<StudyNestSyncResolution> _resolveSnapshot(
     Map<String, dynamic> localSnapshot, {
     required bool preferRemoteOnConflict,
+    bool allowCrossUserLocalSnapshot = false,
   }) async {
     final currentUser = await _ensureUser();
     if (currentUser == null) {
@@ -470,18 +423,50 @@ class FirebaseStudyNestSyncService implements StudyNestSyncService {
     }
 
     try {
-      final remoteSnapshot = await _loadRemoteSnapshot(currentUser.uid);
-      final remoteIsNewer = _isRemoteNewer(
-        localSnapshot: localSnapshot,
+      final rawRemoteSnapshot = await _loadRemoteSnapshot(currentUser.uid);
+      final remoteOwnerUserId = rawRemoteSnapshot?['ownerUserId'] as String?;
+      final remoteSnapshot =
+          remoteOwnerUserId != null && remoteOwnerUserId != currentUser.uid
+          ? null
+          : rawRemoteSnapshot;
+      if (rawRemoteSnapshot != null && remoteSnapshot == null) {
+        logStudyNestAuthDebug(
+          'Ignoring Firebase snapshot with mismatched owner',
+          userId: currentUser.uid,
+          ownerUserId: remoteOwnerUserId,
+          source: 'firebase',
+        );
+      }
+      logStudyNestAuthDebug(
+        'Loaded remote snapshot',
+        userId: currentUser.uid,
+        ownerUserId: remoteSnapshot?['ownerUserId'] as String?,
+        source: 'firebase',
+      );
+      final safeLocalSnapshot = safeStudyNestLocalSnapshot(
+        localSnapshot,
+        currentUser.uid,
+        allowCrossUserLocalSnapshot,
+      );
+      final remoteIsNewer = isRemoteStudyNestSnapshotNewer(
+        localSnapshot: safeLocalSnapshot,
         remoteSnapshot: remoteSnapshot,
       );
       final resolvedSnapshot =
-          remoteIsNewer && preferRemoteOnConflict && remoteSnapshot != null
+          allowCrossUserLocalSnapshot && remoteSnapshot != null
+          ? mergeStudyNestSnapshots(safeLocalSnapshot, remoteSnapshot)
+          : remoteIsNewer && preferRemoteOnConflict && remoteSnapshot != null
           ? remoteSnapshot
-          : localSnapshot;
+          : safeLocalSnapshot;
+      final ownedResolvedSnapshot = {
+        ...resolvedSnapshot,
+        'ownerUserId': currentUser.uid,
+      };
 
-      if (!remoteIsNewer || remoteSnapshot == null) {
-        await _saveRemoteSnapshot(currentUser.uid, resolvedSnapshot);
+      if (allowCrossUserLocalSnapshot ||
+          !remoteIsNewer ||
+          remoteSnapshot == null) {
+        await _saveRemoteSnapshot(currentUser.uid, ownedResolvedSnapshot);
       }
 
       return StudyNestSyncResolution(
@@ -495,7 +480,7 @@ class FirebaseStudyNestSyncService implements StudyNestSyncService {
               ? 'Anonymous cloud sync is active.'
               : 'Google-linked cloud sync is active.',
         ),
-        snapshot: resolvedSnapshot,
+        snapshot: ownedResolvedSnapshot,
       );
     } on FirebaseException catch (error) {
       return StudyNestSyncResolution(
@@ -528,6 +513,12 @@ class FirebaseStudyNestSyncService implements StudyNestSyncService {
 
   // Loads the StudyNest snapshot document for one Firebase user id.
   Future<Map<String, dynamic>?> _loadRemoteSnapshot(String uid) async {
+    logStudyNestAuthDebug(
+      'Reading Firebase snapshot',
+      userId: uid,
+      cacheKey: 'users/$uid/studyNest/state',
+      source: 'firebase',
+    );
     final doc = await _firestore.doc('users/$uid/studyNest/state').get();
     return doc.data();
   }
@@ -537,30 +528,14 @@ class FirebaseStudyNestSyncService implements StudyNestSyncService {
     String uid,
     Map<String, dynamic> snapshot,
   ) async {
+    logStudyNestAuthDebug(
+      'Writing Firebase snapshot',
+      userId: uid,
+      ownerUserId: snapshot['ownerUserId'] as String?,
+      cacheKey: 'users/$uid/studyNest/state',
+      source: 'firebase',
+    );
     await _firestore.doc('users/$uid/studyNest/state').set(snapshot);
-  }
-
-  // Compares the two snapshots using the canonical updatedAt field.
-  bool _isRemoteNewer({
-    required Map<String, dynamic> localSnapshot,
-    required Map<String, dynamic>? remoteSnapshot,
-  }) {
-    if (remoteSnapshot == null) {
-      return false;
-    }
-    final remoteUpdatedAt = DateTime.tryParse(
-      remoteSnapshot['updatedAt'] as String? ?? '',
-    );
-    final localUpdatedAt = DateTime.tryParse(
-      localSnapshot['updatedAt'] as String? ?? '',
-    );
-    if (remoteUpdatedAt == null) {
-      return false;
-    }
-    if (localUpdatedAt == null) {
-      return true;
-    }
-    return remoteUpdatedAt.isAfter(localUpdatedAt);
   }
 
   // Builds the app-facing auth and sync session snapshot from Firebase state.

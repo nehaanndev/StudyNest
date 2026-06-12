@@ -60,7 +60,10 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
   Future<void> _save() async {
     final state = StudyNestScope.read(context);
     final title = _titleCtrl.text.trim();
-    if (title.isEmpty && _cards.every((c) => c.front.isEmpty && c.back.isEmpty)) return;
+    if (title.isEmpty &&
+        _cards.every((c) => c.front.isEmpty && c.back.isEmpty)) {
+      return;
+    }
 
     final content = FlashcardSetContent(cards: _cards).toJson();
 
@@ -120,7 +123,9 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
     final validCards = _cards.where((c) => c.front.isNotEmpty).toList();
     if (validCards.isEmpty) return;
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => _FlashcardReviewScreen(cards: validCards)),
+      MaterialPageRoute(
+        builder: (_) => _FlashcardReviewScreen(cards: validCards),
+      ),
     );
   }
 
@@ -139,18 +144,33 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
           onPressed: () async {
             _saveTimer?.cancel();
             await _save();
-            if (mounted) Navigator.of(context).pop();
+            if (!context.mounted) {
+              return;
+            }
+            Navigator.of(context).pop();
           },
         ),
-        title: Row(children: [
-          const Text('🃏 ', style: TextStyle(fontSize: 18)),
-          Text('Flashcards', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: theme.text)),
-        ]),
+        title: Row(
+          children: [
+            const Text('🃏 ', style: TextStyle(fontSize: 18)),
+            Text(
+              'Flashcards',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: theme.text,
+              ),
+            ),
+          ],
+        ),
         actions: [
           if (_saved)
             Padding(
               padding: const EdgeInsets.only(right: 8),
-              child: Text('Saved', style: TextStyle(fontSize: 13, color: theme.muted)),
+              child: Text(
+                'Saved',
+                style: TextStyle(fontSize: 13, color: theme.muted),
+              ),
             ),
           if (_cards.any((c) => c.front.isNotEmpty))
             Padding(
@@ -160,7 +180,9 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
                 style: TextButton.styleFrom(
                   backgroundColor: theme.primary.withValues(alpha: 0.12),
                   foregroundColor: theme.primary,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
                 child: const Text('Review'),
               ),
@@ -172,7 +194,12 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
         children: [
           TextField(
             controller: _titleCtrl,
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: theme.text, decoration: TextDecoration.none),
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w900,
+              color: theme.text,
+              decoration: TextDecoration.none,
+            ),
             decoration: InputDecoration(
               hintText: 'Set title…',
               border: InputBorder.none,
@@ -203,7 +230,9 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
             style: OutlinedButton.styleFrom(
               foregroundColor: theme.primary,
               side: BorderSide(color: theme.primary.withValues(alpha: 0.4)),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
           ),
         ],
@@ -268,11 +297,22 @@ class _CardEditorState extends State<_CardEditor> {
             padding: const EdgeInsets.fromLTRB(16, 10, 8, 0),
             child: Row(
               children: [
-                Text('Card ${widget.index + 1}', style: TextStyle(fontSize: 11, color: theme.muted, fontWeight: FontWeight.w700)),
+                Text(
+                  'Card ${widget.index + 1}',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: theme.muted,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
                 const Spacer(),
                 if (widget.onRemove != null)
                   IconButton(
-                    icon: Icon(Icons.remove_circle_outline, size: 18, color: theme.muted),
+                    icon: Icon(
+                      Icons.remove_circle_outline,
+                      size: 18,
+                      color: theme.muted,
+                    ),
                     onPressed: widget.onRemove,
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
@@ -284,11 +324,19 @@ class _CardEditorState extends State<_CardEditor> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             child: TextField(
               controller: _frontCtrl,
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: theme.text, decoration: TextDecoration.none),
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: theme.text,
+                decoration: TextDecoration.none,
+              ),
               decoration: InputDecoration(
                 hintText: 'Front (question or term)…',
                 prefixText: 'Q  ',
-                prefixStyle: TextStyle(color: theme.primary, fontWeight: FontWeight.w900),
+                prefixStyle: TextStyle(
+                  color: theme.primary,
+                  fontWeight: FontWeight.w900,
+                ),
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,
                 focusedBorder: InputBorder.none,
@@ -302,11 +350,18 @@ class _CardEditorState extends State<_CardEditor> {
             padding: const EdgeInsets.fromLTRB(16, 6, 16, 12),
             child: TextField(
               controller: _backCtrl,
-              style: TextStyle(fontSize: 14, color: theme.text, decoration: TextDecoration.none),
+              style: TextStyle(
+                fontSize: 14,
+                color: theme.text,
+                decoration: TextDecoration.none,
+              ),
               decoration: InputDecoration(
                 hintText: 'Back (answer or definition)…',
                 prefixText: 'A  ',
-                prefixStyle: TextStyle(color: theme.accent, fontWeight: FontWeight.w900),
+                prefixStyle: TextStyle(
+                  color: theme.accent,
+                  fontWeight: FontWeight.w900,
+                ),
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,
                 focusedBorder: InputBorder.none,
@@ -344,10 +399,14 @@ class _FlashcardReviewScreenState extends State<_FlashcardReviewScreen>
   void initState() {
     super.initState();
     _deck = [...widget.cards]..shuffle(Random());
-    _flipCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 300));
-    _flipAnim = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _flipCtrl, curve: Curves.easeInOut),
+    _flipCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
     );
+    _flipAnim = Tween<double>(
+      begin: 0,
+      end: 1,
+    ).animate(CurvedAnimation(parent: _flipCtrl, curve: Curves.easeInOut));
   }
 
   @override
@@ -420,7 +479,7 @@ class _FlashcardReviewScreenState extends State<_FlashcardReviewScreen>
             onTap: _flip,
             child: AnimatedBuilder(
               animation: _flipAnim,
-              builder: (_, __) {
+              builder: (_, _) {
                 final angle = _flipAnim.value * pi;
                 final showFront = angle < pi / 2;
                 return Transform(
@@ -431,9 +490,14 @@ class _FlashcardReviewScreenState extends State<_FlashcardReviewScreen>
                     padding: const EdgeInsets.all(28),
                     constraints: const BoxConstraints(minHeight: 220),
                     decoration: BoxDecoration(
-                      color: showFront ? theme.surface : const Color(0xFF2A1F08),
+                      color: showFront
+                          ? theme.surface
+                          : const Color(0xFF2A1F08),
                       borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: theme.primary.withValues(alpha: 0.25), width: 1.5),
+                      border: Border.all(
+                        color: theme.primary.withValues(alpha: 0.25),
+                        width: 1.5,
+                      ),
                     ),
                     child: Center(
                       child: Transform(
@@ -458,7 +522,10 @@ class _FlashcardReviewScreenState extends State<_FlashcardReviewScreen>
           ),
           if (!_showBack) ...[
             const SizedBox(height: 16),
-            Text('Tap to reveal', style: TextStyle(color: theme.muted, fontSize: 13)),
+            Text(
+              'Tap to reveal',
+              style: TextStyle(color: theme.muted, fontSize: 13),
+            ),
           ],
           const Spacer(),
           // Navigation buttons
@@ -471,8 +538,12 @@ class _FlashcardReviewScreenState extends State<_FlashcardReviewScreen>
                     onPressed: _index > 0 ? _prev : null,
                     style: OutlinedButton.styleFrom(
                       foregroundColor: theme.primary,
-                      side: BorderSide(color: theme.primary.withValues(alpha: 0.3)),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      side: BorderSide(
+                        color: theme.primary.withValues(alpha: 0.3),
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     child: const Text('← Back'),
                   ),
@@ -480,13 +551,19 @@ class _FlashcardReviewScreenState extends State<_FlashcardReviewScreen>
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: _showBack ? (isLast ? () => Navigator.of(context).pop() : _next) : _flip,
+                    onPressed: _showBack
+                        ? (isLast ? () => Navigator.of(context).pop() : _next)
+                        : _flip,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: theme.primary,
                       foregroundColor: theme.background,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
-                    child: Text(_showBack ? (isLast ? 'Done ✓' : 'Next →') : 'Reveal'),
+                    child: Text(
+                      _showBack ? (isLast ? 'Done ✓' : 'Next →') : 'Reveal',
+                    ),
                   ),
                 ),
               ],

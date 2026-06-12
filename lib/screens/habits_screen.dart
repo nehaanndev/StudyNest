@@ -41,8 +41,9 @@ class HabitsScreen extends StatelessWidget {
                       Text(
                         '${habits.length} habits tracked',
                         style: TextStyle(
-                          color:
-                              StudyNestScope.watch(context).selectedTheme.muted,
+                          color: StudyNestScope.watch(
+                            context,
+                          ).selectedTheme.muted,
                           fontSize: 13,
                         ),
                       ),
@@ -58,8 +59,7 @@ class HabitsScreen extends StatelessWidget {
             const EmptyState(
               icon: '🌱',
               title: 'No habits yet',
-              body:
-                  'Add your first habit and start building a daily routine.',
+              body: 'Add your first habit and start building a daily routine.',
             )
           else
             Column(
@@ -220,8 +220,10 @@ class _HabitCard extends StatelessWidget {
                     style: const TextStyle(fontWeight: FontWeight.w800),
                   ),
                 ),
-                Text('🔥 ${habit.streak}',
-                    style: const TextStyle(fontWeight: FontWeight.w700)),
+                Text(
+                  '🔥 ${habit.streak}',
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
               ],
             ),
             const SizedBox(height: 12),
@@ -233,8 +235,9 @@ class _HabitCard extends StatelessWidget {
                     label: dayLabels[i],
                     completed: habit.isCompletedOn(days[i]),
                     accentColor: theme.accent,
-                    onTap: () => StudyNestScope.read(context)
-                        .toggleHabitDay(habit.id, days[i]),
+                    onTap: () => StudyNestScope.read(
+                      context,
+                    ).toggleHabitDay(habit.id, days[i]),
                   ),
                 ],
               ],

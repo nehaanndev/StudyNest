@@ -89,7 +89,9 @@ class StudyStationBanner extends StatelessWidget {
                 bottom: 14,
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 12),
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
                     color: theme.surface.withValues(alpha: 0.90),
                     borderRadius: BorderRadius.circular(14),
