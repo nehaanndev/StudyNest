@@ -132,6 +132,7 @@ class _MovableDecorToken extends StatefulWidget {
 
 class _MovableDecorTokenState extends State<_MovableDecorToken> {
   late Offset _localPosition = widget.position;
+  static const double _minimumTouchTarget = 92;
 
   @override
   void didUpdateWidget(covariant _MovableDecorToken oldWidget) {
@@ -144,48 +145,67 @@ class _MovableDecorTokenState extends State<_MovableDecorToken> {
 
   @override
   Widget build(BuildContext context) {
-    final tokenSize = (widget.sceneSize.width * widget.item.baseScale * 1.08)
-        .clamp(68.0, 118.0);
-    final left = _localPosition.dx * widget.sceneSize.width - tokenSize / 2;
-    final top = _localPosition.dy * widget.sceneSize.height - tokenSize / 2;
+    final spriteSize = (widget.sceneSize.width * widget.item.baseScale * 1.14)
+        .clamp(58.0, 124.0);
+    final touchSize = (spriteSize + 28).clamp(_minimumTouchTarget, 148.0);
+    final left = _localPosition.dx * widget.sceneSize.width - touchSize / 2;
+    final top = _localPosition.dy * widget.sceneSize.height - touchSize / 2;
 
     return Positioned(
       left: left,
       top: top,
-      width: tokenSize,
-      height: tokenSize,
+      width: touchSize,
+      height: touchSize,
       child: GestureDetector(
         behavior: HitTestBehavior.translucent,
         onPanStart: (_) {
-          _dragging = true;
+          setState(() => _dragging = true);
           widget.onMoveStart();
         },
         onPanUpdate: (details) => _handleDrag(details.delta),
         onPanEnd: (_) {
-          _dragging = false;
+          setState(() => _dragging = false);
           widget.onMoved(_localPosition);
           widget.onMoveEnd();
         },
-        child: StudyDecorPreview(
-          item: widget.item,
-          size: tokenSize,
-          backgroundColor: Colors.transparent,
-          paddingFactor: 0,
+        onPanCancel: () {
+          setState(() => _dragging = false);
+          widget.onMoveEnd();
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 120),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: _dragging
+                ? widget.item.rarity.color.withValues(alpha: 0.16)
+                : Colors.transparent,
+            border: Border.all(
+              color: _dragging
+                  ? widget.item.rarity.color.withValues(alpha: 0.45)
+                  : Colors.transparent,
+              width: 1.5,
+            ),
+          ),
+          child: StudyDecorPreview(
+            item: widget.item,
+            size: spriteSize,
+            backgroundColor: Colors.transparent,
+            paddingFactor: 0,
+          ),
         ),
       ),
     );
   }
 
+  // Applies one drag delta while keeping the item inside its room zone.
   void _handleDrag(Offset delta) {
     setState(() {
       final next = Offset(
         _localPosition.dx + delta.dx / widget.sceneSize.width,
         _localPosition.dy + delta.dy / widget.sceneSize.height,
       );
-      _localPosition = Offset(
-        next.dx.clamp(0.08, 0.92),
-        next.dy.clamp(0.12, 0.88),
-      );
+      _localPosition = widget.item.zone.clampPosition(next);
     });
   }
 }

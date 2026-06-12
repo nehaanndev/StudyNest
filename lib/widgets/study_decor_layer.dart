@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 import '../app/study_nest_catalog.dart';
 
@@ -28,7 +27,7 @@ class StudyDecorPreview extends StatelessWidget {
         color: backgroundColor ?? Colors.white.withValues(alpha: 0.78),
         borderRadius: BorderRadius.circular(14),
       ),
-      child: _DecorAssetImage(assetPath: item.assetPath),
+      child: DecorSpriteImage(item: item),
     );
   }
 }
@@ -91,7 +90,7 @@ class _PositionedDecor extends StatelessWidget {
   // Builds one decor sprite at its normalized room position.
   @override
   Widget build(BuildContext context) {
-    final size = (sceneSize.width * item.baseScale * 0.82).clamp(44.0, 88.0);
+    final size = (sceneSize.width * item.baseScale * 0.86).clamp(42.0, 98.0);
     final left = position.dx * sceneSize.width - size / 2;
     final top = position.dy * sceneSize.height - size * 0.72;
 
@@ -100,22 +99,58 @@ class _PositionedDecor extends StatelessWidget {
       top: top,
       width: size,
       height: size,
-      child: _DecorAssetImage(assetPath: item.assetPath),
+      child: DecorSpriteImage(item: item),
     );
   }
 }
 
-class _DecorAssetImage extends StatelessWidget {
-  const _DecorAssetImage({required this.assetPath});
+class DecorSpriteImage extends StatelessWidget {
+  const DecorSpriteImage({super.key, required this.item});
 
-  final String assetPath;
+  final StudyDecorItem item;
 
-  // Builds either generated PNG decor or the older SVG fallback asset.
+  // Builds the decor PNG overlay with a graceful pre-asset fallback chip.
   @override
   Widget build(BuildContext context) {
-    if (assetPath.endsWith('.png')) {
-      return Image.asset(assetPath, fit: BoxFit.contain);
-    }
-    return SvgPicture.asset(assetPath, fit: BoxFit.contain);
+    return Image.asset(
+      item.assetPath,
+      fit: BoxFit.contain,
+      errorBuilder: (context, error, stackTrace) {
+        return _DecorFallbackChip(item: item);
+      },
+    );
+  }
+}
+
+class _DecorFallbackChip extends StatelessWidget {
+  const _DecorFallbackChip({required this.item});
+
+  final StudyDecorItem item;
+
+  // Builds the rarity-tinted stand-in shown until the PNG asset is bundled.
+  @override
+  Widget build(BuildContext context) {
+    final accent = item.rarity.color;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final side = constraints.biggest.shortestSide;
+        return Center(
+          child: Container(
+            width: side,
+            height: side,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: accent.withValues(alpha: 0.18),
+              border: Border.all(
+                color: accent.withValues(alpha: 0.55),
+                width: 2,
+              ),
+            ),
+            child: Icon(item.icon, size: side * 0.5, color: accent),
+          ),
+        );
+      },
+    );
   }
 }

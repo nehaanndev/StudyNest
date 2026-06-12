@@ -66,6 +66,11 @@ flutter:
   assets:
     - assets/decor/
     - assets/decor/generated/
+    - assets/decor/packs/cozyCafe/
+    - assets/decor/packs/rainyLibrary/
+    - assets/decor/packs/midnightCity/
+    - assets/decor/packs/gardenMatcha/
+    - assets/decor/packs/grandArchive/
     - assets/reference/
     - assets/reference/generated/
 

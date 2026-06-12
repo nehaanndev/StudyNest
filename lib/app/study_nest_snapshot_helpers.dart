@@ -67,7 +67,7 @@ StudyNestState _starterState(
       CoinTransaction(
         id: 'coins.seed.welcome',
         label: 'Welcome bonus',
-        amount: 40,
+        amount: 75,
         createdAt: now,
         sourceId: 'welcome',
       ),

@@ -22,4 +22,21 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets('Shop shows rarity shelves and collection progress', (
+    tester,
+  ) async {
+    // Builds the app and opens the shop through the More sheet.
+    await tester.pumpWidget(StudyNestApp(appState: StudyNestState.preview()));
+
+    await tester.tap(find.byIcon(Icons.grid_view_outlined));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Shop'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Cozy Cafe collection'), findsOneWidget);
+    expect(find.text('Common'), findsWidgets);
+    expect(find.text('Legendary'), findsWidgets);
+    expect(find.text('Jazz Radio Console'), findsOneWidget);
+  });
 }
