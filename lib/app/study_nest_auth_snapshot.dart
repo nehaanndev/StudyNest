@@ -11,6 +11,14 @@ Map<String, dynamic> safeStudyNestLocalSnapshot(
   return emptyStudyNestSnapshot();
 }
 
+// Reports whether a local snapshot already belongs to the active auth user.
+bool isStudyNestSnapshotOwnedBy(
+  Map<String, dynamic> localSnapshot,
+  String currentUid,
+) {
+  return localSnapshot['ownerUserId'] == currentUid;
+}
+
 // Compares two StudyNest snapshots using the canonical updatedAt field.
 bool isRemoteStudyNestSnapshotNewer({
   required Map<String, dynamic> localSnapshot,
@@ -60,6 +68,7 @@ Map<String, dynamic> mergeStudyNestSnapshots(
   Map<String, dynamic> remoteSnapshot,
 ) {
   final merged = {...remoteSnapshot};
+  final localHasContent = hasStudyNestUserContent(localSnapshot);
   for (final key in ['tasks', 'notes', 'events', 'coinLedger', 'habits']) {
     merged[key] = _mergeRecordLists(localSnapshot[key], remoteSnapshot[key]);
   }
@@ -75,15 +84,27 @@ Map<String, dynamic> mergeStudyNestSnapshots(
     localSnapshot['appliedDecorItemIds'],
     remoteSnapshot['appliedDecorItemIds'],
   );
-  merged['decorPositions'] = {
-    ...(remoteSnapshot['decorPositions'] as Map? ?? const {}),
-    ...(localSnapshot['decorPositions'] as Map? ?? const {}),
-  };
-  for (final key in ['selectedThemeId', 'studySpaceStyleId', 'sessionGoal']) {
-    if (localSnapshot[key] != null) merged[key] = localSnapshot[key];
+  if (localHasContent) {
+    merged['decorPositions'] = {
+      ...(remoteSnapshot['decorPositions'] as Map? ?? const {}),
+      ...(localSnapshot['decorPositions'] as Map? ?? const {}),
+    };
+    for (final key in ['selectedThemeId', 'studySpaceStyleId', 'sessionGoal']) {
+      if (localSnapshot[key] != null) merged[key] = localSnapshot[key];
+    }
   }
   merged['updatedAt'] = DateTime.now().toIso8601String();
   return merged;
+}
+
+// Reports whether a snapshot contains learner-created or earned study data.
+bool hasStudyNestUserContent(Map<String, dynamic> snapshot) {
+  for (final key in ['tasks', 'notes', 'events', 'coinLedger', 'habits']) {
+    if ((snapshot[key] as List<dynamic>? ?? const []).isNotEmpty) {
+      return true;
+    }
+  }
+  return (snapshot['ownedShopItemIds'] as List<dynamic>? ?? const []).isNotEmpty;
 }
 
 // Combines JSON records by id while keeping local anonymous records available.

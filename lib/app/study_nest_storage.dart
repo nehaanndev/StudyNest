@@ -14,7 +14,7 @@ abstract class StudyNestStorage {
   // Saves the complete StudyNest snapshot to the storage backend.
   Future<void> save(Map<String, dynamic> snapshot);
 
-  // Clears locally cached StudyNest snapshots for auth boundary changes.
+  // Clears only unscoped StudyNest snapshots for auth boundary changes.
   Future<void> clear();
 }
 
@@ -104,9 +104,7 @@ class SharedPreferencesStudyNestStorage implements StudyNestStorage {
   @override
   Future<void> clear() async {
     final keys = _preferences.getKeys().where((key) {
-      return key == storageKey ||
-          key == legacyStorageKey ||
-          key.startsWith('$storageKey.');
+      return key == storageKey || key == legacyStorageKey;
     }).toList();
     for (final key in keys) {
       logStudyNestAuthDebug('Clearing local cache', cacheKey: key);

@@ -67,11 +67,6 @@ extension StudyNestSyncState on StudyNestState {
     );
   }
 
-  // Creates a Firestore-ready dump of the current local phone snapshot.
-  Map<String, dynamic> createFirestoreRestoreDump() {
-    return _toSnapshot();
-  }
-
   // Pushes the latest local snapshot into the configured sync service.
   Future<void> _syncLatestSnapshot() async {
     final resolution = await _syncService.sync(_toSnapshot());

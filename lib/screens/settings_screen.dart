@@ -1,11 +1,7 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../app/study_nest_scope.dart';
 import '../app/study_nest_session.dart';
-import '../app/study_nest_state.dart';
 import '../theme/study_theme.dart';
 import 'auth/welcome_screen.dart';
 
@@ -98,12 +94,6 @@ class SettingsScreen extends StatelessWidget {
                     const SizedBox(height: 8),
                     _SectionHeader(title: 'Data'),
                     _SettingsTile(
-                      icon: Icons.copy_all_rounded,
-                      title: 'Copy Firestore Dump',
-                      subtitle: 'Copy local phone data as restore JSON',
-                      onTap: () => _copyFirestoreDump(context),
-                    ),
-                    _SettingsTile(
                       icon: Icons.delete_outline,
                       title: 'Reset Progress',
                       subtitle: 'Clear all tasks, notes, and coins',
@@ -146,24 +136,6 @@ class SettingsScreen extends StatelessWidget {
       case StudyNestSyncStatus.disabled:
         return 'Local only';
     }
-  }
-
-  // Copies the current local snapshot as JSON for manual Firestore restore.
-  Future<void> _copyFirestoreDump(BuildContext context) async {
-    final dump = const JsonEncoder.withIndent(
-      '  ',
-    ).convert(StudyNestScope.read(context).createFirestoreRestoreDump());
-    await Clipboard.setData(ClipboardData(text: dump));
-    if (!context.mounted) {
-      return;
-    }
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Firestore dump copied. Paste it into users/{uid}/studyNest/state.',
-        ),
-      ),
-    );
   }
 
   Future<void> _confirmSignOut(BuildContext context) async {
