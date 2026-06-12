@@ -448,6 +448,14 @@ class FirebaseStudyNestSyncService implements StudyNestSyncService {
         currentUser.uid,
         allowCrossUserLocalSnapshot,
       );
+      final localSnapshotBelongsToCurrentUser = isStudyNestSnapshotOwnedBy(
+        localSnapshot,
+        currentUser.uid,
+      );
+      final shouldKeepExistingRemote =
+          !allowCrossUserLocalSnapshot &&
+          !localSnapshotBelongsToCurrentUser &&
+          remoteSnapshot != null;
       final remoteIsNewer = isRemoteStudyNestSnapshotNewer(
         localSnapshot: safeLocalSnapshot,
         remoteSnapshot: remoteSnapshot,
@@ -455,6 +463,8 @@ class FirebaseStudyNestSyncService implements StudyNestSyncService {
       final resolvedSnapshot =
           allowCrossUserLocalSnapshot && remoteSnapshot != null
           ? mergeStudyNestSnapshots(safeLocalSnapshot, remoteSnapshot)
+          : shouldKeepExistingRemote
+          ? remoteSnapshot
           : remoteIsNewer && preferRemoteOnConflict && remoteSnapshot != null
           ? remoteSnapshot
           : safeLocalSnapshot;
@@ -463,9 +473,10 @@ class FirebaseStudyNestSyncService implements StudyNestSyncService {
         'ownerUserId': currentUser.uid,
       };
 
-      if (allowCrossUserLocalSnapshot ||
-          !remoteIsNewer ||
-          remoteSnapshot == null) {
+      if (!shouldKeepExistingRemote &&
+          (allowCrossUserLocalSnapshot ||
+              !remoteIsNewer ||
+              remoteSnapshot == null)) {
         await _saveRemoteSnapshot(currentUser.uid, ownedResolvedSnapshot);
       }
 
