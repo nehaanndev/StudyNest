@@ -93,10 +93,7 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
         fit: StackFit.expand,
         children: [
           // ── Full-screen room background ──────────────────────────────
-          Image.asset(
-            visuals.detailImagePath,
-            fit: BoxFit.cover,
-          ),
+          Image.asset(visuals.detailImagePath, fit: BoxFit.cover),
           // Dark overlay to make content readable
           Container(
             decoration: BoxDecoration(
@@ -133,11 +130,10 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
                             ),
                           ),
                           Text(
-                            _isBreak ? 'Break time — relax a little' : 'Deep work in focused sprints',
-                            style: TextStyle(
-                              color: theme.muted,
-                              fontSize: 13,
-                            ),
+                            _isBreak
+                                ? 'Break time — relax a little'
+                                : 'Deep work in focused sprints',
+                            style: TextStyle(color: theme.muted, fontSize: 13),
                           ),
                         ],
                       ),
@@ -150,8 +146,11 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
                 _GlassCard(
                   child: Row(
                     children: [
-                      Icon(Icons.format_quote_rounded,
-                          color: theme.accent, size: 20),
+                      Icon(
+                        Icons.format_quote_rounded,
+                        color: theme.accent,
+                        size: 20,
+                      ),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
@@ -201,31 +200,28 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
                             strokeWidth: 10,
                             strokeCap: StrokeCap.round,
                             color: ringColor,
-                            backgroundColor:
-                                Colors.white.withValues(alpha: 0.08),
+                            backgroundColor: Colors.white.withValues(
+                              alpha: 0.08,
+                            ),
                           ),
                         ),
                         // Glass inner circle
                         ClipOval(
                           child: BackdropFilter(
-                            filter:
-                                ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                            filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
                             child: Container(
                               width: 210,
                               height: 210,
                               decoration: BoxDecoration(
-                                color: theme.surface
-                                    .withValues(alpha: 0.55),
+                                color: theme.surface.withValues(alpha: 0.55),
                                 shape: BoxShape.circle,
                                 border: Border.all(
-                                  color:
-                                      ringColor.withValues(alpha: 0.35),
+                                  color: ringColor.withValues(alpha: 0.35),
                                   width: 1.5,
                                 ),
                               ),
                               child: Column(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.center,
+                                mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Text(
                                     _formatted,
@@ -238,8 +234,7 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
                                   ),
                                   const SizedBox(height: 4),
                                   Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.center,
+                                    mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
                                       Container(
                                         width: 8,
@@ -251,9 +246,7 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
                                       ),
                                       const SizedBox(width: 6),
                                       Text(
-                                        _isBreak
-                                            ? 'Break Time'
-                                            : 'Focus Time',
+                                        _isBreak ? 'Break Time' : 'Focus Time',
                                         style: TextStyle(
                                           color: ringColor,
                                           fontSize: 13,
@@ -311,8 +304,7 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
                       onTap: _startStop,
                       child: ClipOval(
                         child: BackdropFilter(
-                          filter:
-                              ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                           child: Container(
                             width: 80,
                             height: 80,
@@ -325,8 +317,7 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color:
-                                      theme.accent.withValues(alpha: 0.30),
+                                  color: theme.accent.withValues(alpha: 0.30),
                                   blurRadius: 20,
                                   spreadRadius: 2,
                                 ),
@@ -356,14 +347,16 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
                 _GlassCard(
                   child: Row(
                     children: [
-                      Icon(Icons.savings_outlined,
-                          color: theme.accent, size: 20),
+                      Icon(
+                        Icons.savings_outlined,
+                        color: theme.accent,
+                        size: 20,
+                      ),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
                           'Stay consistent, results will follow.',
-                          style: TextStyle(
-                              color: theme.text, fontSize: 13),
+                          style: TextStyle(color: theme.text, fontSize: 13),
                         ),
                       ),
                     ],
@@ -396,9 +389,7 @@ class _GlassCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: theme.surface.withValues(alpha: 0.55),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: theme.accent.withValues(alpha: 0.20),
-            ),
+            border: Border.all(color: theme.accent.withValues(alpha: 0.20)),
           ),
           child: child,
         ),
@@ -432,9 +423,7 @@ class _ControlButton extends StatelessWidget {
           decoration: BoxDecoration(
             color: theme.surface.withValues(alpha: 0.45),
             shape: BoxShape.circle,
-            border: Border.all(
-              color: theme.accent.withValues(alpha: 0.22),
-            ),
+            border: Border.all(color: theme.accent.withValues(alpha: 0.22)),
           ),
           child: IconButton(
             icon: Icon(icon, color: theme.accent, size: size * 0.44),

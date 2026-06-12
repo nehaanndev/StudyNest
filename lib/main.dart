@@ -33,6 +33,7 @@ class StudyNestApp extends StatelessWidget {
         return StudyNestScope(
           state: appState,
           child: MaterialApp(
+            key: ValueKey(appState.userId ?? 'local-user'),
             title: 'StudyNest',
             debugShowCheckedModeBanner: false,
             theme: appState.selectedTheme.toThemeData(),
@@ -65,11 +66,11 @@ class _MainScreenState extends State<MainScreen> {
 
     // 5 primary screens in the IndexedStack — More opens a sheet, not a screen.
     final screens = [
-      HomeScreen(onNavigate: _navigate),  // 0
-      const TasksScreen(),                // 1
-      const PomodoroScreen(),             // 2
-      const PlannerScreen(),              // 3
-      const NotesScreen(),                // 4
+      HomeScreen(onNavigate: _navigate), // 0
+      const TasksScreen(), // 1
+      const PomodoroScreen(), // 2
+      const PlannerScreen(), // 3
+      const NotesScreen(), // 4
     ];
 
     return Scaffold(
@@ -103,7 +104,8 @@ class _MainScreenState extends State<MainScreen> {
                         setState(() => _index = i);
                       }
                     },
-                    labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+                    labelBehavior:
+                        NavigationDestinationLabelBehavior.alwaysShow,
                     destinations: const [
                       NavigationDestination(
                         icon: Icon(Icons.home_outlined),
@@ -163,7 +165,8 @@ class _MainScreenState extends State<MainScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 36, height: 4,
+              width: 36,
+              height: 4,
               decoration: BoxDecoration(
                 color: theme.muted.withValues(alpha: 0.4),
                 borderRadius: BorderRadius.circular(2),
@@ -213,7 +216,11 @@ class _MainScreenState extends State<MainScreen> {
 
 // Tile used inside the More bottom sheet.
 class _MoreTile extends StatelessWidget {
-  const _MoreTile({required this.emoji, required this.label, required this.onTap});
+  const _MoreTile({
+    required this.emoji,
+    required this.label,
+    required this.onTap,
+  });
 
   final String emoji;
   final String label;
@@ -239,7 +246,11 @@ class _MoreTile extends StatelessWidget {
               const SizedBox(height: 6),
               Text(
                 label,
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: theme.text),
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: theme.text,
+                ),
               ),
             ],
           ),

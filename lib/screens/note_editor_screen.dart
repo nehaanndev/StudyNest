@@ -9,7 +9,16 @@ import '../models/study_models.dart';
 const _kDefaultFolders = ['School', 'Personal', 'Projects', 'Robotics', 'SAT'];
 
 // Predefined tag suggestions shown in the tag picker.
-const _kTagSuggestions = ['school', 'math', 'apes', 'robotics', 'personal', 'homework', 'tests', 'reading'];
+const _kTagSuggestions = [
+  'school',
+  'math',
+  'apes',
+  'robotics',
+  'personal',
+  'homework',
+  'tests',
+  'reading',
+];
 
 // Note color options mapped to display names.
 const _kNoteColors = ['honey', 'matcha', 'rose', 'ink'];
@@ -86,7 +95,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
       if (result.applied && mounted) {
         // Capture the id so subsequent saves update the same note.
         final created = state.notes.firstWhere(
-          (n) => n.title == (title.isEmpty ? 'Untitled' : title) && n.body == body,
+          (n) =>
+              n.title == (title.isEmpty ? 'Untitled' : title) && n.body == body,
           orElse: () => state.notes.first,
         );
         _savedNoteId = created.id;
@@ -113,7 +123,10 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
         title: const Text('Delete note?'),
         content: const Text('This cannot be undone.'),
         actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
@@ -143,7 +156,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     final newText = text.replaceRange(sel.start, sel.end, replacement);
     _bodyCtrl.value = TextEditingValue(
       text: newText,
-      selection: TextSelection.collapsed(offset: sel.start + replacement.length),
+      selection: TextSelection.collapsed(
+        offset: sel.start + replacement.length,
+      ),
     );
   }
 
@@ -152,7 +167,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     final text = _bodyCtrl.text;
     final offset = _bodyCtrl.selection.baseOffset.clamp(0, text.length);
     final lineStart = text.lastIndexOf('\n', offset - 1) + 1;
-    final newText = text.substring(0, lineStart) + prefix + text.substring(lineStart);
+    final newText =
+        text.substring(0, lineStart) + prefix + text.substring(lineStart);
     _bodyCtrl.value = TextEditingValue(
       text: newText,
       selection: TextSelection.collapsed(offset: offset + prefix.length),
@@ -193,7 +209,11 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = StudyNestScope.watch(context).selectedTheme;
-    final cardColor = _noteCardColor(_colorName, theme.isDark, theme.surfaceAlt);
+    final cardColor = _noteCardColor(
+      _colorName,
+      theme.isDark,
+      theme.surfaceAlt,
+    );
 
     return Scaffold(
       backgroundColor: theme.background,
@@ -206,7 +226,10 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
           onPressed: () async {
             _autoSaveTimer?.cancel();
             await _save();
-            if (mounted) Navigator.of(context).pop();
+            if (!context.mounted) {
+              return;
+            }
+            Navigator.of(context).pop();
           },
         ),
         title: _saved
@@ -220,22 +243,34 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
               setState(() => _colorName = color);
               _onChanged();
             },
-            itemBuilder: (_) => _kNoteColors.map((c) => PopupMenuItem(
-              value: c,
-              child: Row(children: [
-                Container(
-                  width: 16,
-                  height: 16,
-                  decoration: BoxDecoration(
-                    color: _noteCardColor(c, theme.isDark, theme.surfaceAlt),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: theme.primary.withValues(alpha: 0.3)),
+            itemBuilder: (_) => _kNoteColors
+                .map(
+                  (c) => PopupMenuItem(
+                    value: c,
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 16,
+                          height: 16,
+                          decoration: BoxDecoration(
+                            color: _noteCardColor(
+                              c,
+                              theme.isDark,
+                              theme.surfaceAlt,
+                            ),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: theme.primary.withValues(alpha: 0.3),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(c, style: TextStyle(color: theme.text)),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(width: 10),
-                Text(c, style: TextStyle(color: theme.text)),
-              ]),
-            )).toList(),
+                )
+                .toList(),
           ),
           if (_savedNoteId != null)
             IconButton(
@@ -261,7 +296,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w900,
-                        color: theme.isDark ? theme.text : const Color(0xFF1A110A),
+                        color: theme.isDark
+                            ? theme.text
+                            : const Color(0xFF1A110A),
                         decoration: TextDecoration.none,
                       ),
                       decoration: const InputDecoration(
@@ -284,7 +321,10 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                         GestureDetector(
                           onTap: _showFolderPicker,
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
                               color: theme.primary.withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(8),
@@ -292,11 +332,19 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.folder_outlined, size: 14, color: theme.primary),
+                                Icon(
+                                  Icons.folder_outlined,
+                                  size: 14,
+                                  color: theme.primary,
+                                ),
                                 const SizedBox(width: 4),
                                 Text(
                                   _folder.isEmpty ? 'No folder' : _folder,
-                                  style: TextStyle(fontSize: 12, color: theme.primary, fontWeight: FontWeight.w600),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: theme.primary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                               ],
                             ),
@@ -312,16 +360,31 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                                 children: [
                                   if (_tags.isEmpty)
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 4,
+                                      ),
                                       decoration: BoxDecoration(
-                                        color: theme.primary.withValues(alpha: 0.07),
+                                        color: theme.primary.withValues(
+                                          alpha: 0.07,
+                                        ),
                                         borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: Row(
                                         children: [
-                                          Icon(Icons.sell_outlined, size: 13, color: theme.muted),
+                                          Icon(
+                                            Icons.sell_outlined,
+                                            size: 13,
+                                            color: theme.muted,
+                                          ),
                                           const SizedBox(width: 4),
-                                          Text('Add tags', style: TextStyle(fontSize: 12, color: theme.muted)),
+                                          Text(
+                                            'Add tags',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: theme.muted,
+                                            ),
+                                          ),
                                         ],
                                       ),
                                     )
@@ -329,12 +392,26 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                                     for (final tag in _tags) ...[
                                       Container(
                                         margin: const EdgeInsets.only(right: 6),
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                        decoration: BoxDecoration(
-                                          color: theme.primary.withValues(alpha: 0.12),
-                                          borderRadius: BorderRadius.circular(8),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 4,
                                         ),
-                                        child: Text(tag, style: TextStyle(fontSize: 11, color: theme.primary, fontWeight: FontWeight.w600)),
+                                        decoration: BoxDecoration(
+                                          color: theme.primary.withValues(
+                                            alpha: 0.12,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          tag,
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: theme.primary,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
                                       ),
                                     ],
                                 ],
@@ -345,7 +422,10 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                       ],
                     ),
                   ),
-                  Divider(color: theme.primary.withValues(alpha: 0.12), height: 1),
+                  Divider(
+                    color: theme.primary.withValues(alpha: 0.12),
+                    height: 1,
+                  ),
                   // Body field
                   Expanded(
                     child: Padding(
@@ -355,7 +435,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                         style: TextStyle(
                           fontSize: 15,
                           height: 1.6,
-                          color: theme.isDark ? theme.text : const Color(0xFF1A110A),
+                          color: theme.isDark
+                              ? theme.text
+                              : const Color(0xFF1A110A),
                           decoration: TextDecoration.none,
                         ),
                         decoration: const InputDecoration(
@@ -441,10 +523,22 @@ class _FormatToolbar extends StatelessWidget {
       child: Row(
         children: [
           _ToolbarBtn(icon: Icons.format_bold, label: 'Bold', onTap: onBold),
-          _ToolbarBtn(icon: Icons.format_italic, label: 'Italic', onTap: onItalic),
+          _ToolbarBtn(
+            icon: Icons.format_italic,
+            label: 'Italic',
+            onTap: onItalic,
+          ),
           _ToolbarBtn(icon: Icons.title, label: 'Heading', onTap: onHeading),
-          _ToolbarBtn(icon: Icons.format_list_bulleted, label: 'Bullet', onTap: onBullet),
-          _ToolbarBtn(icon: Icons.checklist, label: 'Checklist', onTap: onChecklist),
+          _ToolbarBtn(
+            icon: Icons.format_list_bulleted,
+            label: 'Bullet',
+            onTap: onBullet,
+          ),
+          _ToolbarBtn(
+            icon: Icons.checklist,
+            label: 'Checklist',
+            onTap: onChecklist,
+          ),
         ],
       ),
     );
@@ -452,7 +546,11 @@ class _FormatToolbar extends StatelessWidget {
 }
 
 class _ToolbarBtn extends StatelessWidget {
-  const _ToolbarBtn({required this.icon, required this.label, required this.onTap});
+  const _ToolbarBtn({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
   final IconData icon;
   final String label;
   final VoidCallback onTap;
@@ -471,7 +569,14 @@ class _ToolbarBtn extends StatelessWidget {
             children: [
               Icon(icon, size: 20, color: theme.primary),
               const SizedBox(height: 2),
-              Text(label, style: TextStyle(fontSize: 9, color: theme.muted, fontWeight: FontWeight.w600)),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 9,
+                  color: theme.muted,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ],
           ),
         ),
@@ -536,7 +641,12 @@ class _TagPickerSheetState extends State<_TagPickerSheet> {
         color: theme.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      padding: EdgeInsets.fromLTRB(20, 12, 20, MediaQuery.of(context).viewInsets.bottom + 20),
+      padding: EdgeInsets.fromLTRB(
+        20,
+        12,
+        20,
+        MediaQuery.of(context).viewInsets.bottom + 20,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -552,7 +662,14 @@ class _TagPickerSheetState extends State<_TagPickerSheet> {
             ),
           ),
           const SizedBox(height: 16),
-          Text('Tags', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: theme.text)),
+          Text(
+            'Tags',
+            style: TextStyle(
+              fontWeight: FontWeight.w900,
+              fontSize: 16,
+              color: theme.text,
+            ),
+          ),
           const SizedBox(height: 12),
           Wrap(
             spacing: 8,
@@ -562,14 +679,19 @@ class _TagPickerSheetState extends State<_TagPickerSheet> {
               return GestureDetector(
                 onTap: () => _toggle(tag),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: selected
                         ? theme.primary.withValues(alpha: 0.2)
                         : theme.primary.withValues(alpha: 0.07),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: selected ? theme.primary : theme.primary.withValues(alpha: 0.2),
+                      color: selected
+                          ? theme.primary
+                          : theme.primary.withValues(alpha: 0.2),
                     ),
                   ),
                   child: Text(
@@ -604,8 +726,13 @@ class _TagPickerSheetState extends State<_TagPickerSheet> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: theme.primary,
                   foregroundColor: theme.background,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
                 child: const Text('Add'),
               ),
@@ -617,11 +744,16 @@ class _TagPickerSheetState extends State<_TagPickerSheet> {
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: _tags.where((t) => !_kTagSuggestions.contains(t)).map((tag) {
+              children: _tags.where((t) => !_kTagSuggestions.contains(t)).map((
+                tag,
+              ) {
                 return GestureDetector(
                   onTap: () => _toggle(tag),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: theme.primary.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(20),
@@ -630,7 +762,14 @@ class _TagPickerSheetState extends State<_TagPickerSheet> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(tag, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: theme.primary)),
+                        Text(
+                          tag,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: theme.primary,
+                          ),
+                        ),
                         const SizedBox(width: 4),
                         Icon(Icons.close, size: 12, color: theme.primary),
                       ],
@@ -676,22 +815,43 @@ class _FolderPickerSheet extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          Text('Folder', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: theme.text)),
+          Text(
+            'Folder',
+            style: TextStyle(
+              fontWeight: FontWeight.w900,
+              fontSize: 16,
+              color: theme.text,
+            ),
+          ),
           const SizedBox(height: 12),
           ListTile(
             leading: Icon(Icons.folder_off_outlined, color: theme.muted),
             title: Text('No folder', style: TextStyle(color: theme.text)),
-            trailing: selected.isEmpty ? Icon(Icons.check, color: theme.primary) : null,
-            onTap: () { onChanged(''); Navigator.of(context).pop(); },
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            trailing: selected.isEmpty
+                ? Icon(Icons.check, color: theme.primary)
+                : null,
+            onTap: () {
+              onChanged('');
+              Navigator.of(context).pop();
+            },
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
           for (final folder in _kDefaultFolders)
             ListTile(
               leading: Icon(Icons.folder_outlined, color: theme.primary),
               title: Text(folder, style: TextStyle(color: theme.text)),
-              trailing: selected == folder ? Icon(Icons.check, color: theme.primary) : null,
-              onTap: () { onChanged(folder); Navigator.of(context).pop(); },
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              trailing: selected == folder
+                  ? Icon(Icons.check, color: theme.primary)
+                  : null,
+              onTap: () {
+                onChanged(folder);
+                Navigator.of(context).pop();
+              },
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
         ],
       ),

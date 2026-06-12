@@ -9,16 +9,26 @@ import '../widgets/study_station_banner.dart';
 
 // Category colours shared across the planner.
 Color categoryColor(String category) => switch (category) {
-      'Study' => const Color(0xFF5A9E6F),
-      'Review' => const Color(0xFF5581C4),
-      'Break' => const Color(0xFFD4836B),
-      'Plan' => const Color(0xFF9B6EC4),
-      _ => const Color(0xFF888888),
-    };
+  'Study' => const Color(0xFF5A9E6F),
+  'Review' => const Color(0xFF5581C4),
+  'Break' => const Color(0xFFD4836B),
+  'Plan' => const Color(0xFF9B6EC4),
+  _ => const Color(0xFF888888),
+};
 
 const _months = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
 ];
 const _dayHeaders = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
@@ -33,14 +43,15 @@ class PlannerScreen extends StatefulWidget {
 
 class _PlannerScreenState extends State<PlannerScreen> {
   DateTime _selectedDay = DateTime.now();
-  late DateTime _visibleMonth =
-      DateTime(_selectedDay.year, _selectedDay.month);
+  late DateTime _visibleMonth = DateTime(_selectedDay.year, _selectedDay.month);
 
   void _goToPreviousMonth() => setState(
-      () => _visibleMonth = DateTime(_visibleMonth.year, _visibleMonth.month - 1));
+    () => _visibleMonth = DateTime(_visibleMonth.year, _visibleMonth.month - 1),
+  );
 
   void _goToNextMonth() => setState(
-      () => _visibleMonth = DateTime(_visibleMonth.year, _visibleMonth.month + 1));
+    () => _visibleMonth = DateTime(_visibleMonth.year, _visibleMonth.month + 1),
+  );
 
   void _goToToday() {
     final today = DateTime.now();
@@ -111,12 +122,15 @@ class _PlannerScreenState extends State<PlannerScreen> {
     );
   }
 
-  Future<void> _showEventDialog(BuildContext context,
-      {PlannerEvent? event}) async {
+  Future<void> _showEventDialog(
+    BuildContext context, {
+    PlannerEvent? event,
+  }) async {
     final state = StudyNestScope.read(context);
     final titleController = TextEditingController(text: event?.title ?? '');
     var category = event?.category ?? 'Study';
-    var startsAt = event?.startsAt ??
+    var startsAt =
+        event?.startsAt ??
         DateTime(
           _selectedDay.year,
           _selectedDay.month,
@@ -162,17 +176,28 @@ class _PlannerScreenState extends State<PlannerScreen> {
                   onTap: () async {
                     final d = await showDatePicker(
                       context: ctx,
-                      firstDate:
-                          DateTime.now().subtract(const Duration(days: 365)),
+                      firstDate: DateTime.now().subtract(
+                        const Duration(days: 365),
+                      ),
                       lastDate: DateTime.now().add(const Duration(days: 730)),
                       initialDate: startsAt,
                     );
                     if (d == null) return;
                     set(() {
-                      startsAt = DateTime(d.year, d.month, d.day,
-                          startsAt.hour, startsAt.minute);
-                      endsAt = DateTime(d.year, d.month, d.day, endsAt.hour,
-                          endsAt.minute);
+                      startsAt = DateTime(
+                        d.year,
+                        d.month,
+                        d.day,
+                        startsAt.hour,
+                        startsAt.minute,
+                      );
+                      endsAt = DateTime(
+                        d.year,
+                        d.month,
+                        d.day,
+                        endsAt.hour,
+                        endsAt.minute,
+                      );
                       if (!endsAt.isAfter(startsAt)) {
                         endsAt = startsAt.add(const Duration(hours: 1));
                       }
@@ -197,10 +222,20 @@ class _PlannerScreenState extends State<PlannerScreen> {
                     );
                     if (pe == null) return;
                     set(() {
-                      startsAt = DateTime(startsAt.year, startsAt.month,
-                          startsAt.day, ps.hour, ps.minute);
-                      endsAt = DateTime(endsAt.year, endsAt.month, endsAt.day,
-                          pe.hour, pe.minute);
+                      startsAt = DateTime(
+                        startsAt.year,
+                        startsAt.month,
+                        startsAt.day,
+                        ps.hour,
+                        ps.minute,
+                      );
+                      endsAt = DateTime(
+                        endsAt.year,
+                        endsAt.month,
+                        endsAt.day,
+                        pe.hour,
+                        pe.minute,
+                      );
                       if (!endsAt.isAfter(startsAt)) {
                         endsAt = startsAt.add(const Duration(hours: 1));
                       }
@@ -224,20 +259,23 @@ class _PlannerScreenState extends State<PlannerScreen> {
                         title: title,
                         startsAt: startsAt,
                         endsAt: endsAt,
-                        category: category)
+                        category: category,
+                      )
                     : null;
                 if (event != null) {
                   await state.updatePlannerEvent(
-                      eventId: event.id,
-                      title: title,
-                      startsAt: startsAt,
-                      endsAt: endsAt,
-                      category: category);
+                    eventId: event.id,
+                    title: title,
+                    startsAt: startsAt,
+                    endsAt: endsAt,
+                    category: category,
+                  );
                 }
                 if (!ctx.mounted) return;
                 final msg = result?.message ?? 'Block updated.';
-                ScaffoldMessenger.of(ctx)
-                    .showSnackBar(SnackBar(content: Text(msg)));
+                ScaffoldMessenger.of(
+                  ctx,
+                ).showSnackBar(SnackBar(content: Text(msg)));
                 if (result != null && !result.applied) return;
                 if (ctx.mounted) Navigator.of(ctx).pop();
               },
@@ -287,10 +325,7 @@ class _MonthHeader extends StatelessWidget {
             ),
           ),
         ),
-        TextButton(
-          onPressed: onToday,
-          child: const Text('Today'),
-        ),
+        TextButton(onPressed: onToday, child: const Text('Today')),
         IconButton(
           visualDensity: VisualDensity.compact,
           onPressed: onNext,
@@ -327,8 +362,9 @@ class _MonthGrid extends StatelessWidget {
 
     // First Monday on or before the 1st of the month
     final firstOfMonth = DateTime(visibleMonth.year, visibleMonth.month);
-    final gridStart =
-        firstOfMonth.subtract(Duration(days: firstOfMonth.weekday - 1));
+    final gridStart = firstOfMonth.subtract(
+      Duration(days: firstOfMonth.weekday - 1),
+    );
 
     return CozyCard(
       padding: const EdgeInsets.fromLTRB(6, 10, 6, 6),
@@ -367,13 +403,16 @@ class _MonthGrid extends StatelessWidget {
                       visibleMonth: visibleMonth,
                       selectedDay: selectedDay,
                       today: today,
-                      events: events
-                          .where((e) => isSameCalendarDay(
-                              e.startsAt,
-                              gridStart.add(Duration(days: week * 7 + d))))
-                          .toList()
-                        ..sort((a, b) =>
-                            a.startsAt.compareTo(b.startsAt)),
+                      events:
+                          events
+                              .where(
+                                (e) => isSameCalendarDay(
+                                  e.startsAt,
+                                  gridStart.add(Duration(days: week * 7 + d)),
+                                ),
+                              )
+                              .toList()
+                            ..sort((a, b) => a.startsAt.compareTo(b.startsAt)),
                       theme: theme,
                       onTap: onDayTapped,
                     ),
@@ -441,8 +480,8 @@ class _DayCell extends StatelessWidget {
                   color: _isSelected
                       ? theme.accent
                       : _isToday
-                          ? theme.accent.withValues(alpha: 0.20)
-                          : Colors.transparent,
+                      ? theme.accent.withValues(alpha: 0.20)
+                      : Colors.transparent,
                   shape: BoxShape.circle,
                 ),
                 child: Center(
@@ -454,8 +493,8 @@ class _DayCell extends StatelessWidget {
                       color: _isSelected
                           ? Colors.white
                           : _inMonth
-                              ? theme.text
-                              : theme.muted.withValues(alpha: 0.45),
+                          ? theme.text
+                          : theme.muted.withValues(alpha: 0.45),
                     ),
                   ),
                 ),
@@ -463,8 +502,7 @@ class _DayCell extends StatelessWidget {
             ),
             const SizedBox(height: 2),
             // Event chips
-            for (final event in visible)
-              _EventChip(event: event),
+            for (final event in visible) _EventChip(event: event),
             if (overflow > 0)
               Padding(
                 padding: const EdgeInsets.only(top: 1, left: 2),
@@ -557,10 +595,9 @@ class _AgendaSection extends StatelessWidget {
             Expanded(
               child: Text(
                 compactDate(day),
-                style: Theme.of(context)
-                    .textTheme
-                    .titleMedium
-                    ?.copyWith(fontWeight: FontWeight.w900),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
               ),
             ),
             Text(
@@ -658,9 +695,10 @@ class _AgendaRow extends StatelessWidget {
                     Text(
                       event.title,
                       style: TextStyle(
-                          fontWeight: FontWeight.w900,
-                          fontSize: 15,
-                          color: theme.text),
+                        fontWeight: FontWeight.w900,
+                        fontSize: 15,
+                        color: theme.text,
+                      ),
                     ),
                     const SizedBox(height: 3),
                     Text(
@@ -681,15 +719,17 @@ class _AgendaRow extends StatelessWidget {
                   tooltip: 'Edit',
                   visualDensity: VisualDensity.compact,
                   onPressed: onEdit,
-                  icon: Icon(Icons.edit_outlined,
-                      size: 18, color: theme.muted),
+                  icon: Icon(Icons.edit_outlined, size: 18, color: theme.muted),
                 ),
                 IconButton(
                   tooltip: 'Delete',
                   visualDensity: VisualDensity.compact,
                   onPressed: onDelete,
-                  icon: Icon(Icons.delete_outline,
-                      size: 18, color: theme.muted),
+                  icon: Icon(
+                    Icons.delete_outline,
+                    size: 18,
+                    color: theme.muted,
+                  ),
                 ),
               ],
             ),

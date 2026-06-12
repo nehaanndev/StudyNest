@@ -386,32 +386,31 @@ class StudyHabit {
       completions.any((c) => isSameDay(DateTime.parse(c), day));
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'emoji': emoji,
-        'streak': streak,
-        'completions': completions,
-      };
+    'id': id,
+    'name': name,
+    'emoji': emoji,
+    'streak': streak,
+    'completions': completions,
+  };
 
   factory StudyHabit.fromJson(Map<String, dynamic> j) => StudyHabit(
-        id: j['id'] as String,
-        name: j['name'] as String,
-        emoji: j['emoji'] as String? ?? '✅',
-        streak: j['streak'] as int? ?? 0,
-        completions: (j['completions'] as List?)?.cast<String>() ?? [],
-      );
+    id: j['id'] as String,
+    name: j['name'] as String,
+    emoji: j['emoji'] as String? ?? '✅',
+    streak: j['streak'] as int? ?? 0,
+    completions: (j['completions'] as List?)?.cast<String>() ?? [],
+  );
 
   StudyHabit copyWith({
     String? name,
     String? emoji,
     int? streak,
     List<String>? completions,
-  }) =>
-      StudyHabit(
-        id: id,
-        name: name ?? this.name,
-        emoji: emoji ?? this.emoji,
-        streak: streak ?? this.streak,
-        completions: completions ?? this.completions,
-      );
+  }) => StudyHabit(
+    id: id,
+    name: name ?? this.name,
+    emoji: emoji ?? this.emoji,
+    streak: streak ?? this.streak,
+    completions: completions ?? this.completions,
+  );
 }

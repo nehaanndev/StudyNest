@@ -116,7 +116,11 @@ class _QuizScreenState extends State<QuizScreen> {
     _saveTimer?.cancel();
     await _save();
     if (!mounted) return;
-    final valid = _questions.where((q) => q.question.isNotEmpty && q.choices.any((c) => c.isNotEmpty)).toList();
+    final valid = _questions
+        .where(
+          (q) => q.question.isNotEmpty && q.choices.any((c) => c.isNotEmpty),
+        )
+        .toList();
     if (valid.isEmpty) return;
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => _QuizRunnerScreen(questions: valid)),
@@ -138,18 +142,33 @@ class _QuizScreenState extends State<QuizScreen> {
           onPressed: () async {
             _saveTimer?.cancel();
             await _save();
-            if (mounted) Navigator.of(context).pop();
+            if (!context.mounted) {
+              return;
+            }
+            Navigator.of(context).pop();
           },
         ),
-        title: Row(children: [
-          const Text('❓ ', style: TextStyle(fontSize: 18)),
-          Text('Quiz', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: theme.text)),
-        ]),
+        title: Row(
+          children: [
+            const Text('❓ ', style: TextStyle(fontSize: 18)),
+            Text(
+              'Quiz',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: theme.text,
+              ),
+            ),
+          ],
+        ),
         actions: [
           if (_saved)
             Padding(
               padding: const EdgeInsets.only(right: 8),
-              child: Text('Saved', style: TextStyle(fontSize: 13, color: theme.muted)),
+              child: Text(
+                'Saved',
+                style: TextStyle(fontSize: 13, color: theme.muted),
+              ),
             ),
           if (_questions.any((q) => q.question.isNotEmpty))
             Padding(
@@ -159,7 +178,9 @@ class _QuizScreenState extends State<QuizScreen> {
                 style: TextButton.styleFrom(
                   backgroundColor: theme.primary.withValues(alpha: 0.12),
                   foregroundColor: theme.primary,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
                 child: const Text('Take Quiz'),
               ),
@@ -171,7 +192,12 @@ class _QuizScreenState extends State<QuizScreen> {
         children: [
           TextField(
             controller: _titleCtrl,
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: theme.text, decoration: TextDecoration.none),
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w900,
+              color: theme.text,
+              decoration: TextDecoration.none,
+            ),
             decoration: InputDecoration(
               hintText: 'Quiz title…',
               border: InputBorder.none,
@@ -181,8 +207,10 @@ class _QuizScreenState extends State<QuizScreen> {
               hintStyle: TextStyle(color: theme.muted),
             ),
           ),
-          Text('${_questions.length} question${_questions.length == 1 ? '' : 's'}',
-              style: TextStyle(fontSize: 13, color: theme.muted)),
+          Text(
+            '${_questions.length} question${_questions.length == 1 ? '' : 's'}',
+            style: TextStyle(fontSize: 13, color: theme.muted),
+          ),
           const SizedBox(height: 14),
           for (int i = 0; i < _questions.length; i++)
             _QuestionEditor(
@@ -199,7 +227,9 @@ class _QuizScreenState extends State<QuizScreen> {
             style: OutlinedButton.styleFrom(
               foregroundColor: theme.primary,
               side: BorderSide(color: theme.primary.withValues(alpha: 0.4)),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
           ),
         ],
@@ -234,18 +264,28 @@ class _QuestionEditorState extends State<_QuestionEditor> {
   void initState() {
     super.initState();
     _qCtrl = TextEditingController(text: widget.question.question);
-    _choiceCtrl = List.generate(4, (i) =>
-      TextEditingController(text: widget.question.choices.length > i ? widget.question.choices[i] : ''));
+    _choiceCtrl = List.generate(
+      4,
+      (i) => TextEditingController(
+        text: widget.question.choices.length > i
+            ? widget.question.choices[i]
+            : '',
+      ),
+    );
     _qCtrl.addListener(_notify);
-    for (final c in _choiceCtrl) c.addListener(_notify);
+    for (final c in _choiceCtrl) {
+      c.addListener(_notify);
+    }
   }
 
   // Emits updated question to parent.
   void _notify() {
-    widget.onChanged(widget.question.copyWith(
-      question: _qCtrl.text,
-      choices: _choiceCtrl.map((c) => c.text).toList(),
-    ));
+    widget.onChanged(
+      widget.question.copyWith(
+        question: _qCtrl.text,
+        choices: _choiceCtrl.map((c) => c.text).toList(),
+      ),
+    );
   }
 
   // Sets the correct answer index.
@@ -256,7 +296,9 @@ class _QuestionEditorState extends State<_QuestionEditor> {
   @override
   void dispose() {
     _qCtrl.dispose();
-    for (final c in _choiceCtrl) c.dispose();
+    for (final c in _choiceCtrl) {
+      c.dispose();
+    }
     super.dispose();
   }
 
@@ -279,11 +321,22 @@ class _QuestionEditorState extends State<_QuestionEditor> {
             padding: const EdgeInsets.fromLTRB(16, 12, 8, 0),
             child: Row(
               children: [
-                Text('Q${widget.index + 1}', style: TextStyle(fontSize: 11, color: theme.muted, fontWeight: FontWeight.w700)),
+                Text(
+                  'Q${widget.index + 1}',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: theme.muted,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
                 const Spacer(),
                 if (widget.onRemove != null)
                   IconButton(
-                    icon: Icon(Icons.remove_circle_outline, size: 18, color: theme.muted),
+                    icon: Icon(
+                      Icons.remove_circle_outline,
+                      size: 18,
+                      color: theme.muted,
+                    ),
                     onPressed: widget.onRemove,
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
@@ -295,7 +348,12 @@ class _QuestionEditorState extends State<_QuestionEditor> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             child: TextField(
               controller: _qCtrl,
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: theme.text, decoration: TextDecoration.none),
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: theme.text,
+                decoration: TextDecoration.none,
+              ),
               decoration: InputDecoration(
                 hintText: 'Question…',
                 border: InputBorder.none,
@@ -314,7 +372,10 @@ class _QuestionEditorState extends State<_QuestionEditor> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Choices — tap letter to mark correct', style: TextStyle(fontSize: 11, color: theme.muted)),
+                Text(
+                  'Choices — tap letter to mark correct',
+                  style: TextStyle(fontSize: 11, color: theme.muted),
+                ),
                 const SizedBox(height: 8),
                 for (int i = 0; i < 4; i++)
                   _ChoiceRow(
@@ -360,18 +421,25 @@ class _ChoiceRow extends StatelessWidget {
               width: 28,
               height: 28,
               decoration: BoxDecoration(
-                color: isCorrect ? Colors.green.withValues(alpha: 0.2) : theme.primary.withValues(alpha: 0.08),
+                color: isCorrect
+                    ? Colors.green.withValues(alpha: 0.2)
+                    : theme.primary.withValues(alpha: 0.08),
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isCorrect ? Colors.green : theme.primary.withValues(alpha: 0.3),
+                  color: isCorrect
+                      ? Colors.green
+                      : theme.primary.withValues(alpha: 0.3),
                 ),
               ),
               child: Center(
-                child: Text(label, style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w900,
-                  color: isCorrect ? Colors.green : theme.muted,
-                )),
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w900,
+                    color: isCorrect ? Colors.green : theme.muted,
+                  ),
+                ),
               ),
             ),
           ),
@@ -379,7 +447,11 @@ class _ChoiceRow extends StatelessWidget {
           Expanded(
             child: TextField(
               controller: controller,
-              style: TextStyle(fontSize: 14, color: theme.text, decoration: TextDecoration.none),
+              style: TextStyle(
+                fontSize: 14,
+                color: theme.text,
+                decoration: TextDecoration.none,
+              ),
               decoration: InputDecoration(
                 hintText: 'Choice $label…',
                 isDense: true,
@@ -458,8 +530,10 @@ class _QuizRunnerScreenState extends State<_QuizRunnerScreen> {
           color: theme.primary,
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: Text('Question ${_current + 1} / ${widget.questions.length}',
-            style: TextStyle(color: theme.muted, fontSize: 14)),
+        title: Text(
+          'Question ${_current + 1} / ${widget.questions.length}',
+          style: TextStyle(color: theme.muted, fontSize: 14),
+        ),
       ),
       body: Column(
         children: [
@@ -480,11 +554,18 @@ class _QuizRunnerScreenState extends State<_QuizRunnerScreen> {
                     decoration: BoxDecoration(
                       color: theme.surface,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: theme.primary.withValues(alpha: 0.2)),
+                      border: Border.all(
+                        color: theme.primary.withValues(alpha: 0.2),
+                      ),
                     ),
                     child: Text(
                       q.question,
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: theme.text, decoration: TextDecoration.none),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: theme.text,
+                        decoration: TextDecoration.none,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -495,8 +576,10 @@ class _QuizRunnerScreenState extends State<_QuizRunnerScreen> {
                         text: q.choices[i],
                         state: _answered
                             ? (i == q.correctIndex
-                                ? _AnswerState.correct
-                                : (i == _selected ? _AnswerState.wrong : _AnswerState.neutral))
+                                  ? _AnswerState.correct
+                                  : (i == _selected
+                                        ? _AnswerState.wrong
+                                        : _AnswerState.neutral))
                             : _AnswerState.neutral,
                         onTap: () => _select(i),
                       ),
@@ -510,9 +593,15 @@ class _QuizRunnerScreenState extends State<_QuizRunnerScreen> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: theme.primary,
                           foregroundColor: theme.background,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
                         ),
-                        child: Text(_current < widget.questions.length - 1 ? 'Next →' : 'See Results'),
+                        child: Text(
+                          _current < widget.questions.length - 1
+                              ? 'Next →'
+                              : 'See Results',
+                        ),
                       ),
                     ),
                 ],
@@ -574,13 +663,32 @@ class _AnswerTile extends StatelessWidget {
             Container(
               width: 26,
               height: 26,
-              decoration: BoxDecoration(shape: BoxShape.circle, color: border.withValues(alpha: 0.15)),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: border.withValues(alpha: 0.15),
+              ),
               child: Center(
-                child: Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: border)),
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w900,
+                    color: border,
+                  ),
+                ),
               ),
             ),
             const SizedBox(width: 12),
-            Expanded(child: Text(text, style: TextStyle(fontSize: 15, color: theme.text, decoration: TextDecoration.none))),
+            Expanded(
+              child: Text(
+                text,
+                style: TextStyle(
+                  fontSize: 15,
+                  color: theme.text,
+                  decoration: TextDecoration.none,
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -590,7 +698,11 @@ class _AnswerTile extends StatelessWidget {
 
 // Results screen shown after finishing the quiz.
 class _ResultsScreen extends StatelessWidget {
-  const _ResultsScreen({required this.score, required this.total, required this.onClose});
+  const _ResultsScreen({
+    required this.score,
+    required this.total,
+    required this.onClose,
+  });
   final int score;
   final int total;
   final VoidCallback onClose;
@@ -599,7 +711,11 @@ class _ResultsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = StudyNestScope.watch(context).selectedTheme;
     final pct = total > 0 ? (score / total * 100).round() : 0;
-    final emoji = pct >= 80 ? '🎉' : pct >= 60 ? '👍' : '📚';
+    final emoji = pct >= 80
+        ? '🎉'
+        : pct >= 60
+        ? '👍'
+        : '📚';
 
     return Scaffold(
       backgroundColor: theme.background,
@@ -611,9 +727,24 @@ class _ResultsScreen extends StatelessWidget {
             children: [
               Text(emoji, style: const TextStyle(fontSize: 64)),
               const SizedBox(height: 20),
-              Text('$score / $total', style: TextStyle(fontSize: 48, fontWeight: FontWeight.w900, color: theme.primary, decoration: TextDecoration.none)),
+              Text(
+                '$score / $total',
+                style: TextStyle(
+                  fontSize: 48,
+                  fontWeight: FontWeight.w900,
+                  color: theme.primary,
+                  decoration: TextDecoration.none,
+                ),
+              ),
               const SizedBox(height: 8),
-              Text('$pct% correct', style: TextStyle(fontSize: 18, color: theme.muted, decoration: TextDecoration.none)),
+              Text(
+                '$pct% correct',
+                style: TextStyle(
+                  fontSize: 18,
+                  color: theme.muted,
+                  decoration: TextDecoration.none,
+                ),
+              ),
               const SizedBox(height: 40),
               SizedBox(
                 width: double.infinity,
@@ -623,7 +754,9 @@ class _ResultsScreen extends StatelessWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: theme.primary,
                     foregroundColor: theme.background,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
                   ),
                   child: const Text('Done'),
                 ),

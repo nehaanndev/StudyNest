@@ -12,12 +12,14 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = StudyNestScope.watch(context);
-    final isSignedIn = state.authStatus == StudyNestAuthStatus.ready &&
-        !state.isAnonymousUser;
+    final isSignedIn =
+        state.authStatus == StudyNestAuthStatus.ready && !state.isAnonymousUser;
 
     return CozyPage(
       title: 'Profile',
-      subtitle: isSignedIn ? 'Your account & stats.' : 'Create an account to sync your data.',
+      subtitle: isSignedIn
+          ? 'Your account & stats.'
+          : 'Create an account to sync your data.',
       child: Column(
         children: [
           // Account card
@@ -30,9 +32,9 @@ class ProfileScreen extends StatelessWidget {
           _MenuTile(
             icon: Icons.settings_outlined,
             label: 'Settings',
-            onTap: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const SettingsScreen()),
-            ),
+            onTap: () => Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => const SettingsScreen())),
           ),
           const SizedBox(height: 8),
           if (!isSignedIn)
@@ -56,7 +58,8 @@ class ProfileScreen extends StatelessWidget {
   void _showWelcome(BuildContext context) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => WelcomeScreen(onDismiss: () => Navigator.of(context).pop()),
+        builder: (_) =>
+            WelcomeScreen(onDismiss: () => Navigator.of(context).pop()),
       ),
     );
   }
@@ -66,7 +69,9 @@ class ProfileScreen extends StatelessWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Sign out?'),
-        content: const Text('Your data is saved. You can sign back in anytime.'),
+        content: const Text(
+          'Your data is saved. You can sign back in anytime.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
@@ -130,7 +135,9 @@ class _AccountCard extends StatelessWidget {
               children: [
                 Text(
                   isSignedIn
-                      ? (state.userDisplayName ?? state.userEmail ?? 'Signed In')
+                      ? (state.userDisplayName ??
+                            state.userEmail ??
+                            'Signed In')
                       : 'Anonymous',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w800,
@@ -198,17 +205,25 @@ class _StatsCard extends StatelessWidget {
         children: [
           Text(
             'Your Stats',
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w800,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 16),
           Row(
             children: [
-              _StatItem(label: 'Tasks Done', value: '$completedTasks', icon: '✅'),
+              _StatItem(
+                label: 'Tasks Done',
+                value: '$completedTasks',
+                icon: '✅',
+              ),
               _StatItem(label: 'Open Tasks', value: '$openTasks', icon: '📋'),
               _StatItem(label: 'Coins', value: '$coinBalance', icon: '🪙'),
-              _StatItem(label: 'Streak Days', value: '$habitStreaks', icon: '🔥'),
+              _StatItem(
+                label: 'Streak Days',
+                value: '$habitStreaks',
+                icon: '🔥',
+              ),
             ],
           ),
         ],
@@ -218,7 +233,11 @@ class _StatsCard extends StatelessWidget {
 }
 
 class _StatItem extends StatelessWidget {
-  const _StatItem({required this.label, required this.value, required this.icon});
+  const _StatItem({
+    required this.label,
+    required this.value,
+    required this.icon,
+  });
   final String label;
   final String value;
   final String icon;

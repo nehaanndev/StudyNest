@@ -156,35 +156,35 @@ class _TasksScreenState extends State<TasksScreen> {
                   children: [
                     TextField(
                       controller: titleController,
-                      decoration:
-                          const InputDecoration(labelText: 'Task title'),
+                      decoration: const InputDecoration(
+                        labelText: 'Task title',
+                      ),
                     ),
                     const SizedBox(height: 12),
                     TextField(
                       controller: detailsController,
                       maxLines: 2,
-                      decoration:
-                          const InputDecoration(labelText: 'Details'),
+                      decoration: const InputDecoration(labelText: 'Details'),
                     ),
                     const SizedBox(height: 12),
                     TextField(
                       controller: rewardController,
                       keyboardType: TextInputType.number,
-                      decoration:
-                          const InputDecoration(labelText: 'Coin reward'),
+                      decoration: const InputDecoration(
+                        labelText: 'Coin reward',
+                      ),
                     ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
                       initialValue: priority,
-                      decoration:
-                          const InputDecoration(labelText: 'Priority'),
+                      decoration: const InputDecoration(labelText: 'Priority'),
                       items: const [
+                        DropdownMenuItem(value: 'High', child: Text('High')),
                         DropdownMenuItem(
-                            value: 'High', child: Text('High')),
-                        DropdownMenuItem(
-                            value: 'Medium', child: Text('Medium')),
-                        DropdownMenuItem(
-                            value: 'Low', child: Text('Low')),
+                          value: 'Medium',
+                          child: Text('Medium'),
+                        ),
+                        DropdownMenuItem(value: 'Low', child: Text('Low')),
                       ],
                       onChanged: (v) {
                         if (v != null) setDialogState(() => priority = v);
@@ -199,10 +199,12 @@ class _TasksScreenState extends State<TasksScreen> {
                       onTap: () async {
                         final pickedDate = await showDatePicker(
                           context: dialogContext,
-                          firstDate: DateTime.now()
-                              .subtract(const Duration(days: 1)),
-                          lastDate: DateTime.now()
-                              .add(const Duration(days: 365)),
+                          firstDate: DateTime.now().subtract(
+                            const Duration(days: 1),
+                          ),
+                          lastDate: DateTime.now().add(
+                            const Duration(days: 365),
+                          ),
                           initialDate: dueAt,
                         );
                         if (pickedDate == null || !dialogContext.mounted) {
@@ -235,8 +237,7 @@ class _TasksScreenState extends State<TasksScreen> {
                 FilledButton(
                   onPressed: () async {
                     final title = titleController.text.trim();
-                    final reward =
-                        int.tryParse(rewardController.text) ?? 20;
+                    final reward = int.tryParse(rewardController.text) ?? 20;
                     if (title.isEmpty) return;
                     final clampedReward = reward.clamp(1, 500);
                     final result = task == null
@@ -260,8 +261,9 @@ class _TasksScreenState extends State<TasksScreen> {
                     }
                     if (!dialogContext.mounted) return;
                     final message = result?.message ?? 'Task updated.';
-                    ScaffoldMessenger.of(dialogContext)
-                        .showSnackBar(SnackBar(content: Text(message)));
+                    ScaffoldMessenger.of(
+                      dialogContext,
+                    ).showSnackBar(SnackBar(content: Text(message)));
                     if (result != null && !result.applied) return;
                     if (dialogContext.mounted) {
                       Navigator.of(dialogContext).pop();
@@ -419,8 +421,7 @@ class _TaskCard extends StatelessWidget {
                   style: TextStyle(
                     fontWeight: FontWeight.w900,
                     fontSize: 15,
-                    decoration:
-                        isComplete ? TextDecoration.lineThrough : null,
+                    decoration: isComplete ? TextDecoration.lineThrough : null,
                     color: isComplete ? theme.muted : theme.text,
                   ),
                 ),
@@ -429,7 +430,10 @@ class _TaskCard extends StatelessWidget {
                   Text(
                     task.details,
                     style: TextStyle(
-                        color: theme.muted, height: 1.3, fontSize: 13),
+                      color: theme.muted,
+                      height: 1.3,
+                      fontSize: 13,
+                    ),
                   ),
                 ],
                 const SizedBox(height: 10),
@@ -437,15 +441,10 @@ class _TaskCard extends StatelessWidget {
                   spacing: 8,
                   runSpacing: 6,
                   children: [
-                    CozyTag(
-                        label: compactDate(task.dueAt),
-                        icon: Icons.event),
-                    CozyTag(
-                        label: '+${task.reward}',
-                        icon: Icons.savings),
+                    CozyTag(label: compactDate(task.dueAt), icon: Icons.event),
+                    CozyTag(label: '+${task.reward}', icon: Icons.savings),
                     if (task.rewardCollected)
-                      const CozyTag(
-                          label: 'Claimed', icon: Icons.lock),
+                      const CozyTag(label: 'Claimed', icon: Icons.lock),
                   ],
                 ),
               ],
@@ -455,8 +454,7 @@ class _TaskCard extends StatelessWidget {
             tooltip: 'Delete task',
             visualDensity: VisualDensity.compact,
             onPressed: () => state.deleteTask(task.id),
-            icon: Icon(Icons.delete_outline,
-                size: 18, color: theme.muted),
+            icon: Icon(Icons.delete_outline, size: 18, color: theme.muted),
           ),
         ],
       ),
@@ -468,8 +466,7 @@ class _TaskCard extends StatelessWidget {
     final awarded = await state.toggleTask(taskId);
     if (!context.mounted || awarded == 0) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-          content: Text('Task complete. You earned $awarded coins.')),
+      SnackBar(content: Text('Task complete. You earned $awarded coins.')),
     );
   }
 }
@@ -515,7 +512,9 @@ class _PriorityFilterBar extends StatelessWidget {
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 150),
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 6),
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: selectedPriority == label
                             ? color.withValues(alpha: 0.20)

@@ -61,7 +61,10 @@ class _StudyGuideScreenState extends State<StudyGuideScreen> {
   Future<void> _save() async {
     final state = StudyNestScope.read(context);
     final title = _titleCtrl.text.trim();
-    if (title.isEmpty && _sections.every((s) => s.title.isEmpty && s.notes.isEmpty)) return;
+    if (title.isEmpty &&
+        _sections.every((s) => s.title.isEmpty && s.notes.isEmpty)) {
+      return;
+    }
 
     final content = StudyGuideContent(sections: _sections).toJson();
 
@@ -123,17 +126,26 @@ class _StudyGuideScreenState extends State<StudyGuideScreen> {
     final updated = List<KeyTerm>.from(_sections[sectionIndex].keyTerms)
       ..add(const KeyTerm(term: '', definition: ''));
     setState(() {
-      _sections[sectionIndex] = _sections[sectionIndex].copyWith(keyTerms: updated);
+      _sections[sectionIndex] = _sections[sectionIndex].copyWith(
+        keyTerms: updated,
+      );
     });
     _scheduleAutoSave();
   }
 
   // Updates a key term within a section.
-  void _updateKeyTerm(int sectionIndex, int termIndex, String term, String def) {
+  void _updateKeyTerm(
+    int sectionIndex,
+    int termIndex,
+    String term,
+    String def,
+  ) {
     final updated = List<KeyTerm>.from(_sections[sectionIndex].keyTerms);
     updated[termIndex] = KeyTerm(term: term, definition: def);
     setState(() {
-      _sections[sectionIndex] = _sections[sectionIndex].copyWith(keyTerms: updated);
+      _sections[sectionIndex] = _sections[sectionIndex].copyWith(
+        keyTerms: updated,
+      );
     });
     _scheduleAutoSave();
   }
@@ -143,7 +155,9 @@ class _StudyGuideScreenState extends State<StudyGuideScreen> {
     final updated = List<KeyTerm>.from(_sections[sectionIndex].keyTerms)
       ..removeAt(termIndex);
     setState(() {
-      _sections[sectionIndex] = _sections[sectionIndex].copyWith(keyTerms: updated);
+      _sections[sectionIndex] = _sections[sectionIndex].copyWith(
+        keyTerms: updated,
+      );
     });
     _scheduleAutoSave();
   }
@@ -163,7 +177,10 @@ class _StudyGuideScreenState extends State<StudyGuideScreen> {
           onPressed: () async {
             _saveTimer?.cancel();
             await _save();
-            if (mounted) Navigator.of(context).pop();
+            if (!context.mounted) {
+              return;
+            }
+            Navigator.of(context).pop();
           },
         ),
         title: Row(
@@ -171,7 +188,11 @@ class _StudyGuideScreenState extends State<StudyGuideScreen> {
             Text('📖 ', style: const TextStyle(fontSize: 18)),
             Text(
               'Study Guide',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: theme.text),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: theme.text,
+              ),
             ),
           ],
         ),
@@ -179,7 +200,10 @@ class _StudyGuideScreenState extends State<StudyGuideScreen> {
           if (_saved)
             Padding(
               padding: const EdgeInsets.only(right: 16),
-              child: Text('Saved', style: TextStyle(fontSize: 13, color: theme.muted)),
+              child: Text(
+                'Saved',
+                style: TextStyle(fontSize: 13, color: theme.muted),
+              ),
             ),
         ],
       ),
@@ -213,7 +237,8 @@ class _StudyGuideScreenState extends State<StudyGuideScreen> {
               onTitleChanged: (v) => _updateSectionTitle(i, v),
               onNotesChanged: (v) => _updateSectionNotes(i, v),
               onAddKeyTerm: () => _addKeyTerm(i),
-              onKeyTermChanged: (ti, term, def) => _updateKeyTerm(i, ti, term, def),
+              onKeyTermChanged: (ti, term, def) =>
+                  _updateKeyTerm(i, ti, term, def),
               onRemoveKeyTerm: (ti) => _removeKeyTerm(i, ti),
               onRemove: _sections.length > 1 ? () => _removeSection(i) : null,
             ),
@@ -225,7 +250,9 @@ class _StudyGuideScreenState extends State<StudyGuideScreen> {
             style: OutlinedButton.styleFrom(
               foregroundColor: theme.primary,
               side: BorderSide(color: theme.primary.withValues(alpha: 0.4)),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
           ),
         ],
@@ -301,12 +328,20 @@ class _SectionCardState extends State<_SectionCard> {
               children: [
                 Text(
                   'Section ${widget.index + 1}',
-                  style: TextStyle(fontSize: 11, color: theme.muted, fontWeight: FontWeight.w700),
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: theme.muted,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
                 const Spacer(),
                 if (widget.onRemove != null)
                   IconButton(
-                    icon: Icon(Icons.remove_circle_outline, color: theme.muted, size: 18),
+                    icon: Icon(
+                      Icons.remove_circle_outline,
+                      color: theme.muted,
+                      size: 18,
+                    ),
                     onPressed: widget.onRemove,
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
@@ -318,7 +353,12 @@ class _SectionCardState extends State<_SectionCard> {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: TextField(
               controller: _titleCtrl,
-              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: theme.text, decoration: TextDecoration.none),
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 16,
+                color: theme.text,
+                decoration: TextDecoration.none,
+              ),
               decoration: InputDecoration(
                 hintText: 'Section title…',
                 border: InputBorder.none,
@@ -334,7 +374,12 @@ class _SectionCardState extends State<_SectionCard> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: TextField(
               controller: _notesCtrl,
-              style: TextStyle(fontSize: 14, height: 1.5, color: theme.text, decoration: TextDecoration.none),
+              style: TextStyle(
+                fontSize: 14,
+                height: 1.5,
+                color: theme.text,
+                decoration: TextDecoration.none,
+              ),
               decoration: InputDecoration(
                 hintText: '• Bullet notes…',
                 border: InputBorder.none,
@@ -355,12 +400,20 @@ class _SectionCardState extends State<_SectionCard> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Key Terms', style: TextStyle(fontSize: 11, color: theme.muted, fontWeight: FontWeight.w700)),
+                  Text(
+                    'Key Terms',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: theme.muted,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                   const SizedBox(height: 6),
                   for (int i = 0; i < widget.section.keyTerms.length; i++)
                     _KeyTermRow(
                       keyTerm: widget.section.keyTerms[i],
-                      onChanged: (term, def) => widget.onKeyTermChanged(i, term, def),
+                      onChanged: (term, def) =>
+                          widget.onKeyTermChanged(i, term, def),
                       onRemove: () => widget.onRemoveKeyTerm(i),
                     ),
                 ],
@@ -371,8 +424,13 @@ class _SectionCardState extends State<_SectionCard> {
             child: TextButton.icon(
               onPressed: widget.onAddKeyTerm,
               icon: Icon(Icons.add, size: 16, color: theme.primary),
-              label: Text('Add key term', style: TextStyle(fontSize: 12, color: theme.primary)),
-              style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 8)),
+              label: Text(
+                'Add key term',
+                style: TextStyle(fontSize: 12, color: theme.primary),
+              ),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+              ),
             ),
           ),
         ],
@@ -383,7 +441,11 @@ class _SectionCardState extends State<_SectionCard> {
 
 // Inline row editor for a single key term.
 class _KeyTermRow extends StatefulWidget {
-  const _KeyTermRow({required this.keyTerm, required this.onChanged, required this.onRemove});
+  const _KeyTermRow({
+    required this.keyTerm,
+    required this.onChanged,
+    required this.onRemove,
+  });
   final KeyTerm keyTerm;
   final void Function(String term, String definition) onChanged;
   final VoidCallback onRemove;
@@ -425,7 +487,12 @@ class _KeyTermRowState extends State<_KeyTermRow> {
             flex: 2,
             child: TextField(
               controller: _termCtrl,
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: theme.text, decoration: TextDecoration.none),
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: theme.text,
+                decoration: TextDecoration.none,
+              ),
               decoration: InputDecoration(
                 hintText: 'Term',
                 isDense: true,
@@ -438,7 +505,11 @@ class _KeyTermRowState extends State<_KeyTermRow> {
             flex: 3,
             child: TextField(
               controller: _defCtrl,
-              style: TextStyle(fontSize: 13, color: theme.text, decoration: TextDecoration.none),
+              style: TextStyle(
+                fontSize: 13,
+                color: theme.text,
+                decoration: TextDecoration.none,
+              ),
               decoration: InputDecoration(
                 hintText: 'Definition',
                 isDense: true,

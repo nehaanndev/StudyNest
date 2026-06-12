@@ -114,7 +114,11 @@ extension _StudyTownSimplePainter on _StudyTownPainter {
       topColor: const Color(0xFFA7744D),
       shadowColor: const Color(0xFF765035),
     );
-    _paintBookStack(canvas, Offset(size.width * 0.50, size.height * 0.51), 0.55);
+    _paintBookStack(
+      canvas,
+      Offset(size.width * 0.50, size.height * 0.51),
+      0.55,
+    );
     _paintPottedPlant(
       canvas,
       Offset(size.width * 0.16, size.height * 0.64),
@@ -285,7 +289,12 @@ extension _StudyTownSimplePainter on _StudyTownPainter {
       muntin,
     );
     canvas.drawArc(
-      Rect.fromLTWH(rect.left + 16, rect.top + 10, rect.width - 32, rect.height * 0.36),
+      Rect.fromLTWH(
+        rect.left + 16,
+        rect.top + 10,
+        rect.width - 32,
+        rect.height * 0.36,
+      ),
       math.pi,
       math.pi,
       false,
@@ -294,7 +303,11 @@ extension _StudyTownSimplePainter on _StudyTownPainter {
   }
 
   // Paints a dense but simplified illustrated shelf wall.
-  void _paintSimpleShelfWall(Canvas canvas, Rect rect, {required Color shelfColor}) {
+  void _paintSimpleShelfWall(
+    Canvas canvas,
+    Rect rect, {
+    required Color shelfColor,
+  }) {
     canvas.drawRRect(
       RRect.fromRectAndRadius(rect, const Radius.circular(8)),
       Paint()..color = shelfColor,
@@ -324,7 +337,8 @@ extension _StudyTownSimplePainter on _StudyTownPainter {
               Rect.fromLTWH(x + book * 11, y, 8, rowHeight - 16),
               const Radius.circular(2),
             ),
-            Paint()..color = bookColors[(row + column + book) % bookColors.length],
+            Paint()
+              ..color = bookColors[(row + column + book) % bookColors.length],
           );
         }
       }
@@ -333,14 +347,23 @@ extension _StudyTownSimplePainter on _StudyTownPainter {
 
   // Paints broad illustrated floor planks under the simple room scenes.
   void _paintSimpleWoodFloor(Canvas canvas, Size size, Color floorColor) {
-    final floorRect = Rect.fromLTWH(0, size.height * 0.62, size.width, size.height * 0.38);
+    final floorRect = Rect.fromLTWH(
+      0,
+      size.height * 0.62,
+      size.width,
+      size.height * 0.38,
+    );
     canvas.drawRect(floorRect, Paint()..color = floorColor);
     final plankPaint = Paint()
       ..color = Colors.white.withValues(alpha: 0.12)
       ..strokeWidth = 2;
     for (var index = 0; index < 10; index++) {
       final x = floorRect.left + index * floorRect.width / 10;
-      canvas.drawLine(Offset(x, floorRect.top), Offset(x, floorRect.bottom), plankPaint);
+      canvas.drawLine(
+        Offset(x, floorRect.top),
+        Offset(x, floorRect.bottom),
+        plankPaint,
+      );
     }
   }
 
@@ -428,7 +451,11 @@ extension _StudyTownSimplePainter on _StudyTownPainter {
       ..strokeWidth = 2;
     for (var index = 1; index < 5; index++) {
       final x = rect.left + index * rect.width / 5;
-      canvas.drawLine(Offset(x, rect.top + 8), Offset(x, rect.bottom - 8), fold);
+      canvas.drawLine(
+        Offset(x, rect.top + 8),
+        Offset(x, rect.bottom - 8),
+        fold,
+      );
     }
   }
 
@@ -443,9 +470,17 @@ extension _StudyTownSimplePainter on _StudyTownPainter {
       ..strokeWidth = 2;
     for (var index = 0; index < 3; index++) {
       final offset = -8.0 + index * 8;
-      canvas.drawLine(center.translate(offset, 10), center.translate(offset, -12), stem);
+      canvas.drawLine(
+        center.translate(offset, 10),
+        center.translate(offset, -12),
+        stem,
+      );
       canvas.drawOval(
-        Rect.fromCenter(center: center.translate(offset, -18), width: 10, height: 16),
+        Rect.fromCenter(
+          center: center.translate(offset, -18),
+          width: 10,
+          height: 16,
+        ),
         Paint()..color = const Color(0xFFE9A188),
       );
     }
@@ -474,7 +509,12 @@ extension _StudyTownSimplePainter on _StudyTownPainter {
     for (var index = 0; index < 5; index++) {
       final left = size.width * (0.12 + index * 0.14);
       canvas.drawRect(
-        Rect.fromLTWH(left, size.height * 0.03, size.width * 0.10, size.height * 0.10),
+        Rect.fromLTWH(
+          left,
+          size.height * 0.03,
+          size.width * 0.10,
+          size.height * 0.10,
+        ),
         panelPaint,
       );
     }

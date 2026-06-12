@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:studynest/app/study_nest_auth_snapshot.dart';
 import 'package:studynest/app/study_nest_catalog.dart';
 import 'package:studynest/app/study_nest_session.dart';
 import 'package:studynest/app/study_nest_state.dart';
@@ -270,6 +271,240 @@ void main() {
     expect(state.notes.single.title, 'Cloud note');
     expect(state.sessionGoal.title, 'Cloud focus goal');
   });
+
+  test('clears previous user data before creating a logout session', () async {
+    final storage = InMemoryStudyNestStorage();
+    final syncService = _FakeSyncService(
+      session: const StudyNestSessionState(
+        authStatus: StudyNestAuthStatus.ready,
+        syncStatus: StudyNestSyncStatus.idle,
+        cloudEnabled: true,
+        isAnonymous: false,
+        hasPendingSync: false,
+        userId: 'user-a',
+        userEmail: 'a@example.com',
+      ),
+      signOutResolution: const StudyNestSyncResolution(
+        session: StudyNestSessionState(
+          authStatus: StudyNestAuthStatus.ready,
+          syncStatus: StudyNestSyncStatus.idle,
+          cloudEnabled: true,
+          isAnonymous: true,
+          hasPendingSync: false,
+          userId: 'anon-b',
+        ),
+      ),
+    );
+    final state = await StudyNestState.load(
+      storage: storage,
+      syncService: syncService,
+    );
+
+    await state.addNote(
+      title: 'Private user A note',
+      body: 'This must not follow the next login.',
+      colorName: 'matcha',
+    );
+    await state.addHabit(name: 'Private habit', emoji: 'P');
+    await state.signOut();
+
+    final signOutSnapshot = syncService.signOutSnapshot;
+    final signOutNotes = signOutSnapshot?['notes'] as List<dynamic>? ?? [];
+    final signOutHabits = signOutSnapshot?['habits'] as List<dynamic>? ?? [];
+
+    expect(
+      state.notes.any((note) => note.title == 'Private user A note'),
+      isFalse,
+    );
+    expect(state.habits.any((habit) => habit.name == 'Private habit'), isFalse);
+    expect(storage.snapshot, isNull);
+    expect(
+      signOutNotes.any((note) {
+        return (note as Map<String, dynamic>)['title'] == 'Private user A note';
+      }),
+      isFalse,
+    );
+    expect(
+      signOutHabits.any((habit) {
+        return (habit as Map<String, dynamic>)['name'] == 'Private habit';
+      }),
+      isFalse,
+    );
+  });
+
+  test('merges anonymous records into an existing account snapshot', () {
+    final merged = mergeStudyNestSnapshots(
+      {
+        'notes': [
+          {'id': 'note.anon', 'title': 'Anonymous note'},
+        ],
+        'tasks': [
+          {'id': 'task.anon', 'title': 'Anonymous task'},
+        ],
+        'events': const [],
+        'coinLedger': [
+          {'id': 'coin.anon', 'label': 'Anonymous coins'},
+        ],
+        'habits': [
+          {'id': 'habit.anon', 'name': 'Anonymous habit'},
+        ],
+        'ownedShopItemIds': const ['theme.anon'],
+        'ownedDecorItemIds': const ['decor.cozyCafe.mug'],
+        'appliedDecorItemIds': const ['decor.cozyCafe.mug'],
+        'decorPositions': const {},
+        'selectedThemeId': 'gardenMatcha',
+        'studySpaceStyleId': 'simple',
+        'sessionGoal': const {'title': 'Anonymous goal', 'reward': 10},
+      },
+      {
+        'notes': [
+          {'id': 'note.remote', 'title': 'Remote note'},
+        ],
+        'tasks': const [],
+        'events': const [],
+        'coinLedger': const [],
+        'habits': const [],
+        'ownedShopItemIds': const ['theme.remote'],
+        'ownedDecorItemIds': const [],
+        'appliedDecorItemIds': const [],
+        'decorPositions': const {},
+      },
+    );
+
+    final notes = merged['notes'] as List<dynamic>;
+    final tasks = merged['tasks'] as List<dynamic>;
+    final habits = merged['habits'] as List<dynamic>;
+    final coinLedger = merged['coinLedger'] as List<dynamic>;
+
+    expect(notes.any((note) => (note as Map)['id'] == 'note.anon'), isTrue);
+    expect(notes.any((note) => (note as Map)['id'] == 'note.remote'), isTrue);
+    expect(tasks.any((task) => (task as Map)['id'] == 'task.anon'), isTrue);
+    expect(habits.any((habit) => (habit as Map)['id'] == 'habit.anon'), isTrue);
+    expect(
+      coinLedger.any((coins) => (coins as Map)['id'] == 'coin.anon'),
+      isTrue,
+    );
+    expect(
+      merged['ownedShopItemIds'],
+      containsAll(['theme.anon', 'theme.remote']),
+    );
+    expect(merged['selectedThemeId'], 'gardenMatcha');
+    expect(merged['studySpaceStyleId'], 'simple');
+    expect((merged['sessionGoal'] as Map)['title'], 'Anonymous goal');
+  });
+
+  test('rejects unowned legacy cache for signed-in users', () {
+    final safeSnapshot = safeStudyNestLocalSnapshot(
+      {
+        'notes': const [
+          {'id': 'note.old-user', 'title': 'Old user note'},
+        ],
+      },
+      'signed-in-user',
+      false,
+    );
+
+    expect(safeSnapshot['notes'], isEmpty);
+  });
+
+  test('user A cache does not hydrate for user B on the same device', () async {
+    final storage = InMemoryStudyNestStorage(
+      snapshot: {
+        'schemaVersion': 2,
+        'ownerUserId': 'user-a',
+        'updatedAt': '2026-05-21T20:30:00.000Z',
+        'tasks': [
+          {
+            'id': 'task.user-a',
+            'title': 'User A private task',
+            'details': '',
+            'dueAt': '2026-05-22T20:30:00.000Z',
+            'reward': 10,
+            'completedAt': null,
+            'rewardCollected': false,
+          },
+        ],
+        'notes': [
+          {
+            'id': 'note.user-a',
+            'title': 'User A private note',
+            'body': 'Should not appear.',
+            'colorName': 'matcha',
+            'updatedAt': '2026-05-21T20:30:00.000Z',
+          },
+        ],
+        'events': const [],
+        'coinLedger': [
+          {
+            'id': 'coins.user-a',
+            'label': 'User A coins',
+            'amount': 99,
+            'createdAt': '2026-05-21T20:30:00.000Z',
+            'sourceId': 'private',
+          },
+        ],
+        'ownedShopItemIds': const ['theme.user-a'],
+        'ownedDecorItemIds': const ['decor.cozyCafe.brassLamp'],
+        'appliedDecorItemIds': const ['decor.cozyCafe.brassLamp'],
+        'decorPositions': const {},
+        'selectedThemeId': 'gardenMatcha',
+        'studySpaceStyleId': 'simple',
+        'sessionGoal': {
+          'title': 'User A goal',
+          'reward': 25,
+          'completedAt': null,
+          'updatedAt': '2026-05-21T20:30:00.000Z',
+        },
+        'habits': [
+          {
+            'id': 'habit.user-a',
+            'name': 'User A habit',
+            'emoji': 'A',
+            'streak': 3,
+            'completions': const [],
+          },
+        ],
+      },
+    );
+    final syncService = _FakeSyncService(
+      session: const StudyNestSessionState(
+        authStatus: StudyNestAuthStatus.ready,
+        syncStatus: StudyNestSyncStatus.idle,
+        cloudEnabled: true,
+        isAnonymous: false,
+        hasPendingSync: false,
+        userId: 'user-b',
+      ),
+      initializeResolution: StudyNestSyncResolution(
+        session: const StudyNestSessionState(
+          authStatus: StudyNestAuthStatus.ready,
+          syncStatus: StudyNestSyncStatus.idle,
+          cloudEnabled: true,
+          isAnonymous: false,
+          hasPendingSync: false,
+          userId: 'user-b',
+        ),
+        snapshot: {...emptyStudyNestSnapshot(), 'ownerUserId': 'user-b'},
+      ),
+    );
+
+    final state = await StudyNestState.load(
+      storage: storage,
+      syncService: syncService,
+    );
+
+    expect(state.userId, 'user-b');
+    expect(state.notes.any((note) => note.id == 'note.user-a'), isFalse);
+    expect(state.tasks.any((task) => task.id == 'task.user-a'), isFalse);
+    expect(state.habits.any((habit) => habit.id == 'habit.user-a'), isFalse);
+    expect(
+      state.coinLedger.any((coins) => coins.id == 'coins.user-a'),
+      isFalse,
+    );
+    expect(state.ownsShopItem('theme.user-a'), isFalse);
+    expect(state.sessionGoal.title, isNot('User A goal'));
+    expect(state.studySpaceStyleId, isNot('simple'));
+  });
 }
 
 class _FakeSyncService implements StudyNestSyncService {
@@ -277,11 +512,14 @@ class _FakeSyncService implements StudyNestSyncService {
     required this.session,
     this.initializeResolution,
     this.syncResolution,
+    this.signOutResolution,
   });
 
   final StudyNestSessionState session;
   final StudyNestSyncResolution? initializeResolution;
   final StudyNestSyncResolution? syncResolution;
+  final StudyNestSyncResolution? signOutResolution;
+  Map<String, dynamic>? signOutSnapshot;
 
   @override
   Stream<void> get retryEvents => const Stream<void>.empty();
@@ -332,7 +570,8 @@ class _FakeSyncService implements StudyNestSyncService {
   Future<StudyNestSyncResolution> signOut(
     Map<String, dynamic> localSnapshot,
   ) async {
-    return StudyNestSyncResolution(session: session);
+    signOutSnapshot = localSnapshot;
+    return signOutResolution ?? StudyNestSyncResolution(session: session);
   }
 
   @override

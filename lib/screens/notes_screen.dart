@@ -82,7 +82,8 @@ class _NotesScreenState extends State<NotesScreen> {
             const EmptyState(
               icon: '📚',
               title: 'Nothing here yet',
-              body: 'Tap + to create a note, guide, flashcards, quiz, or formula sheet.',
+              body:
+                  'Tap + to create a note, guide, flashcards, quiz, or formula sheet.',
             )
           else
             LayoutBuilder(
@@ -115,10 +116,18 @@ class _NotesScreenState extends State<NotesScreen> {
   // Routes to the correct editor for the note's type.
   void _openItem(BuildContext context, StudyNote note) {
     final route = switch (note.noteType) {
-      NoteType.studyGuide => MaterialPageRoute(builder: (_) => StudyGuideScreen(note: note)),
-      NoteType.flashcards => MaterialPageRoute(builder: (_) => FlashcardScreen(note: note)),
-      NoteType.quiz => MaterialPageRoute(builder: (_) => QuizScreen(note: note)),
-      NoteType.formula => MaterialPageRoute(builder: (_) => FormulaSheetScreen(note: note)),
+      NoteType.studyGuide => MaterialPageRoute(
+        builder: (_) => StudyGuideScreen(note: note),
+      ),
+      NoteType.flashcards => MaterialPageRoute(
+        builder: (_) => FlashcardScreen(note: note),
+      ),
+      NoteType.quiz => MaterialPageRoute(
+        builder: (_) => QuizScreen(note: note),
+      ),
+      NoteType.formula => MaterialPageRoute(
+        builder: (_) => FormulaSheetScreen(note: note),
+      ),
       _ => MaterialPageRoute(builder: (_) => NoteEditorScreen(note: note)),
     };
     Navigator.of(context).push(route);
@@ -130,7 +139,8 @@ class _NotesScreenState extends State<NotesScreen> {
       final matchesType = _typeFilter == 'All' || note.noteType == _typeFilter;
       final matchesTag = _tagFilter == 'All' || note.tags.contains(_tagFilter);
       final q = _searchQuery.toLowerCase();
-      final matchesSearch = q.isEmpty ||
+      final matchesSearch =
+          q.isEmpty ||
           note.title.toLowerCase().contains(q) ||
           note.body.toLowerCase().contains(q) ||
           note.tags.any((t) => t.contains(q));
@@ -177,34 +187,77 @@ class _CreateButton extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 36, height: 4,
+              width: 36,
+              height: 4,
               decoration: BoxDecoration(
                 color: theme.muted.withValues(alpha: 0.4),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
             const SizedBox(height: 16),
-            Text('Create', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: theme.text)),
+            Text(
+              'Create',
+              style: TextStyle(
+                fontWeight: FontWeight.w900,
+                fontSize: 18,
+                color: theme.text,
+              ),
+            ),
             const SizedBox(height: 16),
             _CreateOption(
-              emoji: '📝', label: 'New Note', subtitle: 'Plain text with formatting',
-              onTap: () { Navigator.of(context).pop(); Navigator.of(context).push(MaterialPageRoute(builder: (_) => const NoteEditorScreen())); },
+              emoji: '📝',
+              label: 'New Note',
+              subtitle: 'Plain text with formatting',
+              onTap: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const NoteEditorScreen()),
+                );
+              },
             ),
             _CreateOption(
-              emoji: '📖', label: 'New Study Guide', subtitle: 'Sections, bullets, key terms',
-              onTap: () { Navigator.of(context).pop(); Navigator.of(context).push(MaterialPageRoute(builder: (_) => const StudyGuideScreen())); },
+              emoji: '📖',
+              label: 'New Study Guide',
+              subtitle: 'Sections, bullets, key terms',
+              onTap: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const StudyGuideScreen()),
+                );
+              },
             ),
             _CreateOption(
-              emoji: '🃏', label: 'New Flashcard Set', subtitle: 'Front/back cards with review mode',
-              onTap: () { Navigator.of(context).pop(); Navigator.of(context).push(MaterialPageRoute(builder: (_) => const FlashcardScreen())); },
+              emoji: '🃏',
+              label: 'New Flashcard Set',
+              subtitle: 'Front/back cards with review mode',
+              onTap: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const FlashcardScreen()),
+                );
+              },
             ),
             _CreateOption(
-              emoji: '❓', label: 'New Quiz', subtitle: 'Multiple choice with scoring',
-              onTap: () { Navigator.of(context).pop(); Navigator.of(context).push(MaterialPageRoute(builder: (_) => const QuizScreen())); },
+              emoji: '❓',
+              label: 'New Quiz',
+              subtitle: 'Multiple choice with scoring',
+              onTap: () {
+                Navigator.of(context).pop();
+                Navigator.of(
+                  context,
+                ).push(MaterialPageRoute(builder: (_) => const QuizScreen()));
+              },
             ),
             _CreateOption(
-              emoji: '🔢', label: 'New Formula Sheet', subtitle: 'Formulas with explanations',
-              onTap: () { Navigator.of(context).pop(); Navigator.of(context).push(MaterialPageRoute(builder: (_) => const FormulaSheetScreen())); },
+              emoji: '🔢',
+              label: 'New Formula Sheet',
+              subtitle: 'Formulas with explanations',
+              onTap: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const FormulaSheetScreen()),
+                );
+              },
               isLast: true,
             ),
           ],
@@ -237,13 +290,22 @@ class _CreateOption extends StatelessWidget {
       children: [
         ListTile(
           leading: Text(emoji, style: const TextStyle(fontSize: 26)),
-          title: Text(label, style: TextStyle(fontWeight: FontWeight.w700, color: theme.text)),
-          subtitle: Text(subtitle, style: TextStyle(fontSize: 12, color: theme.muted)),
+          title: Text(
+            label,
+            style: TextStyle(fontWeight: FontWeight.w700, color: theme.text),
+          ),
+          subtitle: Text(
+            subtitle,
+            style: TextStyle(fontSize: 12, color: theme.muted),
+          ),
           trailing: Icon(Icons.arrow_forward_ios, size: 14, color: theme.muted),
           onTap: onTap,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
-        if (!isLast) Divider(color: theme.primary.withValues(alpha: 0.08), height: 1),
+        if (!isLast)
+          Divider(color: theme.primary.withValues(alpha: 0.08), height: 1),
       ],
     );
   }
@@ -258,7 +320,14 @@ class _TypeFilterBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = StudyNestScope.watch(context).selectedTheme;
-    final types = ['All', NoteType.note, NoteType.studyGuide, NoteType.flashcards, NoteType.quiz, NoteType.formula];
+    final types = [
+      'All',
+      NoteType.note,
+      NoteType.studyGuide,
+      NoteType.flashcards,
+      NoteType.quiz,
+      NoteType.formula,
+    ];
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -273,9 +342,15 @@ class _TypeFilterBar extends StatelessWidget {
               margin: const EdgeInsets.only(right: 8),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: isSelected ? theme.primary.withValues(alpha: 0.18) : theme.primary.withValues(alpha: 0.06),
+                color: isSelected
+                    ? theme.primary.withValues(alpha: 0.18)
+                    : theme.primary.withValues(alpha: 0.06),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: isSelected ? theme.primary : theme.primary.withValues(alpha: 0.18)),
+                border: Border.all(
+                  color: isSelected
+                      ? theme.primary
+                      : theme.primary.withValues(alpha: 0.18),
+                ),
               ),
               child: Text(
                 '$emoji$label',
@@ -295,7 +370,11 @@ class _TypeFilterBar extends StatelessWidget {
 
 // Horizontal tag-filter chip row.
 class _TagFilterBar extends StatelessWidget {
-  const _TagFilterBar({required this.tags, required this.selected, required this.onSelected});
+  const _TagFilterBar({
+    required this.tags,
+    required this.selected,
+    required this.onSelected,
+  });
   final List<String> tags;
   final String selected;
   final ValueChanged<String> onSelected;
@@ -314,9 +393,15 @@ class _TagFilterBar extends StatelessWidget {
               margin: const EdgeInsets.only(right: 8),
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: isSelected ? theme.accent.withValues(alpha: 0.18) : theme.primary.withValues(alpha: 0.05),
+                color: isSelected
+                    ? theme.accent.withValues(alpha: 0.18)
+                    : theme.primary.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: isSelected ? theme.accent : theme.primary.withValues(alpha: 0.15)),
+                border: Border.all(
+                  color: isSelected
+                      ? theme.accent
+                      : theme.primary.withValues(alpha: 0.15),
+                ),
               ),
               child: Text(
                 tag,
@@ -353,7 +438,10 @@ class _SearchBar extends StatelessWidget {
         suffixIcon: controller.text.isNotEmpty
             ? IconButton(
                 icon: Icon(Icons.clear, color: theme.muted, size: 18),
-                onPressed: () { controller.clear(); onChanged(''); },
+                onPressed: () {
+                  controller.clear();
+                  onChanged('');
+                },
               )
             : null,
         isDense: true,
@@ -365,7 +453,11 @@ class _SearchBar extends StatelessWidget {
 
 // Card widget for displaying a note/study item in the grid.
 class _NoteCard extends StatelessWidget {
-  const _NoteCard({required this.note, required this.onTap, required this.onDelete});
+  const _NoteCard({
+    required this.note,
+    required this.onTap,
+    required this.onDelete,
+  });
   final StudyNote note;
   final VoidCallback onTap;
   final VoidCallback onDelete;
@@ -373,7 +465,11 @@ class _NoteCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = StudyNestScope.watch(context).selectedTheme;
-    final cardColor = _colorForNote(theme.surfaceAlt, note.colorName, theme.isDark);
+    final cardColor = _colorForNote(
+      theme.surfaceAlt,
+      note.colorName,
+      theme.isDark,
+    );
     final textColor = theme.isDark ? theme.text : const Color(0xFF1A110A);
     final mutedColor = theme.isDark ? theme.muted : const Color(0xFF6B5040);
     final isStructured = note.noteType != NoteType.note;
@@ -402,7 +498,10 @@ class _NoteCard extends StatelessWidget {
                 children: [
                   // Type icon badge
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 7,
+                      vertical: 3,
+                    ),
                     decoration: BoxDecoration(
                       color: theme.primary.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(6),
@@ -440,7 +539,12 @@ class _NoteCard extends StatelessWidget {
                 const SizedBox(height: 6),
                 Text(
                   note.body,
-                  style: TextStyle(height: 1.4, fontSize: 13, color: textColor.withValues(alpha: 0.8), decoration: TextDecoration.none),
+                  style: TextStyle(
+                    height: 1.4,
+                    fontSize: 13,
+                    color: textColor.withValues(alpha: 0.8),
+                    decoration: TextDecoration.none,
+                  ),
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -449,7 +553,12 @@ class _NoteCard extends StatelessWidget {
                 const SizedBox(height: 6),
                 Text(
                   NoteType.label(note.noteType),
-                  style: TextStyle(fontSize: 12, color: theme.primary, fontWeight: FontWeight.w600, decoration: TextDecoration.none),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: theme.primary,
+                    fontWeight: FontWeight.w600,
+                    decoration: TextDecoration.none,
+                  ),
                 ),
               ],
               if (note.tags.isNotEmpty) ...[
@@ -457,20 +566,40 @@ class _NoteCard extends StatelessWidget {
                 Wrap(
                   spacing: 5,
                   runSpacing: 4,
-                  children: note.tags.take(3).map((tag) => Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: theme.primary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(5),
-                    ),
-                    child: Text(tag, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: theme.primary, decoration: TextDecoration.none)),
-                  )).toList(),
+                  children: note.tags
+                      .take(3)
+                      .map(
+                        (tag) => Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 7,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: theme.primary.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                          child: Text(
+                            tag,
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: theme.primary,
+                              decoration: TextDecoration.none,
+                            ),
+                          ),
+                        ),
+                      )
+                      .toList(),
                 ),
               ],
               const SizedBox(height: 8),
               Text(
                 compactDate(note.updatedAt),
-                style: TextStyle(fontSize: 10, color: mutedColor, decoration: TextDecoration.none),
+                style: TextStyle(
+                  fontSize: 10,
+                  color: mutedColor,
+                  decoration: TextDecoration.none,
+                ),
               ),
             ],
           ),
