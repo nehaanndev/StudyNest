@@ -1,55 +1,20 @@
-// Returns a local snapshot only when it is safe for the current auth user.
-Map<String, dynamic> safeStudyNestLocalSnapshot(
-  Map<String, dynamic> localSnapshot,
-  String currentUid,
-  bool allowCrossUserLocalSnapshot,
-) {
-  final ownerUserId = localSnapshot['ownerUserId'] as String?;
-  if (ownerUserId == currentUid || allowCrossUserLocalSnapshot) {
-    return localSnapshot;
-  }
-  return emptyStudyNestSnapshot();
-}
-
-// Reports whether a local snapshot already belongs to the active auth user.
-bool isStudyNestSnapshotOwnedBy(
-  Map<String, dynamic> localSnapshot,
-  String currentUid,
-) {
-  return localSnapshot['ownerUserId'] == currentUid;
-}
-
-// Compares two StudyNest snapshots using the canonical updatedAt field.
-bool isRemoteStudyNestSnapshotNewer({
-  required Map<String, dynamic> localSnapshot,
-  required Map<String, dynamic>? remoteSnapshot,
-}) {
-  if (remoteSnapshot == null) return false;
-  final remoteUpdatedAt = DateTime.tryParse(
-    remoteSnapshot['updatedAt'] as String? ?? '',
-  );
-  final localUpdatedAt = DateTime.tryParse(
-    localSnapshot['updatedAt'] as String? ?? '',
-  );
-  if (remoteUpdatedAt == null) return false;
-  if (localUpdatedAt == null) return true;
-  return remoteUpdatedAt.isAfter(localUpdatedAt);
-}
-
-// Creates an empty StudyNest snapshot for accounts without cloud data.
+/// Returns an empty, account-safe snapshot when data cannot be attributed.
+///
+/// This intentionally has no starter examples: it is used only while switching
+/// identities, where showing no data is safer than exposing another user's data.
 Map<String, dynamic> emptyStudyNestSnapshot() {
   final now = DateTime.now().toIso8601String();
   return {
     'schemaVersion': 2,
     'updatedAt': now,
-    'tasks': const [],
-    'notes': const [],
-    'events': const [],
-    'coinLedger': const [],
-    'ownedShopItemIds': const [],
-    'ownedDecorItemIds': const ['decor.cozyCafe.mug'],
-    'appliedDecorItemIds': const ['decor.cozyCafe.mug'],
-    'decorPositions': const {},
+    'tasks': <dynamic>[],
+    'notes': <dynamic>[],
+    'events': <dynamic>[],
+    'coinLedger': <dynamic>[],
+    'ownedShopItemIds': <dynamic>[],
+    'ownedDecorItemIds': <dynamic>['decor.cozyCafe.mug'],
+    'appliedDecorItemIds': <dynamic>['decor.cozyCafe.mug'],
+    'decorPositions': <String, dynamic>{},
     'selectedThemeId': 'cozyCafe',
     'studySpaceStyleId': 'detail',
     'sessionGoal': {
@@ -58,75 +23,122 @@ Map<String, dynamic> emptyStudyNestSnapshot() {
       'completedAt': null,
       'updatedAt': now,
     },
-    'habits': const [],
+    'habits': <dynamic>[],
+    'hasCompletedWelcome': false,
+    'lastDestinationId': 'home',
   };
 }
 
-// Merges anonymous study data into an existing account snapshot by record id.
+/// Adds the authenticated Firebase UID to a snapshot before it is persisted.
+Map<String, dynamic> withStudyNestSnapshotOwner(
+  Map<String, dynamic> snapshot,
+  String userId,
+) {
+  return {...snapshot, 'ownerUserId': userId};
+}
+
+/// Reports whether the remote snapshot has a more recent canonical timestamp.
+bool isRemoteStudyNestSnapshotNewer({
+  required Map<String, dynamic> localSnapshot,
+  required Map<String, dynamic>? remoteSnapshot,
+}) {
+  if (remoteSnapshot == null) {
+    return false;
+  }
+  final remoteUpdatedAt = DateTime.tryParse(
+    remoteSnapshot['updatedAt'] as String? ?? '',
+  );
+  final localUpdatedAt = DateTime.tryParse(
+    localSnapshot['updatedAt'] as String? ?? '',
+  );
+  if (remoteUpdatedAt == null) {
+    return false;
+  }
+  if (localUpdatedAt == null) {
+    return true;
+  }
+  return remoteUpdatedAt.isAfter(localUpdatedAt);
+}
+
+/// Merges an intentional anonymous-to-account transfer without dropping either side.
 Map<String, dynamic> mergeStudyNestSnapshots(
   Map<String, dynamic> localSnapshot,
   Map<String, dynamic> remoteSnapshot,
 ) {
-  final merged = {...remoteSnapshot};
-  final localHasContent = hasStudyNestUserContent(localSnapshot);
-  for (final key in ['tasks', 'notes', 'events', 'coinLedger', 'habits']) {
-    merged[key] = _mergeRecordLists(localSnapshot[key], remoteSnapshot[key]);
-  }
-  merged['ownedShopItemIds'] = _mergeStringLists(
-    localSnapshot['ownedShopItemIds'],
-    remoteSnapshot['ownedShopItemIds'],
+  final localIsNewer = isRemoteStudyNestSnapshotNewer(
+    localSnapshot: remoteSnapshot,
+    remoteSnapshot: localSnapshot,
   );
-  merged['ownedDecorItemIds'] = _mergeStringLists(
-    localSnapshot['ownedDecorItemIds'],
-    remoteSnapshot['ownedDecorItemIds'],
-  );
-  merged['appliedDecorItemIds'] = _mergeStringLists(
-    localSnapshot['appliedDecorItemIds'],
-    remoteSnapshot['appliedDecorItemIds'],
-  );
-  if (localHasContent) {
-    merged['decorPositions'] = {
-      ...(remoteSnapshot['decorPositions'] as Map? ?? const {}),
-      ...(localSnapshot['decorPositions'] as Map? ?? const {}),
-    };
-    for (final key in ['selectedThemeId', 'studySpaceStyleId', 'sessionGoal']) {
-      if (localSnapshot[key] != null) merged[key] = localSnapshot[key];
-    }
-  }
-  merged['updatedAt'] = DateTime.now().toIso8601String();
-  return merged;
-}
-
-// Reports whether a snapshot contains learner-created or earned study data.
-bool hasStudyNestUserContent(Map<String, dynamic> snapshot) {
-  for (final key in ['tasks', 'notes', 'events', 'coinLedger', 'habits']) {
-    if ((snapshot[key] as List<dynamic>? ?? const []).isNotEmpty) {
-      return true;
-    }
-  }
-  return (snapshot['ownedShopItemIds'] as List<dynamic>? ?? const []).isNotEmpty;
-}
-
-// Combines JSON records by id while keeping local anonymous records available.
-List<dynamic> _mergeRecordLists(Object? localSource, Object? remoteSource) {
-  final records = <String, dynamic>{};
-  for (final item in (remoteSource as List<dynamic>? ?? const [])) {
-    final record = (item as Map).cast<String, dynamic>();
-    final id = record['id'] as String?;
-    if (id != null) records[id] = record;
-  }
-  for (final item in (localSource as List<dynamic>? ?? const [])) {
-    final record = (item as Map).cast<String, dynamic>();
-    final id = record['id'] as String?;
-    if (id != null) records[id] = record;
-  }
-  return records.values.toList();
-}
-
-// Combines two string id lists without duplicates.
-List<String> _mergeStringLists(Object? localSource, Object? remoteSource) {
+  final preferred = localIsNewer ? localSnapshot : remoteSnapshot;
+  final secondary = localIsNewer ? remoteSnapshot : localSnapshot;
   return {
-    ...(remoteSource as List<dynamic>? ?? const []).cast<String>(),
-    ...(localSource as List<dynamic>? ?? const []).cast<String>(),
-  }.toList();
+    ...secondary,
+    ...preferred,
+    for (final key in const [
+      'tasks',
+      'notes',
+      'events',
+      'coinLedger',
+      'habits',
+    ])
+      key: _mergeRecords(localSnapshot[key], remoteSnapshot[key]),
+    for (final key in const [
+      'ownedShopItemIds',
+      'ownedDecorItemIds',
+      'appliedDecorItemIds',
+    ])
+      key: _mergeStrings(localSnapshot[key], remoteSnapshot[key]),
+  };
+}
+
+/// Combines record lists by id, retaining the newer version of duplicate records.
+List<dynamic> _mergeRecords(Object? localValue, Object? remoteValue) {
+  final merged = <String, Map<String, dynamic>>{};
+  for (final record in [..._asMaps(remoteValue), ..._asMaps(localValue)]) {
+    final id = record['id'] as String?;
+    if (id == null) {
+      continue;
+    }
+    final existing = merged[id];
+    if (existing == null || _recordIsNewer(record, existing)) {
+      merged[id] = record;
+    }
+  }
+  return merged.values.toList();
+}
+
+/// Converts a JSON list into maps while discarding malformed entries.
+List<Map<String, dynamic>> _asMaps(Object? value) {
+  return (value as List<dynamic>? ?? const [])
+      .whereType<Map>()
+      .map((item) => item.cast<String, dynamic>())
+      .toList();
+}
+
+/// Reports whether one record's updated or created timestamp is more recent.
+bool _recordIsNewer(
+  Map<String, dynamic> candidate,
+  Map<String, dynamic> current,
+) {
+  final candidateTime = _recordTime(candidate);
+  final currentTime = _recordTime(current);
+  return candidateTime != null &&
+      (currentTime == null || candidateTime.isAfter(currentTime));
+}
+
+/// Gets the best available timestamp from a persisted domain record.
+DateTime? _recordTime(Map<String, dynamic> record) {
+  return DateTime.tryParse(
+    record['updatedAt'] as String? ?? record['createdAt'] as String? ?? '',
+  );
+}
+
+/// Returns a de-duplicated union of two persisted string lists.
+List<String> _mergeStrings(Object? localValue, Object? remoteValue) {
+  return {..._asStrings(remoteValue), ..._asStrings(localValue)}.toList();
+}
+
+/// Converts a JSON list into strings while discarding malformed entries.
+List<String> _asStrings(Object? value) {
+  return (value as List<dynamic>? ?? const []).whereType<String>().toList();
 }

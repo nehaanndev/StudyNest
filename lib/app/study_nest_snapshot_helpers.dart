@@ -83,6 +83,7 @@ StudyNestState _starterState(
     session: StudyNestSessionState.disabled(),
     hasCompletedWelcome: false,
     lastDestinationId: 'home',
+    ownerUserId: null,
   );
 }
 

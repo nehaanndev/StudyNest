@@ -32,25 +32,6 @@ extension StudyNestSyncState on StudyNestState {
     });
     final resolution = await _syncService.initialize(_toSnapshot());
     await _applySyncResolution(resolution);
-    if (resolution.snapshot == null && resolution.session.userId != null) {
-      final cachedSnapshot = await _storage?.loadForOwner(
-        resolution.session.userId!,
-      );
-      if (cachedSnapshot != null) {
-        logStudyNestAuthDebug(
-          'Hydrating exact-owner local cache after auth initialization',
-          userId: resolution.session.userId,
-          ownerUserId: cachedSnapshot['ownerUserId'] as String?,
-          source: 'local_cache',
-        );
-        await _applySyncResolution(
-          StudyNestSyncResolution(
-            session: resolution.session,
-            snapshot: cachedSnapshot,
-          ),
-        );
-      }
-    }
   }
 
   // Links the anonymous Firebase account to Google and keeps the same data.
@@ -67,6 +48,11 @@ extension StudyNestSyncState on StudyNestState {
     );
   }
 
+  // Creates a Firestore-ready dump of the current local phone snapshot.
+  Map<String, dynamic> createFirestoreRestoreDump() {
+    return _toSnapshot();
+  }
+
   // Pushes the latest local snapshot into the configured sync service.
   Future<void> _syncLatestSnapshot() async {
     final resolution = await _syncService.sync(_toSnapshot());
@@ -76,18 +62,6 @@ extension StudyNestSyncState on StudyNestState {
   // Applies returned sync state and optionally replaces local data from cloud.
   Future<void> _applySyncResolution(StudyNestSyncResolution resolution) async {
     var changed = false;
-    final nextUserId = resolution.session.userId;
-    if (_session.userId != null &&
-        nextUserId != null &&
-        _session.userId != nextUserId) {
-      logStudyNestAuthDebug(
-        'Clearing app state for Firebase UID change',
-        userId: nextUserId,
-        ownerUserId: _session.userId,
-      );
-      _applySnapshot(emptyStudyNestSnapshot());
-      changed = true;
-    }
     if (_session != resolution.session) {
       _session = resolution.session;
       changed = true;
@@ -129,11 +103,11 @@ extension StudyNestSyncState on StudyNestState {
         : StudySessionGoal.fromJson(
             migrated['sessionGoal'] as Map<String, dynamic>,
           );
-    _habits = _decodeList(migrated['habits'], StudyHabit.fromJson);
     _updatedAt =
         DateTime.tryParse(migrated['updatedAt'] as String? ?? '') ??
         DateTime.now();
     _hasCompletedWelcome = migrated['hasCompletedWelcome'] as bool? ?? true;
     _lastDestinationId = migrated['lastDestinationId'] as String? ?? 'home';
+    _ownerUserId = migrated['ownerUserId'] as String?;
   }
 }

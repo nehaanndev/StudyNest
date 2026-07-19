@@ -36,6 +36,7 @@ class StudyNestState extends ChangeNotifier {
     required StudyNestSessionState session,
     required bool hasCompletedWelcome,
     required String lastDestinationId,
+    String? ownerUserId,
     List<StudyHabit>? habits,
   }) : _storage = storage,
        _syncService = syncService,
@@ -54,6 +55,7 @@ class StudyNestState extends ChangeNotifier {
        _session = session,
        _hasCompletedWelcome = hasCompletedWelcome,
        _lastDestinationId = lastDestinationId,
+       _ownerUserId = ownerUserId,
        _habits = habits ?? [];
 
   final StudyNestStorage? _storage;
@@ -74,6 +76,7 @@ class StudyNestState extends ChangeNotifier {
   StudyNestSessionState _session;
   bool _hasCompletedWelcome;
   String _lastDestinationId;
+  String? _ownerUserId;
   StreamSubscription<void>? _retrySubscription;
 
   static const shopItems = studyThemeShopItems;
@@ -508,6 +511,7 @@ class StudyNestState extends ChangeNotifier {
       'updatedAt': _updatedAt.toIso8601String(),
       'hasCompletedWelcome': _hasCompletedWelcome,
       'lastDestinationId': _lastDestinationId,
+      if (_ownerUserId != null) 'ownerUserId': _ownerUserId,
       'tasks': _tasks.map((task) => task.toJson()).toList(),
       'notes': _notes.map((note) => note.toJson()).toList(),
       'events': _events.map((event) => event.toJson()).toList(),
@@ -567,6 +571,7 @@ class StudyNestState extends ChangeNotifier {
       session: StudyNestSessionState.disabled(),
       hasCompletedWelcome: snapshot['hasCompletedWelcome'] as bool? ?? true,
       lastDestinationId: snapshot['lastDestinationId'] as String? ?? 'home',
+      ownerUserId: snapshot['ownerUserId'] as String?,
       habits: _decodeList(snapshot['habits'], StudyHabit.fromJson),
     );
   }

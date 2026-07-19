@@ -21,3 +21,28 @@ String _friendlyAuthError(FirebaseAuthException e) {
       return e.message ?? 'Authentication failed.';
   }
 }
+
+extension _FirebaseSessionBuilder on FirebaseStudyNestSyncService {
+  // Builds the app-facing auth and sync session snapshot from Firebase state.
+  StudyNestSessionState _session({
+    required StudyNestAuthStatus authStatus,
+    required StudyNestSyncStatus syncStatus,
+    bool hasPendingSync = false,
+    DateTime? lastSyncedAt,
+    User? user,
+    String? message,
+  }) {
+    return StudyNestSessionState(
+      authStatus: authStatus,
+      syncStatus: syncStatus,
+      cloudEnabled: true,
+      isAnonymous: user?.isAnonymous ?? true,
+      hasPendingSync: hasPendingSync,
+      lastSyncedAt: lastSyncedAt,
+      userId: user?.uid,
+      userEmail: user?.email,
+      userDisplayName: user?.displayName,
+      message: message,
+    );
+  }
+}
