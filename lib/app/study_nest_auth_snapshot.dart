@@ -37,6 +37,19 @@ Map<String, dynamic> withStudyNestSnapshotOwner(
   return {...snapshot, 'ownerUserId': userId};
 }
 
+/// Returns local data only when it belongs to the active authenticated user.
+Map<String, dynamic> safeStudyNestLocalSnapshot(
+  Map<String, dynamic> localSnapshot,
+  String currentUserId,
+  bool allowCrossUserLocalSnapshot,
+) {
+  final ownerUserId = localSnapshot['ownerUserId'] as String?;
+  if (ownerUserId == currentUserId || allowCrossUserLocalSnapshot) {
+    return localSnapshot;
+  }
+  return emptyStudyNestSnapshot();
+}
+
 /// Reports whether the remote snapshot has a more recent canonical timestamp.
 bool isRemoteStudyNestSnapshotNewer({
   required Map<String, dynamic> localSnapshot,
