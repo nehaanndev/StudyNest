@@ -34,6 +34,9 @@ class StudyNestState extends ChangeNotifier {
     required StudySessionGoal sessionGoal,
     required DateTime updatedAt,
     required StudyNestSessionState session,
+    required bool hasCompletedWelcome,
+    required String lastDestinationId,
+    String? ownerUserId,
     List<StudyHabit>? habits,
   }) : _storage = storage,
        _syncService = syncService,
@@ -50,6 +53,9 @@ class StudyNestState extends ChangeNotifier {
        _sessionGoal = sessionGoal,
        _updatedAt = updatedAt,
        _session = session,
+       _hasCompletedWelcome = hasCompletedWelcome,
+       _lastDestinationId = lastDestinationId,
+       _ownerUserId = ownerUserId,
        _habits = habits ?? [];
 
   final StudyNestStorage? _storage;
@@ -68,6 +74,9 @@ class StudyNestState extends ChangeNotifier {
   StudySessionGoal _sessionGoal;
   DateTime _updatedAt;
   StudyNestSessionState _session;
+  bool _hasCompletedWelcome;
+  String _lastDestinationId;
+  String? _ownerUserId;
   StreamSubscription<void>? _retrySubscription;
 
   static const shopItems = studyThemeShopItems;
@@ -449,8 +458,32 @@ class StudyNestState extends ChangeNotifier {
   // Returns the current cloud-auth status.
   StudyNestAuthStatus get authStatus => _session.authStatus;
 
+  // Reports whether this device has already completed the initial welcome flow.
+  bool get hasCompletedWelcome => _hasCompletedWelcome;
+
+  // Returns the most recently selected top-level destination.
+  String get lastDestinationId => _lastDestinationId;
+
   // Returns the current cloud-sync status.
   StudyNestSyncStatus get syncStatus => _session.syncStatus;
+
+  // Persists completion of the first-run welcome choice before opening the app.
+  Future<void> completeWelcome() async {
+    if (_hasCompletedWelcome) {
+      return;
+    }
+    _hasCompletedWelcome = true;
+    await _commitChanges();
+  }
+
+  // Persists a valid top-level destination for the next app launch.
+  Future<void> setLastDestination(String destinationId) async {
+    if (destinationId.isEmpty || destinationId == _lastDestinationId) {
+      return;
+    }
+    _lastDestinationId = destinationId;
+    await _commitChanges();
+  }
 
   // Saves the current state to local device storage when persistence is active.
   Future<void> _save() async {
@@ -476,6 +509,9 @@ class StudyNestState extends ChangeNotifier {
       'schemaVersion': 2,
       'ownerUserId': _session.userId,
       'updatedAt': _updatedAt.toIso8601String(),
+      'hasCompletedWelcome': _hasCompletedWelcome,
+      'lastDestinationId': _lastDestinationId,
+      if (_ownerUserId != null) 'ownerUserId': _ownerUserId,
       'tasks': _tasks.map((task) => task.toJson()).toList(),
       'notes': _notes.map((note) => note.toJson()).toList(),
       'events': _events.map((event) => event.toJson()).toList(),
@@ -533,6 +569,9 @@ class StudyNestState extends ChangeNotifier {
           DateTime.tryParse(snapshot['updatedAt'] as String? ?? '') ??
           DateTime.now(),
       session: StudyNestSessionState.disabled(),
+      hasCompletedWelcome: snapshot['hasCompletedWelcome'] as bool? ?? true,
+      lastDestinationId: snapshot['lastDestinationId'] as String? ?? 'home',
+      ownerUserId: snapshot['ownerUserId'] as String?,
       habits: _decodeList(snapshot['habits'], StudyHabit.fromJson),
     );
   }

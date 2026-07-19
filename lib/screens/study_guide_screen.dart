@@ -177,9 +177,7 @@ class _StudyGuideScreenState extends State<StudyGuideScreen> {
           onPressed: () async {
             _saveTimer?.cancel();
             await _save();
-            if (!context.mounted) {
-              return;
-            }
+            if (!context.mounted) return;
             Navigator.of(context).pop();
           },
         ),

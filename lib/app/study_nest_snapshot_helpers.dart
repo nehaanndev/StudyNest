@@ -81,6 +81,9 @@ StudyNestState _starterState(
     sessionGoal: _defaultSessionGoal(),
     updatedAt: now,
     session: StudyNestSessionState.disabled(),
+    hasCompletedWelcome: false,
+    lastDestinationId: 'home',
+    ownerUserId: null,
   );
 }
 
@@ -177,6 +180,8 @@ Map<String, dynamic>? _migrateSnapshot(Map<String, dynamic>? snapshot) {
     'schemaVersion': (snapshot['schemaVersion'] as int?) ?? 2,
     'updatedAt':
         snapshot['updatedAt'] as String? ?? DateTime.now().toIso8601String(),
+    'hasCompletedWelcome': snapshot['hasCompletedWelcome'] as bool? ?? true,
+    'lastDestinationId': snapshot['lastDestinationId'] as String? ?? 'home',
     'studySpaceStyleId': _normalizedStyleId(
       snapshot['studySpaceStyleId'] as String?,
     ),

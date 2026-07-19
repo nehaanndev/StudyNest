@@ -67,6 +67,11 @@ extension StudyNestSyncState on StudyNestState {
     );
   }
 
+  // Creates a Firestore-ready dump of the current local phone snapshot.
+  Map<String, dynamic> createFirestoreRestoreDump() {
+    return _toSnapshot();
+  }
+
   // Pushes the latest local snapshot into the configured sync service.
   Future<void> _syncLatestSnapshot() async {
     final resolution = await _syncService.sync(_toSnapshot());
@@ -133,5 +138,8 @@ extension StudyNestSyncState on StudyNestState {
     _updatedAt =
         DateTime.tryParse(migrated['updatedAt'] as String? ?? '') ??
         DateTime.now();
+    _hasCompletedWelcome = migrated['hasCompletedWelcome'] as bool? ?? true;
+    _lastDestinationId = migrated['lastDestinationId'] as String? ?? 'home';
+    _ownerUserId = migrated['ownerUserId'] as String?;
   }
 }

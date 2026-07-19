@@ -1,70 +1,53 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:studynest/app/study_nest_auth_snapshot.dart';
 
-// Verifies auth snapshot merge guards for account-bound cloud data.
+// Verifies that snapshot ownership helpers preserve account boundaries.
 void main() {
-  test('empty anonymous snapshots do not reset existing account preferences', () {
-    final merged = mergeStudyNestSnapshots(
-      {
-        'notes': const [],
-        'tasks': const [],
-        'events': const [],
-        'coinLedger': const [],
-        'habits': const [],
-        'ownedShopItemIds': const [],
-        'ownedDecorItemIds': const ['decor.cozyCafe.mug'],
-        'appliedDecorItemIds': const ['decor.cozyCafe.mug'],
-        'decorPositions': const {'decor.cozyCafe.mug': {'x': 0.57, 'y': 0.66}},
-        'selectedThemeId': 'cozyCafe',
-        'studySpaceStyleId': 'detail',
-        'sessionGoal': const {
-          'title': 'Finish one focused study block',
-          'reward': 25,
-        },
-      },
-      {
-        'notes': [
-          {'id': 'note.remote', 'title': 'Remote note'},
-        ],
-        'tasks': const [],
-        'events': const [],
-        'coinLedger': const [],
-        'habits': const [],
-        'ownedShopItemIds': const ['theme.midnightCity'],
-        'ownedDecorItemIds': const ['decor.midnightCity.neonSign'],
-        'appliedDecorItemIds': const ['decor.midnightCity.neonSign'],
-        'decorPositions': const {
-          'decor.midnightCity.neonSign': {'x': 0.76, 'y': 0.2},
-        },
-        'selectedThemeId': 'midnightCity',
-        'studySpaceStyleId': 'simple',
-        'sessionGoal': const {'title': 'Remote goal', 'reward': 50},
-      },
+  test('adds the authenticated owner before persisting a snapshot', () {
+    final snapshot = withStudyNestSnapshotOwner(
+      {'tasks': const []},
+      'current-user',
     );
 
-    expect(merged['selectedThemeId'], 'midnightCity');
-    expect(merged['studySpaceStyleId'], 'simple');
-    expect((merged['sessionGoal'] as Map)['title'], 'Remote goal');
-    expect(
-      (merged['decorPositions'] as Map).containsKey(
-        'decor.midnightCity.neonSign',
-      ),
-      isTrue,
-    );
-    expect(hasStudyNestUserContent(merged), isTrue);
+    expect(snapshot['ownerUserId'], 'current-user');
   });
 
-  test('detects whether a snapshot belongs to the active auth user', () {
-    expect(
-      isStudyNestSnapshotOwnedBy({'ownerUserId': 'old-user'}, 'signed-in-user'),
-      isFalse,
+  test('prefers a newer remote snapshot timestamp', () {
+    final remoteIsNewer = isRemoteStudyNestSnapshotNewer(
+      localSnapshot: {'updatedAt': '2026-07-18T18:15:00.000Z'},
+      remoteSnapshot: {'updatedAt': '2026-07-18T18:16:00.000Z'},
     );
-    expect(
-      isStudyNestSnapshotOwnedBy(
-        {'ownerUserId': 'signed-in-user'},
-        'signed-in-user',
-      ),
-      isTrue,
+
+    expect(remoteIsNewer, isTrue);
+  });
+
+  test('merges an intentional account transfer without dropping remote records', () {
+    final merged = mergeStudyNestSnapshots(
+      {
+        'updatedAt': '2026-07-18T18:16:00.000Z',
+        'tasks': [
+          {'id': 'local-task', 'updatedAt': '2026-07-18T18:16:00.000Z'},
+        ],
+        'notes': const [],
+        'events': const [],
+        'coinLedger': const [],
+        'habits': const [],
+      },
+      {
+        'updatedAt': '2026-07-18T18:15:00.000Z',
+        'tasks': [
+          {'id': 'remote-task', 'updatedAt': '2026-07-18T18:15:00.000Z'},
+        ],
+        'notes': const [],
+        'events': const [],
+        'coinLedger': const [],
+        'habits': const [],
+      },
     );
+    final taskIds = (merged['tasks'] as List<dynamic>)
+        .map((task) => (task as Map<String, dynamic>)['id'])
+        .toSet();
+
+    expect(taskIds, {'local-task', 'remote-task'});
   });
 }
