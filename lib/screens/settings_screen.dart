@@ -68,7 +68,9 @@ class SettingsScreen extends StatelessWidget {
                         onTap: () => Navigator.of(context).push(
                           MaterialPageRoute(
                             builder: (_) => WelcomeScreen(
-                              onDismiss: () => Navigator.of(context).pop(),
+                              onDismiss: () => Navigator.of(
+                                context,
+                              ).popUntil((route) => route.isFirst),
                             ),
                           ),
                         ),

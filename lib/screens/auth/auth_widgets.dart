@@ -20,6 +20,7 @@ class AuthField extends StatelessWidget {
   final Widget? suffixIcon;
   final String? Function(String?)? validator;
 
+  // Builds a consistently styled input field for the authentication flow.
   @override
   Widget build(BuildContext context) {
     final theme = StudyNestScope.watch(context).selectedTheme;
@@ -60,6 +61,7 @@ class AuthErrorBanner extends StatelessWidget {
   const AuthErrorBanner({super.key, required this.message});
   final String message;
 
+  // Presents a recoverable authentication error in a consistent visual style.
   @override
   Widget build(BuildContext context) {
     return Container(

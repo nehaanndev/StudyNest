@@ -28,6 +28,18 @@ void main() {
     );
   });
 
+  test('persists the entry choice and last selected destination', () async {
+    final storage = InMemoryStudyNestStorage();
+    final state = await StudyNestState.load(storage: storage);
+
+    await state.completeWelcome();
+    await state.setLastDestination('habits');
+    final reloaded = await StudyNestState.load(storage: storage);
+
+    expect(reloaded.hasCompletedWelcome, isTrue);
+    expect(reloaded.lastDestinationId, 'habits');
+  });
+
   test('awards task completion coins only once per task', () async {
     final state = await StudyNestState.load(
       storage: InMemoryStudyNestStorage(),

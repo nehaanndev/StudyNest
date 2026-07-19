@@ -133,5 +133,7 @@ extension StudyNestSyncState on StudyNestState {
     _updatedAt =
         DateTime.tryParse(migrated['updatedAt'] as String? ?? '') ??
         DateTime.now();
+    _hasCompletedWelcome = migrated['hasCompletedWelcome'] as bool? ?? true;
+    _lastDestinationId = migrated['lastDestinationId'] as String? ?? 'home';
   }
 }

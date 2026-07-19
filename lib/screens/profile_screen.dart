@@ -55,11 +55,14 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
+  // Opens account entry and returns to the profile after authentication finishes.
   void _showWelcome(BuildContext context) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) =>
-            WelcomeScreen(onDismiss: () => Navigator.of(context).pop()),
+        builder: (_) => WelcomeScreen(
+          onDismiss: () =>
+              Navigator.of(context).popUntil((route) => route.isFirst),
+        ),
       ),
     );
   }

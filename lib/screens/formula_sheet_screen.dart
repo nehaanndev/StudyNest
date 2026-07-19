@@ -133,9 +133,7 @@ class _FormulaSheetScreenState extends State<FormulaSheetScreen> {
           onPressed: () async {
             _saveTimer?.cancel();
             await _save();
-            if (!context.mounted) {
-              return;
-            }
+            if (!context.mounted) return;
             Navigator.of(context).pop();
           },
         ),

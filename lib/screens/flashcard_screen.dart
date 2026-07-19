@@ -144,9 +144,7 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
           onPressed: () async {
             _saveTimer?.cancel();
             await _save();
-            if (!context.mounted) {
-              return;
-            }
+            if (!context.mounted) return;
             Navigator.of(context).pop();
           },
         ),
@@ -479,7 +477,7 @@ class _FlashcardReviewScreenState extends State<_FlashcardReviewScreen>
             onTap: _flip,
             child: AnimatedBuilder(
               animation: _flipAnim,
-              builder: (_, _) {
+              builder: (_, animation) {
                 final angle = _flipAnim.value * pi;
                 final showFront = angle < pi / 2;
                 return Transform(

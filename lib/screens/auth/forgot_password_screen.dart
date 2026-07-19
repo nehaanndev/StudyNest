@@ -17,12 +17,14 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   bool _sent = false;
   String? _error;
 
+  // Releases the email controller when this route is removed.
   @override
   void dispose() {
     _emailCtrl.dispose();
     super.dispose();
   }
 
+  // Sends a reset email after validating the entered address.
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() {
@@ -42,6 +44,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     });
   }
 
+  // Builds the reset-password form or its post-send confirmation state.
   @override
   Widget build(BuildContext context) {
     final theme = StudyNestScope.watch(context).selectedTheme;
