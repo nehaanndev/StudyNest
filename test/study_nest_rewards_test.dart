@@ -7,7 +7,7 @@ import 'package:studynest/app/study_nest_storage.dart';
 // Verifies Pomodoro rewards, optional task coins, multipliers, and persistence.
 void main() {
   test(
-    'new profiles earn five coins from each unique Pomodoro cycle',
+    'new profiles earn fifteen coins from each unique Pomodoro cycle',
     () async {
       final state = await StudyNestState.load(
         storage: InMemoryStudyNestStorage(),
@@ -27,7 +27,7 @@ void main() {
   );
 
   test(
-    'task switch costs 500 and disabled completions stay consumed',
+    'task switch costs 375 and disabled completions stay consumed',
     () async {
       final state = await _loadStateWithCoins(1000);
       final bought = await state.buyTaskCoinRewards();
@@ -89,7 +89,7 @@ void main() {
   });
 
   test(
-    'focus-length unlock costs 300 and persists supported selections',
+    'focus-length unlock costs 225 and persists supported selections',
     () async {
       final insufficient = await _loadStateWithCoins(
         pomodoroDurationUnlockCost - 1,
@@ -104,12 +104,14 @@ void main() {
       expect(await state.buyPomodoroDurationUnlock(), isTrue);
       expect(await state.buyPomodoroDurationUnlock(), isFalse);
       expect(state.coinBalance, 0);
-      expect(await state.setPomodoroFocusMinutes(10), isFalse);
+      expect(await state.setPomodoroFocusMinutes(0), isFalse);
+      expect(await state.setPomodoroFocusMinutes(181), isFalse);
       expect(await state.setPomodoroFocusMinutes(45), isTrue);
+      expect(await state.setPomodoroFocusMinutes(7), isTrue);
 
       final reloaded = await StudyNestState.load(storage: storage);
       expect(reloaded.pomodoroDurationUnlocked, isTrue);
-      expect(reloaded.pomodoroFocusMinutes, 45);
+      expect(reloaded.pomodoroFocusMinutes, 7);
     },
   );
 
@@ -120,8 +122,8 @@ void main() {
         snapshot: _snapshotWithCoins(10000),
       );
       final state = await StudyNestState.load(storage: storage);
-      const expectedRewards = [8, 10, 13, 15, 20, 25];
-      const expectedCosts = [100, 175, 250, 325, 400, 475];
+      const expectedRewards = [23, 30, 38, 45, 60, 75];
+      const expectedCosts = [75, 125, 200, 250, 300, 350];
 
       expect(
         coinMultiplierOffers.every((offer) => offer.cost < taskCoinUnlockCost),
@@ -142,7 +144,7 @@ void main() {
 
       final reloaded = await StudyNestState.load(storage: storage);
       expect(reloaded.activeCoinMultiplier, 5);
-      expect(reloaded.pomodoroCycleReward, 25);
+      expect(reloaded.pomodoroCycleReward, 75);
       expect(coinMultiplierOffers.every(reloaded.ownsCoinMultiplier), isTrue);
     },
   );

@@ -62,9 +62,9 @@ void main() {
     expect(find.text('Coin earning'), findsOneWidget);
     expect(find.text('Unlock task coins'), findsOneWidget);
     expect(find.text('Unlock focus lengths'), findsOneWidget);
-    expect(find.text('300 coins'), findsOneWidget);
+    expect(find.text('225 coins'), findsOneWidget);
     expect(find.text('Pomodoro boosts'), findsOneWidget);
-    expect(find.text('8 coins per completed cycle'), findsOneWidget);
+    expect(find.text('23 coins per completed cycle'), findsOneWidget);
     expect(find.byType(NavigationBar), findsOneWidget);
   });
 
@@ -102,6 +102,46 @@ void main() {
     expect(find.text('45 min'), findsOneWidget);
   });
 
+  testWidgets('Custom focus length updates the next idle Pomodoro cycle', (
+    tester,
+  ) async {
+    final snapshot = emptyStudyNestSnapshot();
+    snapshot['coinLedger'] = [
+      {
+        'id': 'coins.custom-duration-funding',
+        'label': 'Custom duration test funding',
+        'amount': pomodoroDurationUnlockCost,
+        'createdAt': DateTime.now().toIso8601String(),
+        'sourceId': 'custom-duration-test-funding',
+      },
+    ];
+    final state = await StudyNestState.load(
+      storage: InMemoryStudyNestStorage(snapshot: snapshot),
+    );
+    await state.completeWelcome();
+    await state.buyPomodoroDurationUnlock();
+    await state.setLastDestination('shop');
+    await tester.pumpWidget(StudyNestApp(appState: state));
+
+    await tester.scrollUntilVisible(
+      find.text('Custom'),
+      220,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Custom'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), '7');
+    await tester.tap(find.text('Apply'));
+    await tester.pumpAndSettle();
+
+    expect(state.pomodoroFocusMinutes, 7);
+    expect(find.text('Custom'), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.hourglass_empty_rounded));
+    await tester.pump();
+    expect(find.text('07:00'), findsOneWidget);
+  });
+
   testWidgets('Shop coin upgrades fit a narrow phone viewport', (tester) async {
     tester.view.physicalSize = const Size(360, 800);
     tester.view.devicePixelRatio = 1;
@@ -115,11 +155,58 @@ void main() {
     expect(tester.takeException(), isNull);
     await tester.ensureVisible(find.text('5x'));
     await tester.pumpAndSettle();
-    expect(find.text('🪙 475'), findsOneWidget);
+    expect(find.text('🪙 350'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
   testWidgets('Task editor explains and validates the fifty coin maximum', (
+    tester,
+  ) async {
+    final snapshot = emptyStudyNestSnapshot();
+    snapshot['coinLedger'] = [
+      {
+        'id': 'coins.task-reward-funding',
+        'label': 'Task reward test funding',
+        'amount': taskCoinUnlockCost,
+        'createdAt': DateTime.now().toIso8601String(),
+        'sourceId': 'task-reward-test-funding',
+      },
+    ];
+    final state = await StudyNestState.load(
+      storage: InMemoryStudyNestStorage(snapshot: snapshot),
+    );
+    await state.completeWelcome();
+    await tester.pumpWidget(StudyNestApp(appState: state));
+
+    await tester.tap(find.byIcon(Icons.checklist_outlined));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Add New Task'));
+    await tester.pumpAndSettle();
+
+    var rewardField = tester.widget<TextField>(find.byType(TextField).at(2));
+    expect(rewardField.enabled, isFalse);
+    expect(
+      find.text('Turn on task coins in the Shop to set a reward.'),
+      findsOneWidget,
+    );
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+
+    await state.buyTaskCoinRewards();
+    await tester.pump();
+    await tester.tap(find.text('Add New Task'));
+    await tester.pumpAndSettle();
+    rewardField = tester.widget<TextField>(find.byType(TextField).at(2));
+    expect(rewardField.enabled, isTrue);
+    expect(find.textContaining('Maximum 50'), findsOneWidget);
+    await tester.enterText(find.byType(TextField).at(2), '51');
+    await tester.pump();
+
+    expect(find.text('Enter 1–50 coins.'), findsOneWidget);
+    expect(find.text('New task'), findsOneWidget);
+  });
+
+  testWidgets('Creating a task closes the editor without lifecycle errors', (
     tester,
   ) async {
     final state = StudyNestState.preview();
@@ -130,24 +217,50 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Add New Task'));
     await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).first, 'Crash regression');
+    await tester.tap(find.text('Create'));
+    await tester.pumpAndSettle();
 
-    expect(find.textContaining('Max 50'), findsOneWidget);
-    await tester.enterText(find.byType(TextField).at(2), '51');
-    await tester.pump();
-
-    expect(find.text('Enter 1–50 coins.'), findsOneWidget);
-    expect(find.text('New task'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    expect(find.text('Crash regression'), findsOneWidget);
+    expect(find.text('New task'), findsNothing);
   });
 
-  testWidgets('Pomodoro skips mint nothing and exact focus duration awards', (
+  testWidgets('Saving a focus goal waits for dialog resources to detach', (
     tester,
   ) async {
     final state = StudyNestState.preview();
     await state.completeWelcome();
     await tester.pumpWidget(StudyNestApp(appState: state));
 
+    await tester.tap(find.byTooltip('Edit goal'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).first, 'Review chemistry');
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('Review chemistry'), findsOneWidget);
+    expect(find.text('Set focus goal'), findsNothing);
+  });
+
+  testWidgets('Pomodoro skips mint nothing and exact focus duration awards', (
+    tester,
+  ) async {
+    const testFocusMinutes = int.fromEnvironment('POMODORO_TEST_MINUTES');
+    final focusMinutes = testFocusMinutes > 0
+        ? testFocusMinutes
+        : defaultPomodoroFocusMinutes;
+    final state = StudyNestState.preview();
+    await state.completeWelcome();
+    await tester.pumpWidget(StudyNestApp(appState: state));
+
     await tester.tap(find.byIcon(Icons.hourglass_empty_rounded));
     await tester.pump();
+    expect(
+      find.text('${focusMinutes.toString().padLeft(2, '0')}:00'),
+      findsOneWidget,
+    );
     final timerScroll = find.descendant(
       of: find.byType(PomodoroScreen),
       matching: find.byType(Scrollable),
@@ -161,9 +274,9 @@ void main() {
     expect(state.coinBalance, 0);
 
     await tester.tap(find.byTooltip('Start timer'));
-    await tester.pump(const Duration(minutes: 25));
+    await tester.pump(Duration(minutes: focusMinutes));
 
-    expect(state.coinBalance, 5);
+    expect(state.coinBalance, pomodoroBaseCoinReward);
     expect(find.text('05:00'), findsOneWidget);
   });
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../app/study_nest_scope.dart';
 import '../app/study_nest_rewards.dart';
@@ -8,6 +9,7 @@ import '../models/study_models.dart';
 import '../theme/study_theme.dart';
 import '../widgets/cozy_widgets.dart';
 import '../widgets/decor_shop_widgets.dart';
+import '../widgets/managed_dialog.dart';
 import '../widgets/study_photo_widgets.dart';
 import '../widgets/study_station_banner.dart';
 
@@ -60,7 +62,7 @@ class _ShopScreenState extends State<ShopScreen> {
           ),
           const SectionHeader(title: 'Pomodoro boosts'),
           Text(
-            'Choose how many coins each completed ${state.pomodoroFocusMinutes}-minute focus cycle earns.',
+            'The base reward is $pomodoroBaseCoinReward coins per completed ${state.pomodoroFocusMinutes}-minute focus cycle. Multipliers build from that rate.',
             style: TextStyle(color: state.selectedTheme.muted, height: 1.35),
           ),
           const SizedBox(height: 14),
@@ -248,7 +250,10 @@ class _ShopScreenState extends State<ShopScreen> {
     await _runPendingAction('multiplier.1', () async {
       await StudyNestScope.read(context).activateCoinMultiplier(factor);
       if (context.mounted) {
-        _showMessage(context, 'Base rate active: 5 coins per cycle.');
+        _showMessage(
+          context,
+          'Base rate active: $pomodoroBaseCoinReward coins per cycle.',
+        );
       }
     });
   }

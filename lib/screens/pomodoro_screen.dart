@@ -27,6 +27,7 @@ class PomodoroScreen extends StatefulWidget {
 
 class _PomodoroScreenState extends State<PomodoroScreen> {
   static const _breakMinutes = 5;
+  static const _testFocusMinutes = int.fromEnvironment('POMODORO_TEST_MINUTES');
 
   int _focusMinutes = defaultPomodoroFocusMinutes;
   int _cyclesCompleted = 0;
@@ -43,11 +44,18 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
     return DateTime.now().microsecondsSinceEpoch.toString();
   }
 
+  // Returns a build-time test duration when configured, or the saved duration.
+  int _effectiveFocusMinutes(int savedMinutes) {
+    return _testFocusMinutes > 0 ? _testFocusMinutes : savedMinutes;
+  }
+
   // Applies saved focus-length changes while an idle focus cycle can reset safely.
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final savedMinutes = StudyNestScope.read(context).pomodoroFocusMinutes;
+    final savedMinutes = _effectiveFocusMinutes(
+      StudyNestScope.read(context).pomodoroFocusMinutes,
+    );
     if (!_loadedSavedFocusMinutes || (!_isRunning && !_isBreak)) {
       if (savedMinutes != _focusMinutes) {
         _focusMinutes = savedMinutes;
@@ -95,7 +103,9 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
         _secondsLeft = _breakMinutes * 60;
         _quoteIndex = (_quoteIndex + 1) % _quotes.length;
       } else {
-        _focusMinutes = StudyNestScope.read(context).pomodoroFocusMinutes;
+        _focusMinutes = _effectiveFocusMinutes(
+          StudyNestScope.read(context).pomodoroFocusMinutes,
+        );
         _isBreak = false;
         _secondsLeft = _focusMinutes * 60;
         _focusCycleId = _newFocusCycleId();

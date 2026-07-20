@@ -1,5 +1,5 @@
 /// Base coins awarded when one Pomodoro focus cycle finishes naturally.
-const int pomodoroBaseCoinReward = 5;
+const int pomodoroBaseCoinReward = 15;
 
 /// Highest configurable and payable reward for a completed task.
 const int maximumTaskCoinReward = 50;
@@ -8,19 +8,31 @@ const int maximumTaskCoinReward = 50;
 const String taskCoinUnlockProductId = 'reward.taskCoins';
 
 /// One-time price of unlocking task completion rewards.
-const int taskCoinUnlockCost = 500;
+const int taskCoinUnlockCost = 375;
 
 /// Stable ledger source used for the one-time focus-length unlock.
 const String pomodoroDurationUnlockProductId = 'reward.pomodoroDuration';
 
 /// One-time price of unlocking selectable Pomodoro focus lengths.
-const int pomodoroDurationUnlockCost = 300;
+const int pomodoroDurationUnlockCost = 225;
 
 /// Default focus length for new profiles and older saved snapshots.
 const int defaultPomodoroFocusMinutes = 25;
 
 /// Supported focus lengths displayed after the duration upgrade is owned.
 const List<int> pomodoroFocusMinuteOptions = [15, 20, 25, 30, 45, 60];
+
+/// Smallest custom focus cycle accepted by the duration control.
+const int minimumPomodoroFocusMinutes = 1;
+
+/// Largest custom focus cycle accepted by the duration control.
+const int maximumPomodoroFocusMinutes = 180;
+
+/// Reports whether a preset or custom Pomodoro duration can be saved.
+bool isValidPomodoroFocusMinutes(int minutes) {
+  return minutes >= minimumPomodoroFocusMinutes &&
+      minutes <= maximumPomodoroFocusMinutes;
+}
 
 /// Describes a permanent Pomodoro reward multiplier sold in the shop.
 class CoinMultiplierOffer {
@@ -41,12 +53,12 @@ class CoinMultiplierOffer {
 
 /// Permanent multiplier products in their intended shop display order.
 const coinMultiplierOffers = [
-  CoinMultiplierOffer(factor: 1.5, cost: 100),
-  CoinMultiplierOffer(factor: 2, cost: 175),
-  CoinMultiplierOffer(factor: 2.5, cost: 250),
-  CoinMultiplierOffer(factor: 3, cost: 325),
-  CoinMultiplierOffer(factor: 4, cost: 400),
-  CoinMultiplierOffer(factor: 5, cost: 475),
+  CoinMultiplierOffer(factor: 1.5, cost: 75),
+  CoinMultiplierOffer(factor: 2, cost: 125),
+  CoinMultiplierOffer(factor: 2.5, cost: 200),
+  CoinMultiplierOffer(factor: 3, cost: 250),
+  CoinMultiplierOffer(factor: 4, cost: 300),
+  CoinMultiplierOffer(factor: 5, cost: 350),
 ];
 
 /// Finds a multiplier offer by factor, or null for the base 1x rate.
@@ -68,7 +80,7 @@ double normalizedCoinMultiplier(Object? value) {
 /// Keeps persisted focus lengths within the supported customization options.
 int normalizedPomodoroFocusMinutes(Object? value) {
   final minutes = (value as num?)?.toInt() ?? defaultPomodoroFocusMinutes;
-  return pomodoroFocusMinuteOptions.contains(minutes)
+  return isValidPomodoroFocusMinutes(minutes)
       ? minutes
       : defaultPomodoroFocusMinutes;
 }

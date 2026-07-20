@@ -104,8 +104,7 @@ extension StudyNestRewardsState on StudyNestState {
 
   /// Saves one supported focus length after the upgrade has been purchased.
   Future<bool> setPomodoroFocusMinutes(int minutes) async {
-    if (!pomodoroDurationUnlocked ||
-        !pomodoroFocusMinuteOptions.contains(minutes)) {
+    if (!pomodoroDurationUnlocked || !isValidPomodoroFocusMinutes(minutes)) {
       return false;
     }
     if (_pomodoroFocusMinutes == minutes) {

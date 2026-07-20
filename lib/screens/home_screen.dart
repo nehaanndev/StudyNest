@@ -6,6 +6,7 @@ import '../app/study_nest_scope.dart';
 import '../app/study_nest_state.dart';
 import '../utils/date_labels.dart';
 import '../widgets/cozy_widgets.dart';
+import '../widgets/managed_dialog.dart';
 import '../widgets/study_town_scene.dart';
 import 'study_space_screen.dart';
 
@@ -265,7 +266,7 @@ class HomeScreen extends StatelessWidget {
       text: state.sessionGoal.title,
     );
 
-    await showDialog<void>(
+    await showManagedDialog<void>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(

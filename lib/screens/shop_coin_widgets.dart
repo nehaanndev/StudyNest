@@ -89,12 +89,85 @@ class _PomodoroDurationCard extends StatelessWidget {
                         ? null
                         : (_) => onMinutesSelected(minutes),
                   ),
+                ChoiceChip(
+                  label: const Text('Custom'),
+                  selected: !pomodoroFocusMinuteOptions.contains(
+                    state.pomodoroFocusMinutes,
+                  ),
+                  onSelected: pending
+                      ? null
+                      : (_) => _showCustomMinutesDialog(
+                          context,
+                          state.pomodoroFocusMinutes,
+                        ),
+                ),
               ],
             ),
           ],
         ],
       ),
     );
+  }
+
+  // Collects and validates a custom focus duration before applying it.
+  Future<void> _showCustomMinutesDialog(
+    BuildContext context,
+    int currentMinutes,
+  ) async {
+    final controller = TextEditingController(
+      text: pomodoroFocusMinuteOptions.contains(currentMinutes)
+          ? ''
+          : currentMinutes.toString(),
+    );
+    String? errorText;
+    final minutes = await showManagedDialog<int>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (dialogContext, setDialogState) {
+            return AlertDialog(
+              title: const Text('Custom focus length'),
+              content: TextField(
+                controller: controller,
+                autofocus: true,
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                decoration: InputDecoration(
+                  labelText: 'Minutes',
+                  helperText:
+                      '$minimumPomodoroFocusMinutes–$maximumPomodoroFocusMinutes minutes',
+                  errorText: errorText,
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  onPressed: () {
+                    final value = int.tryParse(controller.text);
+                    if (value == null || !isValidPomodoroFocusMinutes(value)) {
+                      setDialogState(
+                        () => errorText =
+                            'Enter $minimumPomodoroFocusMinutes–$maximumPomodoroFocusMinutes minutes.',
+                      );
+                      return;
+                    }
+                    Navigator.of(dialogContext).pop(value);
+                  },
+                  child: const Text('Apply'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+    controller.dispose();
+    if (minutes != null && context.mounted) {
+      onMinutesSelected(minutes);
+    }
   }
 }
 

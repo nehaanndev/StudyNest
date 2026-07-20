@@ -8,6 +8,7 @@ import '../app/study_nest_visuals.dart';
 import '../models/study_models.dart';
 import '../utils/date_labels.dart';
 import '../widgets/cozy_widgets.dart';
+import '../widgets/managed_dialog.dart';
 import '../widgets/study_station_banner.dart';
 
 part 'tasks_coin_widgets.dart';
@@ -162,7 +163,7 @@ class _TasksScreenState extends State<TasksScreen> {
     var priority = task?.priority ?? 'Medium';
     String? rewardError;
 
-    await showDialog<void>(
+    await showManagedDialog<void>(
       context: context,
       builder: (dialogContext) {
         return StatefulBuilder(
@@ -188,6 +189,7 @@ class _TasksScreenState extends State<TasksScreen> {
                     const SizedBox(height: 12),
                     TextField(
                       controller: rewardController,
+                      enabled: state.taskCoinRewardsEnabled,
                       keyboardType: TextInputType.number,
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       onChanged: (value) {
@@ -205,11 +207,11 @@ class _TasksScreenState extends State<TasksScreen> {
                         labelText: 'Coin reward',
                         helperText: state.taskCoinRewardsEnabled
                             ? 'Maximum $maximumTaskCoinReward coins per task.'
-                            : 'Saved for when task coins are switched on. Max $maximumTaskCoinReward.',
+                            : 'Turn on task coins in the Shop to set a reward.',
                         errorText: rewardError,
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 24),
                     DropdownButtonFormField<String>(
                       initialValue: priority,
                       decoration: const InputDecoration(labelText: 'Priority'),
