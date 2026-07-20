@@ -8,13 +8,13 @@ const int maximumTaskCoinReward = 50;
 const String taskCoinUnlockProductId = 'reward.taskCoins';
 
 /// One-time price of unlocking task completion rewards.
-const int taskCoinUnlockCost = 500;
+const int taskCoinUnlockCost = 375;
 
 /// Stable ledger source used for the one-time focus-length unlock.
 const String pomodoroDurationUnlockProductId = 'reward.pomodoroDuration';
 
 /// One-time price of unlocking selectable Pomodoro focus lengths.
-const int pomodoroDurationUnlockCost = 300;
+const int pomodoroDurationUnlockCost = 225;
 
 /// Default focus length for new profiles and older saved snapshots.
 const int defaultPomodoroFocusMinutes = 25;
@@ -53,12 +53,12 @@ class CoinMultiplierOffer {
 
 /// Permanent multiplier products in their intended shop display order.
 const coinMultiplierOffers = [
-  CoinMultiplierOffer(factor: 1.5, cost: 100),
-  CoinMultiplierOffer(factor: 2, cost: 175),
-  CoinMultiplierOffer(factor: 2.5, cost: 250),
-  CoinMultiplierOffer(factor: 3, cost: 325),
-  CoinMultiplierOffer(factor: 4, cost: 400),
-  CoinMultiplierOffer(factor: 5, cost: 475),
+  CoinMultiplierOffer(factor: 1.5, cost: 75),
+  CoinMultiplierOffer(factor: 2, cost: 125),
+  CoinMultiplierOffer(factor: 2.5, cost: 200),
+  CoinMultiplierOffer(factor: 3, cost: 250),
+  CoinMultiplierOffer(factor: 4, cost: 300),
+  CoinMultiplierOffer(factor: 5, cost: 350),
 ];
 
 /// Finds a multiplier offer by factor, or null for the base 1x rate.

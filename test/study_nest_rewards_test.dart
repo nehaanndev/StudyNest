@@ -27,7 +27,7 @@ void main() {
   );
 
   test(
-    'task switch costs 500 and disabled completions stay consumed',
+    'task switch costs 375 and disabled completions stay consumed',
     () async {
       final state = await _loadStateWithCoins(1000);
       final bought = await state.buyTaskCoinRewards();
@@ -89,7 +89,7 @@ void main() {
   });
 
   test(
-    'focus-length unlock costs 300 and persists supported selections',
+    'focus-length unlock costs 225 and persists supported selections',
     () async {
       final insufficient = await _loadStateWithCoins(
         pomodoroDurationUnlockCost - 1,
@@ -123,7 +123,7 @@ void main() {
       );
       final state = await StudyNestState.load(storage: storage);
       const expectedRewards = [23, 30, 38, 45, 60, 75];
-      const expectedCosts = [100, 175, 250, 325, 400, 475];
+      const expectedCosts = [75, 125, 200, 250, 300, 350];
 
       expect(
         coinMultiplierOffers.every((offer) => offer.cost < taskCoinUnlockCost),

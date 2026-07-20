@@ -62,7 +62,7 @@ void main() {
     expect(find.text('Coin earning'), findsOneWidget);
     expect(find.text('Unlock task coins'), findsOneWidget);
     expect(find.text('Unlock focus lengths'), findsOneWidget);
-    expect(find.text('300 coins'), findsOneWidget);
+    expect(find.text('225 coins'), findsOneWidget);
     expect(find.text('Pomodoro boosts'), findsOneWidget);
     expect(find.text('23 coins per completed cycle'), findsOneWidget);
     expect(find.byType(NavigationBar), findsOneWidget);
@@ -155,7 +155,7 @@ void main() {
     expect(tester.takeException(), isNull);
     await tester.ensureVisible(find.text('5x'));
     await tester.pumpAndSettle();
-    expect(find.text('🪙 475'), findsOneWidget);
+    expect(find.text('🪙 350'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
