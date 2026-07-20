@@ -163,12 +163,15 @@ class DecorRarityShelf extends StatelessWidget {
             children: [
               DecorRarityTag(rarity: rarity),
               const SizedBox(width: 8),
-              Text(
-                '$ownedCount of ${items.length} collected',
-                style: TextStyle(
-                  color: state.selectedTheme.muted,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
+              Expanded(
+                child: Text(
+                  '$ownedCount of ${items.length} collected',
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: state.selectedTheme.muted,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
             ],

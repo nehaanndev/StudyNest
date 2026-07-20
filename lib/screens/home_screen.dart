@@ -14,6 +14,7 @@ class HomeScreen extends StatelessWidget {
 
   final ValueChanged<int>? onNavigate;
 
+  // Builds the dashboard with progress, focus goal, tasks, and room preview.
   @override
   Widget build(BuildContext context) {
     final state = StudyNestScope.watch(context);
@@ -63,7 +64,6 @@ class HomeScreen extends StatelessWidget {
           StudyTownScene(
             environmentName: theme.name,
             focusTitle: state.sessionGoal.title,
-            reward: state.sessionGoal.reward,
             isComplete: sessionComplete,
             onComplete: () => _completeSessionGoal(context),
             onEdit: () => _showSessionGoalDialog(context),
@@ -225,7 +225,8 @@ class HomeScreen extends StatelessWidget {
                         ],
                       ),
                     ),
-                    CozyTag(label: '+${task.reward}', icon: Icons.savings),
+                    if (state.taskCoinRewardsEnabled)
+                      CozyTag(label: '+${task.reward}', icon: Icons.savings),
                   ],
                 ),
               ),
@@ -236,31 +237,32 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
+  // Opens the interactive room where collected decorations can be arranged.
   void _openStudySpace(BuildContext context) {
     Navigator.of(
       context,
     ).push(MaterialPageRoute<void>(builder: (_) => const StudySpaceScreen()));
   }
 
+  // Marks today's focus goal complete without awarding a second coin source.
   Future<void> _completeSessionGoal(BuildContext context) async {
     final state = StudyNestScope.read(context);
-    final awarded = await state.completeSessionGoal();
+    final alreadyComplete = state.sessionGoal.isCompleteOn(DateTime.now());
+    await state.completeSessionGoal();
     if (!context.mounted) return;
-    final message = awarded > 0
-        ? 'Nice focus. You earned $awarded coins.'
-        : 'That goal is already complete today.';
+    final message = alreadyComplete
+        ? 'That goal is already complete today.'
+        : 'Focus goal complete. Nice work!';
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(message)));
   }
 
+  // Opens the focus-goal editor without exposing the retired goal coin reward.
   Future<void> _showSessionGoalDialog(BuildContext context) async {
     final state = StudyNestScope.read(context);
     final titleController = TextEditingController(
       text: state.sessionGoal.title,
-    );
-    final rewardController = TextEditingController(
-      text: state.sessionGoal.reward.toString(),
     );
 
     await showDialog<void>(
@@ -275,12 +277,6 @@ class HomeScreen extends StatelessWidget {
                 controller: titleController,
                 decoration: const InputDecoration(labelText: 'Goal'),
               ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: rewardController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Coin reward'),
-              ),
             ],
           ),
           actions: [
@@ -291,11 +287,10 @@ class HomeScreen extends StatelessWidget {
             FilledButton(
               onPressed: () async {
                 final title = titleController.text.trim();
-                final reward = int.tryParse(rewardController.text) ?? 25;
                 if (title.isEmpty) return;
                 final result = await state.setSessionGoal(
                   title,
-                  reward.clamp(1, 500),
+                  state.sessionGoal.reward,
                 );
                 if (dialogContext.mounted) {
                   ScaffoldMessenger.of(
@@ -311,6 +306,7 @@ class HomeScreen extends StatelessWidget {
         );
       },
     );
+    titleController.dispose();
   }
 }
 
@@ -320,6 +316,7 @@ class _StatPill extends StatelessWidget {
   final String label;
   final Color accentColor;
 
+  // Builds one compact dashboard statistic over the room artwork.
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -352,6 +349,7 @@ class _QuickNavTile extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
 
+  // Builds one shortcut tile for a primary study destination.
   @override
   Widget build(BuildContext context) {
     final theme = StudyNestScope.watch(context).selectedTheme;

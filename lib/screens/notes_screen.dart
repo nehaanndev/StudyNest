@@ -13,9 +13,12 @@ import 'note_editor_screen.dart';
 import 'quiz_screen.dart';
 import 'study_guide_screen.dart';
 
+part 'notes_filter_widgets.dart';
+
 class NotesScreen extends StatefulWidget {
   const NotesScreen({super.key});
 
+  // Creates local search and filter state for the notes collection.
   @override
   State<NotesScreen> createState() => _NotesScreenState();
 }
@@ -28,6 +31,7 @@ class _NotesScreenState extends State<NotesScreen> {
   String _searchQuery = '';
   final _searchCtrl = TextEditingController();
 
+  // Disposes the search field controller when the screen leaves the tree.
   @override
   void dispose() {
     _searchCtrl.dispose();
@@ -160,6 +164,7 @@ class _CreateButton extends StatelessWidget {
   const _CreateButton({required this.onCreated});
   final VoidCallback onCreated;
 
+  // Builds the add button that opens the study-material creation menu.
   @override
   Widget build(BuildContext context) {
     return IconButton.filled(
@@ -283,6 +288,7 @@ class _CreateOption extends StatelessWidget {
   final VoidCallback onTap;
   final bool isLast;
 
+  // Builds one study-material type option in the creation sheet.
   @override
   Widget build(BuildContext context) {
     final theme = StudyNestScope.watch(context).selectedTheme;
@@ -311,146 +317,6 @@ class _CreateOption extends StatelessWidget {
   }
 }
 
-// Horizontal type-filter chip row (All, Note, Study Guide, Flashcards, Quiz, Formulas).
-class _TypeFilterBar extends StatelessWidget {
-  const _TypeFilterBar({required this.selected, required this.onSelected});
-  final String selected;
-  final ValueChanged<String> onSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = StudyNestScope.watch(context).selectedTheme;
-    final types = [
-      'All',
-      NoteType.note,
-      NoteType.studyGuide,
-      NoteType.flashcards,
-      NoteType.quiz,
-      NoteType.formula,
-    ];
-
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: types.map((type) {
-          final isSelected = type == selected;
-          final label = type == 'All' ? 'All' : NoteType.label(type);
-          final emoji = type == 'All' ? '' : '${NoteType.emoji(type)} ';
-          return GestureDetector(
-            onTap: () => onSelected(type),
-            child: Container(
-              margin: const EdgeInsets.only(right: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? theme.primary.withValues(alpha: 0.18)
-                    : theme.primary.withValues(alpha: 0.06),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: isSelected
-                      ? theme.primary
-                      : theme.primary.withValues(alpha: 0.18),
-                ),
-              ),
-              child: Text(
-                '$emoji$label',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                  color: isSelected ? theme.primary : theme.muted,
-                ),
-              ),
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-}
-
-// Horizontal tag-filter chip row.
-class _TagFilterBar extends StatelessWidget {
-  const _TagFilterBar({
-    required this.tags,
-    required this.selected,
-    required this.onSelected,
-  });
-  final List<String> tags;
-  final String selected;
-  final ValueChanged<String> onSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = StudyNestScope.watch(context).selectedTheme;
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: tags.map((tag) {
-          final isSelected = tag == selected;
-          return GestureDetector(
-            onTap: () => onSelected(tag),
-            child: Container(
-              margin: const EdgeInsets.only(right: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? theme.accent.withValues(alpha: 0.18)
-                    : theme.primary.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: isSelected
-                      ? theme.accent
-                      : theme.primary.withValues(alpha: 0.15),
-                ),
-              ),
-              child: Text(
-                tag,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                  color: isSelected ? theme.accent : theme.muted,
-                ),
-              ),
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-}
-
-// Search bar widget for filtering notes by title or body text.
-class _SearchBar extends StatelessWidget {
-  const _SearchBar({required this.controller, required this.onChanged});
-  final TextEditingController controller;
-  final ValueChanged<String> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = StudyNestScope.watch(context).selectedTheme;
-    return TextField(
-      controller: controller,
-      onChanged: onChanged,
-      style: TextStyle(color: theme.text, decoration: TextDecoration.none),
-      decoration: InputDecoration(
-        hintText: 'Search notes…',
-        prefixIcon: Icon(Icons.search, color: theme.muted, size: 20),
-        suffixIcon: controller.text.isNotEmpty
-            ? IconButton(
-                icon: Icon(Icons.clear, color: theme.muted, size: 18),
-                onPressed: () {
-                  controller.clear();
-                  onChanged('');
-                },
-              )
-            : null,
-        isDense: true,
-        contentPadding: const EdgeInsets.symmetric(vertical: 10),
-      ),
-    );
-  }
-}
-
 // Card widget for displaying a note/study item in the grid.
 class _NoteCard extends StatelessWidget {
   const _NoteCard({
@@ -462,6 +328,7 @@ class _NoteCard extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback onDelete;
 
+  // Builds one note preview with type, tags, date, and delete action.
   @override
   Widget build(BuildContext context) {
     final theme = StudyNestScope.watch(context).selectedTheme;

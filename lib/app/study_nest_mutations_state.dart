@@ -65,7 +65,7 @@ extension StudyNestMutationsState on StudyNestState {
         title: title.trim(),
         details: details.trim(),
         dueAt: dueAt,
-        reward: reward,
+        reward: reward.clamp(1, maximumTaskCoinReward),
         completedAt: null,
         rewardCollected: false,
         priority: priority,
@@ -76,7 +76,7 @@ extension StudyNestMutationsState on StudyNestState {
     return StudyNestActionResult.success('Task created.');
   }
 
-  // Toggles completion and awards coins once when a task is completed.
+  // Toggles completion and optionally awards capped task coins once.
   Future<int> toggleTask(String taskId) async {
     final taskIndex = _tasks.indexWhere((task) => task.id == taskId);
     if (taskIndex == -1) {
@@ -90,7 +90,9 @@ extension StudyNestMutationsState on StudyNestState {
     if (isCompleted) {
       _tasks[taskIndex] = task.copyWith(clearCompletedAt: true);
     } else {
-      awardedCoins = task.rewardCollected ? 0 : task.reward;
+      awardedCoins = taskCoinRewardsEnabled && !task.rewardCollected
+          ? task.reward.clamp(1, maximumTaskCoinReward)
+          : 0;
       _tasks[taskIndex] = task.copyWith(
         completedAt: now,
         rewardCollected: true,
@@ -130,7 +132,7 @@ extension StudyNestMutationsState on StudyNestState {
       title: title.trim(),
       details: details.trim(),
       dueAt: dueAt,
-      reward: reward,
+      reward: reward.clamp(1, maximumTaskCoinReward),
       priority: priority,
     );
     await _commitChanges();
@@ -300,25 +302,15 @@ extension StudyNestMutationsState on StudyNestState {
     return StudyNestActionResult.success('Focus goal updated.');
   }
 
-  // Completes today's study session goal and awards coins once per day.
+  // Completes today's study goal without minting coins outside Pomodoro.
   Future<int> completeSessionGoal() async {
     final now = DateTime.now();
     if (_sessionGoal.isCompleteOn(now)) {
       return 0;
     }
     _sessionGoal = _sessionGoal.copyWith(completedAt: now, updatedAt: now);
-    _coinLedger = [
-      CoinTransaction(
-        id: _newId('coins'),
-        label: 'Study goal: ${_sessionGoal.title}',
-        amount: _sessionGoal.reward,
-        createdAt: now,
-        sourceId: 'session.${now.year}.${now.month}.${now.day}',
-      ),
-      ..._coinLedger,
-    ];
     await _commitChanges();
-    return _sessionGoal.reward;
+    return 0;
   }
 
   // Purchases a shop item when the user has enough coins.

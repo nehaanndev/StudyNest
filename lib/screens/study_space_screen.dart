@@ -62,7 +62,6 @@ class StudySpaceScreen extends StatelessWidget {
                       MovableDecorScene(
                         environmentName: theme.name,
                         focusTitle: state.sessionGoal.title,
-                        reward: state.sessionGoal.reward,
                         isComplete: state.sessionGoal.isCompleteOn(
                           DateTime.now(),
                         ),

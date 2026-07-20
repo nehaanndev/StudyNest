@@ -22,7 +22,6 @@ class StudyTownScene extends StatelessWidget {
     super.key,
     required this.environmentName,
     required this.focusTitle,
-    required this.reward,
     required this.isComplete,
     required this.onComplete,
     required this.onEdit,
@@ -35,7 +34,6 @@ class StudyTownScene extends StatelessWidget {
 
   final String environmentName;
   final String focusTitle;
-  final int reward;
   final bool isComplete;
   final VoidCallback onComplete;
   final VoidCallback onEdit;
@@ -124,7 +122,6 @@ class StudyTownScene extends StatelessWidget {
                     bottom: 14,
                     child: _FocusPanel(
                       focusTitle: focusTitle,
-                      reward: reward,
                       isComplete: isComplete,
                       onComplete: onComplete,
                       onEdit: onEdit,
@@ -249,14 +246,12 @@ class _SceneHeader extends StatelessWidget {
 class _FocusPanel extends StatelessWidget {
   const _FocusPanel({
     required this.focusTitle,
-    required this.reward,
     required this.isComplete,
     required this.onComplete,
     required this.onEdit,
   });
 
   final String focusTitle;
-  final int reward;
   final bool isComplete;
   final VoidCallback onComplete;
   final VoidCallback onEdit;
@@ -285,7 +280,6 @@ class _FocusPanel extends StatelessWidget {
           final compact = constraints.maxWidth < 470;
           final content = _FocusPanelContent(
             focusTitle: focusTitle,
-            reward: reward,
             isComplete: isComplete,
           );
           final actions = _FocusPanelActions(
@@ -321,12 +315,10 @@ class _FocusPanel extends StatelessWidget {
 class _FocusPanelContent extends StatelessWidget {
   const _FocusPanelContent({
     required this.focusTitle,
-    required this.reward,
     required this.isComplete,
   });
 
   final String focusTitle;
-  final int reward;
   final bool isComplete;
 
   // Builds the focus-goal text and circular status mark.
@@ -378,8 +370,6 @@ class _FocusPanelContent extends StatelessWidget {
                   fontWeight: FontWeight.w900,
                 ),
               ),
-              const SizedBox(height: 6),
-              CozyTag(label: '+$reward', icon: Icons.savings),
             ],
           ),
         ),

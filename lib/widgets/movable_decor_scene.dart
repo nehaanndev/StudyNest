@@ -9,7 +9,6 @@ class MovableDecorScene extends StatefulWidget {
     super.key,
     required this.environmentName,
     required this.focusTitle,
-    required this.reward,
     required this.isComplete,
     required this.decorItems,
     required this.decorPositions,
@@ -19,7 +18,6 @@ class MovableDecorScene extends StatefulWidget {
 
   final String environmentName;
   final String focusTitle;
-  final int reward;
   final bool isComplete;
   final List<StudyDecorItem> decorItems;
   final Map<String, Offset> decorPositions;
@@ -61,7 +59,6 @@ class _MovableDecorSceneState extends State<MovableDecorScene> {
                 child: StudyTownScene(
                   environmentName: widget.environmentName,
                   focusTitle: widget.focusTitle,
-                  reward: widget.reward,
                   isComplete: widget.isComplete,
                   onComplete: () {},
                   onEdit: () {},

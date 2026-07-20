@@ -1,15 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
+import '../app/study_nest_rewards.dart';
 import '../app/study_nest_scope.dart';
+import '../app/study_nest_state.dart';
 import '../app/study_nest_visuals.dart';
 import '../models/study_models.dart';
 import '../utils/date_labels.dart';
 import '../widgets/cozy_widgets.dart';
 import '../widgets/study_station_banner.dart';
 
+part 'tasks_coin_widgets.dart';
+part 'tasks_filter_widgets.dart';
+
 class TasksScreen extends StatefulWidget {
   const TasksScreen({super.key});
 
+  // Creates filter and dialog state for the task list.
   @override
   State<TasksScreen> createState() => _TasksScreenState();
 }
@@ -25,6 +32,7 @@ class _TasksScreenState extends State<TasksScreen> {
     'Low': Colors.green,
   };
 
+  // Builds task progress, coin-mode guidance, filters, and grouped task cards.
   @override
   Widget build(BuildContext context) {
     final state = StudyNestScope.watch(context);
@@ -47,7 +55,9 @@ class _TasksScreenState extends State<TasksScreen> {
     return Scaffold(
       body: CozyPage(
         title: 'Tasks',
-        subtitle: 'Turn tiny wins into coins for your shop.',
+        subtitle: state.taskCoinRewardsEnabled
+            ? 'Finish tasks for up to $maximumTaskCoinReward coins each.'
+            : 'Plan your wins. Pomodoro cycles earn coins.',
         action: IconButton.filled(
           tooltip: 'Add task',
           onPressed: () => _showTaskDialog(context),
@@ -57,12 +67,16 @@ class _TasksScreenState extends State<TasksScreen> {
           children: [
             StudyStationBanner(
               title: 'My Tasks',
-              detail: 'Complete tasks to earn coins for your room.',
+              detail: state.taskCoinRewardsEnabled
+                  ? 'Complete tasks to earn their listed coin reward.'
+                  : 'Task completion counts even while task coins are off.',
               metric: '${state.openTaskCount} open',
               icon: Icons.checklist,
               imagePath: screenBannerAsset('tasks', state.selectedTheme.id),
               imageAlignment: Alignment.center,
             ),
+            const SizedBox(height: 12),
+            const _TaskCoinStatusCard(),
             const SizedBox(height: 14),
             _TaskFilterBar(
               selectedFilter: _filter,
@@ -75,10 +89,12 @@ class _TasksScreenState extends State<TasksScreen> {
             ),
             const SizedBox(height: 14),
             if (tasks.isEmpty)
-              const EmptyState(
+              EmptyState(
                 icon: '✅',
                 title: 'No tasks yet',
-                body: 'Create a goal, finish it, and collect coins.',
+                body: state.taskCoinRewardsEnabled
+                    ? 'Create a goal, finish it, and collect coins.'
+                    : 'Create a goal, finish it, and build momentum.',
               )
             else
               Column(
@@ -118,6 +134,7 @@ class _TasksScreenState extends State<TasksScreen> {
     );
   }
 
+  // Applies the selected date and priority filters to the task list.
   List<StudyTask> _filteredTasks(List<StudyTask> tasks) {
     final now = DateTime.now();
     return tasks.where((task) {
@@ -133,6 +150,7 @@ class _TasksScreenState extends State<TasksScreen> {
     }).toList();
   }
 
+  // Opens the create/edit form and validates the 1–50 coin task limit.
   Future<void> _showTaskDialog(BuildContext context, {StudyTask? task}) async {
     final state = StudyNestScope.read(context);
     final titleController = TextEditingController(text: task?.title ?? '');
@@ -142,6 +160,7 @@ class _TasksScreenState extends State<TasksScreen> {
     );
     var dueAt = task?.dueAt ?? DateTime.now().add(const Duration(hours: 2));
     var priority = task?.priority ?? 'Medium';
+    String? rewardError;
 
     await showDialog<void>(
       context: context,
@@ -170,8 +189,24 @@ class _TasksScreenState extends State<TasksScreen> {
                     TextField(
                       controller: rewardController,
                       keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      onChanged: (value) {
+                        final reward = int.tryParse(value);
+                        setDialogState(() {
+                          rewardError =
+                              reward == null ||
+                                  reward < 1 ||
+                                  reward > maximumTaskCoinReward
+                              ? 'Enter 1–$maximumTaskCoinReward coins.'
+                              : null;
+                        });
+                      },
+                      decoration: InputDecoration(
                         labelText: 'Coin reward',
+                        helperText: state.taskCoinRewardsEnabled
+                            ? 'Maximum $maximumTaskCoinReward coins per task.'
+                            : 'Saved for when task coins are switched on. Max $maximumTaskCoinReward.',
+                        errorText: rewardError,
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -237,15 +272,23 @@ class _TasksScreenState extends State<TasksScreen> {
                 FilledButton(
                   onPressed: () async {
                     final title = titleController.text.trim();
-                    final reward = int.tryParse(rewardController.text) ?? 20;
+                    final reward = int.tryParse(rewardController.text);
                     if (title.isEmpty) return;
-                    final clampedReward = reward.clamp(1, 500);
+                    if (reward == null ||
+                        reward < 1 ||
+                        reward > maximumTaskCoinReward) {
+                      setDialogState(
+                        () => rewardError =
+                            'Enter 1–$maximumTaskCoinReward coins.',
+                      );
+                      return;
+                    }
                     final result = task == null
                         ? await state.addTask(
                             title: title,
                             details: detailsController.text,
                             dueAt: dueAt,
-                            reward: clampedReward,
+                            reward: reward,
                             priority: priority,
                           )
                         : null;
@@ -255,7 +298,7 @@ class _TasksScreenState extends State<TasksScreen> {
                         title: title,
                         details: detailsController.text,
                         dueAt: dueAt,
-                        reward: clampedReward,
+                        reward: reward,
                         priority: priority,
                       );
                     }
@@ -277,107 +320,9 @@ class _TasksScreenState extends State<TasksScreen> {
         );
       },
     );
-  }
-}
-
-class _PriorityHeader extends StatelessWidget {
-  const _PriorityHeader({
-    required this.priority,
-    required this.count,
-    required this.color,
-  });
-
-  final String priority;
-  final int count;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Text(
-          '$priority Priority',
-          style: TextStyle(
-            fontWeight: FontWeight.w900,
-            color: color,
-            fontSize: 15,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Text(
-            '$count',
-            style: TextStyle(
-              color: color,
-              fontWeight: FontWeight.w700,
-              fontSize: 12,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _TaskFilterBar extends StatelessWidget {
-  const _TaskFilterBar({
-    required this.selectedFilter,
-    required this.onSelected,
-  });
-
-  final String selectedFilter;
-  final ValueChanged<String> onSelected;
-
-  static const _filters = ['All', 'Today', 'Upcoming', 'Completed'];
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = StudyNestScope.watch(context).selectedTheme;
-
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          for (final filter in _filters) ...[
-            InkWell(
-              borderRadius: BorderRadius.circular(999),
-              onTap: () => onSelected(filter),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 15,
-                  vertical: 10,
-                ),
-                decoration: BoxDecoration(
-                  color: filter == selectedFilter
-                      ? theme.accent.withValues(alpha: 0.16)
-                      : theme.surface.withValues(alpha: 0.82),
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(
-                    color: filter == selectedFilter
-                        ? theme.accent.withValues(alpha: 0.7)
-                        : theme.primary.withValues(alpha: 0.12),
-                  ),
-                ),
-                child: Text(
-                  filter,
-                  style: TextStyle(
-                    color: theme.text,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-          ],
-        ],
-      ),
-    );
+    titleController.dispose();
+    detailsController.dispose();
+    rewardController.dispose();
   }
 }
 
@@ -386,11 +331,13 @@ class _TaskCard extends StatelessWidget {
 
   final StudyTask task;
 
+  // Builds one task with completion, reward-state, edit, and delete controls.
   @override
   Widget build(BuildContext context) {
     final state = StudyNestScope.watch(context);
     final theme = state.selectedTheme;
     final isComplete = task.completedAt != null;
+    final rewardWasPaid = state.taskCoinRewardWasPaid(task.id);
 
     return CozyCard(
       onTap: () => context
@@ -442,8 +389,23 @@ class _TaskCard extends StatelessWidget {
                   runSpacing: 6,
                   children: [
                     CozyTag(label: compactDate(task.dueAt), icon: Icons.event),
-                    CozyTag(label: '+${task.reward}', icon: Icons.savings),
-                    if (task.rewardCollected)
+                    if (task.rewardCollected && !rewardWasPaid)
+                      const CozyTag(
+                        label: 'No reward earned',
+                        icon: Icons.money_off,
+                      )
+                    else
+                      CozyTag(
+                        label: state.taskCoinRewardsEnabled
+                            ? '+${task.reward}'
+                            : state.taskCoinRewardsUnlocked
+                            ? '${task.reward} paused'
+                            : 'No task coins',
+                        icon: state.taskCoinRewardsEnabled
+                            ? Icons.savings
+                            : Icons.pause_circle_outline,
+                      ),
+                    if (rewardWasPaid)
                       const CozyTag(label: 'Claimed', icon: Icons.lock),
                   ],
                 ),
@@ -461,90 +423,13 @@ class _TaskCard extends StatelessWidget {
     );
   }
 
+  // Toggles a task and announces a payout only when coins were actually earned.
   Future<void> _toggleTask(BuildContext context, String taskId) async {
     final state = StudyNestScope.read(context);
     final awarded = await state.toggleTask(taskId);
     if (!context.mounted || awarded == 0) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Task complete. You earned $awarded coins.')),
-    );
-  }
-}
-
-class _PriorityFilterBar extends StatelessWidget {
-  const _PriorityFilterBar({
-    required this.selectedPriority,
-    required this.onSelected,
-  });
-
-  final String selectedPriority;
-  final ValueChanged<String> onSelected;
-
-  static const _options = [
-    ('All', Colors.grey),
-    ('High', Colors.red),
-    ('Medium', Colors.orange),
-    ('Low', Colors.green),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = StudyNestScope.watch(context).selectedTheme;
-    return Row(
-      children: [
-        Text(
-          'Priority:',
-          style: TextStyle(
-            color: theme.muted,
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                for (final (label, color) in _options) ...[
-                  GestureDetector(
-                    onTap: () => onSelected(label),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 150),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: selectedPriority == label
-                            ? color.withValues(alpha: 0.20)
-                            : Colors.transparent,
-                        borderRadius: BorderRadius.circular(999),
-                        border: Border.all(
-                          color: selectedPriority == label
-                              ? color.withValues(alpha: 0.70)
-                              : theme.muted.withValues(alpha: 0.25),
-                        ),
-                      ),
-                      child: Text(
-                        label,
-                        style: TextStyle(
-                          color: selectedPriority == label
-                              ? color
-                              : theme.muted,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                ],
-              ],
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

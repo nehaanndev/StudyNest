@@ -63,15 +63,7 @@ StudyNestState _starterState(
         category: 'Review',
       ),
     ],
-    coinLedger: [
-      CoinTransaction(
-        id: 'coins.seed.welcome',
-        label: 'Welcome bonus',
-        amount: 75,
-        createdAt: now,
-        sourceId: 'welcome',
-      ),
-    ],
+    coinLedger: const [],
     ownedShopItemIds: const [],
     ownedDecorItemIds: _defaultOwnedDecorItemIds(),
     appliedDecorItemIds: _defaultAppliedDecorItemIds(),
@@ -83,6 +75,9 @@ StudyNestState _starterState(
     session: StudyNestSessionState.disabled(),
     hasCompletedWelcome: false,
     lastDestinationId: 'home',
+    taskCoinRewardsEnabled: false,
+    activeCoinMultiplier: 1,
+    pomodoroFocusMinutes: defaultPomodoroFocusMinutes,
     ownerUserId: null,
   );
 }
@@ -177,11 +172,19 @@ Map<String, dynamic>? _migrateSnapshot(Map<String, dynamic>? snapshot) {
   }
   return {
     ...snapshot,
-    'schemaVersion': (snapshot['schemaVersion'] as int?) ?? 2,
+    'schemaVersion': 4,
     'updatedAt':
         snapshot['updatedAt'] as String? ?? DateTime.now().toIso8601String(),
     'hasCompletedWelcome': snapshot['hasCompletedWelcome'] as bool? ?? true,
     'lastDestinationId': snapshot['lastDestinationId'] as String? ?? 'home',
+    'taskCoinRewardsEnabled':
+        snapshot['taskCoinRewardsEnabled'] as bool? ?? false,
+    'activeCoinMultiplier': normalizedCoinMultiplier(
+      snapshot['activeCoinMultiplier'],
+    ),
+    'pomodoroFocusMinutes': normalizedPomodoroFocusMinutes(
+      snapshot['pomodoroFocusMinutes'],
+    ),
     'studySpaceStyleId': _normalizedStyleId(
       snapshot['studySpaceStyleId'] as String?,
     ),

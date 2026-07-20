@@ -140,6 +140,14 @@ extension StudyNestSyncState on StudyNestState {
         DateTime.now();
     _hasCompletedWelcome = migrated['hasCompletedWelcome'] as bool? ?? true;
     _lastDestinationId = migrated['lastDestinationId'] as String? ?? 'home';
+    _taskCoinRewardsEnabled =
+        migrated['taskCoinRewardsEnabled'] as bool? ?? false;
+    _activeCoinMultiplier = normalizedCoinMultiplier(
+      migrated['activeCoinMultiplier'],
+    );
+    _pomodoroFocusMinutes = normalizedPomodoroFocusMinutes(
+      migrated['pomodoroFocusMinutes'],
+    );
     _ownerUserId = migrated['ownerUserId'] as String?;
   }
 }

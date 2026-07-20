@@ -8,6 +8,7 @@ import 'study_nest_anonymous_limits.dart';
 import 'study_nest_auth_debug.dart';
 import 'study_nest_auth_snapshot.dart';
 import 'study_nest_catalog.dart';
+import 'study_nest_rewards.dart';
 import 'study_nest_session.dart';
 import 'study_nest_storage.dart';
 import 'study_nest_sync_service.dart';
@@ -16,6 +17,8 @@ part 'study_nest_space_state.dart';
 part 'study_nest_mutations_state.dart';
 part 'study_nest_sync_state.dart';
 part 'study_nest_snapshot_helpers.dart';
+part 'study_nest_rewards_state.dart';
+part 'study_nest_queries_state.dart';
 
 class StudyNestState extends ChangeNotifier {
   StudyNestState._({
@@ -36,6 +39,9 @@ class StudyNestState extends ChangeNotifier {
     required StudyNestSessionState session,
     required bool hasCompletedWelcome,
     required String lastDestinationId,
+    required bool taskCoinRewardsEnabled,
+    required double activeCoinMultiplier,
+    required int pomodoroFocusMinutes,
     String? ownerUserId,
     List<StudyHabit>? habits,
   }) : _storage = storage,
@@ -55,6 +61,9 @@ class StudyNestState extends ChangeNotifier {
        _session = session,
        _hasCompletedWelcome = hasCompletedWelcome,
        _lastDestinationId = lastDestinationId,
+       _taskCoinRewardsEnabled = taskCoinRewardsEnabled,
+       _activeCoinMultiplier = activeCoinMultiplier,
+       _pomodoroFocusMinutes = pomodoroFocusMinutes,
        _ownerUserId = ownerUserId,
        _habits = habits ?? [];
 
@@ -76,6 +85,9 @@ class StudyNestState extends ChangeNotifier {
   StudyNestSessionState _session;
   bool _hasCompletedWelcome;
   String _lastDestinationId;
+  bool _taskCoinRewardsEnabled;
+  double _activeCoinMultiplier;
+  int _pomodoroFocusMinutes;
   String? _ownerUserId;
   StreamSubscription<void>? _retrySubscription;
 
@@ -206,23 +218,6 @@ class StudyNestState extends ChangeNotifier {
     return shopItems.any(
       (item) => item.themeId == themeId && ownsShopItem(item.id),
     );
-  }
-
-  // Returns only the events that happen on a specific calendar day.
-  List<PlannerEvent> eventsForDay(DateTime day) {
-    final matches = _events.where((event) {
-      return event.startsAt.year == day.year &&
-          event.startsAt.month == day.month &&
-          event.startsAt.day == day.day;
-    }).toList()..sort((a, b) => a.startsAt.compareTo(b.startsAt));
-    return List.unmodifiable(matches);
-  }
-
-  // Returns the next few open tasks for the dashboard.
-  List<StudyTask> upcomingTasks({int limit = 3}) {
-    final openTasks = _tasks.where((task) => task.completedAt == null).toList()
-      ..sort((a, b) => a.dueAt.compareTo(b.dueAt));
-    return List.unmodifiable(openTasks.take(limit));
   }
 
   // Adds a new habit while preserving the public StudyNestState API.
@@ -506,11 +501,14 @@ class StudyNestState extends ChangeNotifier {
   // Converts the current app state into the local persistence snapshot.
   Map<String, dynamic> _toSnapshot() {
     return {
-      'schemaVersion': 2,
+      'schemaVersion': 4,
       'ownerUserId': _session.userId,
       'updatedAt': _updatedAt.toIso8601String(),
       'hasCompletedWelcome': _hasCompletedWelcome,
       'lastDestinationId': _lastDestinationId,
+      'taskCoinRewardsEnabled': _taskCoinRewardsEnabled,
+      'activeCoinMultiplier': _activeCoinMultiplier,
+      'pomodoroFocusMinutes': _pomodoroFocusMinutes,
       if (_ownerUserId != null) 'ownerUserId': _ownerUserId,
       'tasks': _tasks.map((task) => task.toJson()).toList(),
       'notes': _notes.map((note) => note.toJson()).toList(),
@@ -571,6 +569,14 @@ class StudyNestState extends ChangeNotifier {
       session: StudyNestSessionState.disabled(),
       hasCompletedWelcome: snapshot['hasCompletedWelcome'] as bool? ?? true,
       lastDestinationId: snapshot['lastDestinationId'] as String? ?? 'home',
+      taskCoinRewardsEnabled:
+          snapshot['taskCoinRewardsEnabled'] as bool? ?? false,
+      activeCoinMultiplier: normalizedCoinMultiplier(
+        snapshot['activeCoinMultiplier'],
+      ),
+      pomodoroFocusMinutes: normalizedPomodoroFocusMinutes(
+        snapshot['pomodoroFocusMinutes'],
+      ),
       ownerUserId: snapshot['ownerUserId'] as String?,
       habits: _decodeList(snapshot['habits'], StudyHabit.fromJson),
     );

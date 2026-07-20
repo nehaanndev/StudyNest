@@ -3,8 +3,11 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
+import '../app/study_nest_rewards.dart';
 import '../app/study_nest_scope.dart';
+import '../app/study_nest_state.dart';
 import '../app/study_nest_visuals.dart';
+import '../widgets/cozy_widgets.dart';
 
 const _quotes = [
   'Focus on the progress, not the perfection.',
@@ -17,27 +20,52 @@ const _quotes = [
 class PomodoroScreen extends StatefulWidget {
   const PomodoroScreen({super.key});
 
+  // Creates the mutable timer state for the Pomodoro screen.
   @override
   State<PomodoroScreen> createState() => _PomodoroScreenState();
 }
 
 class _PomodoroScreenState extends State<PomodoroScreen> {
-  static const _focusMinutes = 25;
   static const _breakMinutes = 5;
 
+  int _focusMinutes = defaultPomodoroFocusMinutes;
   int _cyclesCompleted = 0;
   bool _isRunning = false;
   bool _isBreak = false;
-  int _secondsLeft = _focusMinutes * 60;
+  int _secondsLeft = defaultPomodoroFocusMinutes * 60;
   Timer? _timer;
   int _quoteIndex = 0;
+  String _focusCycleId = _newFocusCycleId();
+  bool _loadedSavedFocusMinutes = false;
 
+  // Creates a source token that prevents duplicate awards for one focus cycle.
+  static String _newFocusCycleId() {
+    return DateTime.now().microsecondsSinceEpoch.toString();
+  }
+
+  // Applies saved focus-length changes while an idle focus cycle can reset safely.
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final savedMinutes = StudyNestScope.read(context).pomodoroFocusMinutes;
+    if (!_loadedSavedFocusMinutes || (!_isRunning && !_isBreak)) {
+      if (savedMinutes != _focusMinutes) {
+        _focusMinutes = savedMinutes;
+        _secondsLeft = savedMinutes * 60;
+        _focusCycleId = _newFocusCycleId();
+      }
+      _loadedSavedFocusMinutes = true;
+    }
+  }
+
+  // Cancels the periodic timer before this screen leaves the widget tree.
   @override
   void dispose() {
     _timer?.cancel();
     super.dispose();
   }
 
+  // Starts or pauses the active focus or break countdown.
   void _startStop() {
     if (_isRunning) {
       _timer?.cancel();
@@ -45,42 +73,67 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
     } else {
       setState(() => _isRunning = true);
       _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-        if (_secondsLeft > 0) {
+        if (_secondsLeft > 1) {
           setState(() => _secondsLeft--);
         } else {
-          _advance();
+          unawaited(_advance(awardFocusCycle: true));
         }
       });
     }
   }
 
-  void _advance() {
+  // Moves to the next phase and rewards only a naturally finished focus timer.
+  Future<void> _advance({bool awardFocusCycle = false}) async {
     _timer?.cancel();
+    final completedFocus = !_isBreak;
     setState(() {
-      if (!_isBreak) {
-        _cyclesCompleted++;
+      if (completedFocus) {
+        if (awardFocusCycle) {
+          _cyclesCompleted++;
+        }
         _isBreak = true;
         _secondsLeft = _breakMinutes * 60;
         _quoteIndex = (_quoteIndex + 1) % _quotes.length;
       } else {
+        _focusMinutes = StudyNestScope.read(context).pomodoroFocusMinutes;
         _isBreak = false;
         _secondsLeft = _focusMinutes * 60;
+        _focusCycleId = _newFocusCycleId();
       }
       _isRunning = false;
     });
+    if (!completedFocus || !awardFocusCycle) {
+      return;
+    }
+    final awarded = await StudyNestScope.read(
+      context,
+    ).awardPomodoroCycle(_focusCycleId);
+    if (!mounted) {
+      return;
+    }
+    if (awarded > 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Focus cycle complete! You earned $awarded coins.'),
+        ),
+      );
+    }
   }
 
+  // Formats the remaining phase duration as minutes and seconds.
   String get _formatted {
     final m = _secondsLeft ~/ 60;
     final s = _secondsLeft % 60;
     return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
   }
 
+  // Calculates the remaining fraction used by the circular timer ring.
   double get _progress {
     final total = _isBreak ? _breakMinutes * 60 : _focusMinutes * 60;
     return (_secondsLeft / total).clamp(0.0, 1.0);
   }
 
+  // Builds the immersive timer, reward summary, and phase controls.
   @override
   Widget build(BuildContext context) {
     final state = StudyNestScope.watch(context);
@@ -138,6 +191,8 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
                         ],
                       ),
                     ),
+                    const SizedBox(width: 12),
+                    CoinBadge(coins: state.coinBalance),
                   ],
                 ),
                 const SizedBox(height: 20),
@@ -292,41 +347,43 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    _ControlButton(
-                      icon: Icons.notifications_off_outlined,
-                      theme: theme,
-                      onPressed: () {},
-                      size: 52,
-                    ),
-                    const SizedBox(width: 20),
                     // Big play/pause
-                    GestureDetector(
-                      onTap: _startStop,
-                      child: ClipOval(
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                          child: Container(
-                            width: 80,
-                            height: 80,
-                            decoration: BoxDecoration(
-                              color: theme.accent.withValues(alpha: 0.20),
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: theme.accent.withValues(alpha: 0.70),
-                                width: 2,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: theme.accent.withValues(alpha: 0.30),
-                                  blurRadius: 20,
-                                  spreadRadius: 2,
+                    Tooltip(
+                      message: _isRunning ? 'Pause timer' : 'Start timer',
+                      child: Semantics(
+                        button: true,
+                        label: _isRunning ? 'Pause timer' : 'Start timer',
+                        child: GestureDetector(
+                          onTap: _startStop,
+                          child: ClipOval(
+                            child: BackdropFilter(
+                              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                              child: Container(
+                                width: 80,
+                                height: 80,
+                                decoration: BoxDecoration(
+                                  color: theme.accent.withValues(alpha: 0.20),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: theme.accent.withValues(alpha: 0.70),
+                                    width: 2,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: theme.accent.withValues(
+                                        alpha: 0.30,
+                                      ),
+                                      blurRadius: 20,
+                                      spreadRadius: 2,
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                            child: Icon(
-                              _isRunning ? Icons.pause : Icons.play_arrow,
-                              size: 40,
-                              color: theme.accent,
+                                child: Icon(
+                                  _isRunning ? Icons.pause : Icons.play_arrow,
+                                  size: 40,
+                                  color: theme.accent,
+                                ),
+                              ),
                             ),
                           ),
                         ),
@@ -336,7 +393,8 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
                     _ControlButton(
                       icon: Icons.skip_next_outlined,
                       theme: theme,
-                      onPressed: _advance,
+                      tooltip: 'Skip this phase without earning coins',
+                      onPressed: () => unawaited(_advance()),
                       size: 52,
                     ),
                   ],
@@ -355,7 +413,9 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          'Stay consistent, results will follow.',
+                          _isBreak
+                              ? 'Breaks recharge your next focused cycle.'
+                              : 'Finish this cycle to earn ${state.pomodoroCycleReward} coins (${state.activeCoinMultiplier == 1 ? 'base rate' : '${state.activeCoinMultiplierLabel} multiplier'}).',
                           style: TextStyle(color: theme.text, fontSize: 13),
                         ),
                       ),
@@ -377,6 +437,7 @@ class _GlassCard extends StatelessWidget {
   const _GlassCard({required this.child});
   final Widget child;
 
+  // Builds a translucent card that remains readable over room artwork.
   @override
   Widget build(BuildContext context) {
     final theme = StudyNestScope.watch(context).selectedTheme;
@@ -404,14 +465,17 @@ class _ControlButton extends StatelessWidget {
   const _ControlButton({
     required this.icon,
     required this.theme,
+    required this.tooltip,
     required this.onPressed,
     required this.size,
   });
   final IconData icon;
   final dynamic theme;
+  final String tooltip;
   final VoidCallback onPressed;
   final double size;
 
+  // Builds a compact circular secondary timer control.
   @override
   Widget build(BuildContext context) {
     return ClipOval(
@@ -426,6 +490,7 @@ class _ControlButton extends StatelessWidget {
             border: Border.all(color: theme.accent.withValues(alpha: 0.22)),
           ),
           child: IconButton(
+            tooltip: tooltip,
             icon: Icon(icon, color: theme.accent, size: size * 0.44),
             onPressed: onPressed,
           ),
@@ -447,6 +512,7 @@ class _StatPill extends StatelessWidget {
   final String label;
   final Color color;
 
+  // Builds one evenly spaced Pomodoro statistic.
   @override
   Widget build(BuildContext context) {
     return Expanded(
