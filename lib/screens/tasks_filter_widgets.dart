@@ -54,9 +54,17 @@ class _TaskFilterBar extends StatelessWidget {
   final String selectedFilter;
   final ValueChanged<String> onSelected;
 
-  static const _filters = ['All', 'Today', 'Upcoming', 'Completed'];
+  static const _filters = [
+    'All',
+    'Today',
+    'Upcoming',
+    'Overdue',
+    'Hide completed',
+    'Completed',
+    'Custom',
+  ];
 
-  // Builds the horizontal completion and due-date filter controls.
+  // Builds the horizontal completion, due-date, and custom filter controls.
   @override
   Widget build(BuildContext context) {
     final theme = StudyNestScope.watch(context).selectedTheme;
