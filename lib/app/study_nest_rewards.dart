@@ -1,5 +1,5 @@
 /// Base coins awarded when one Pomodoro focus cycle finishes naturally.
-const int pomodoroBaseCoinReward = 5;
+const int pomodoroBaseCoinReward = 15;
 
 /// Makes reward-system upgrades free only in explicitly configured test builds.
 const bool rewardShopFreeTestMode = bool.fromEnvironment(
@@ -31,6 +31,18 @@ const int defaultPomodoroFocusMinutes = 25;
 
 /// Supported focus lengths displayed after the duration upgrade is owned.
 const List<int> pomodoroFocusMinuteOptions = [15, 20, 25, 30, 45, 60];
+
+/// Smallest custom focus cycle accepted by the duration control.
+const int minimumPomodoroFocusMinutes = 1;
+
+/// Largest custom focus cycle accepted by the duration control.
+const int maximumPomodoroFocusMinutes = 180;
+
+/// Reports whether a preset or custom Pomodoro duration can be saved.
+bool isValidPomodoroFocusMinutes(int minutes) {
+  return minutes >= minimumPomodoroFocusMinutes &&
+      minutes <= maximumPomodoroFocusMinutes;
+}
 
 /// Describes a permanent Pomodoro reward multiplier sold in the shop.
 class CoinMultiplierOffer {
@@ -78,7 +90,7 @@ double normalizedCoinMultiplier(Object? value) {
 /// Keeps persisted focus lengths within the supported customization options.
 int normalizedPomodoroFocusMinutes(Object? value) {
   final minutes = (value as num?)?.toInt() ?? defaultPomodoroFocusMinutes;
-  return pomodoroFocusMinuteOptions.contains(minutes)
+  return isValidPomodoroFocusMinutes(minutes)
       ? minutes
       : defaultPomodoroFocusMinutes;
 }

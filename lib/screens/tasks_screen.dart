@@ -189,6 +189,7 @@ class _TasksScreenState extends State<TasksScreen> {
                     const SizedBox(height: 12),
                     TextField(
                       controller: rewardController,
+                      enabled: state.taskCoinRewardsEnabled,
                       keyboardType: TextInputType.number,
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       onChanged: (value) {
@@ -206,11 +207,11 @@ class _TasksScreenState extends State<TasksScreen> {
                         labelText: 'Coin reward',
                         helperText: state.taskCoinRewardsEnabled
                             ? 'Maximum $maximumTaskCoinReward coins per task.'
-                            : 'Saved for when task coins are switched on. Max $maximumTaskCoinReward.',
+                            : 'Turn on task coins in the Shop to set a reward.',
                         errorText: rewardError,
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 24),
                     DropdownButtonFormField<String>(
                       initialValue: priority,
                       decoration: const InputDecoration(labelText: 'Priority'),
