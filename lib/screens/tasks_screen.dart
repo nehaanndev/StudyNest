@@ -25,6 +25,9 @@ class TasksScreen extends StatefulWidget {
 class _TasksScreenState extends State<TasksScreen> {
   String _filter = 'All';
   String _priorityFilter = 'All'; // 'All', 'High', 'Medium', 'Low'
+  String _customStatus = 'Any';
+  String _customDueDate = 'Any';
+  String _customPriority = 'Any';
 
   static const _priorityOrder = ['High', 'Medium', 'Low'];
   static const _priorityColors = {
@@ -81,7 +84,7 @@ class _TasksScreenState extends State<TasksScreen> {
             const SizedBox(height: 14),
             _TaskFilterBar(
               selectedFilter: _filter,
-              onSelected: (filter) => setState(() => _filter = filter),
+              onSelected: _selectTaskFilter,
             ),
             const SizedBox(height: 8),
             _PriorityFilterBar(
@@ -135,20 +138,153 @@ class _TasksScreenState extends State<TasksScreen> {
     );
   }
 
-  // Applies the selected date and priority filters to the task list.
+  // Selects a preset filter or opens the custom task-filter controls.
+  void _selectTaskFilter(String filter) {
+    if (filter == 'Custom') {
+      _showCustomFilterDialog();
+      return;
+    }
+    setState(() => _filter = filter);
+  }
+
+  // Applies the selected preset, custom, and priority filters to the task list.
   List<StudyTask> _filteredTasks(List<StudyTask> tasks) {
     final now = DateTime.now();
     return tasks.where((task) {
       final passesDate = switch (_filter) {
         'Today' => isSameCalendarDay(task.dueAt, now),
         'Upcoming' => task.completedAt == null && task.dueAt.isAfter(now),
+        'Overdue' => task.completedAt == null && task.dueAt.isBefore(now),
+        'Hide completed' => task.completedAt == null,
         'Completed' => task.completedAt != null,
+        'Custom' => _matchesCustomFilter(task, now),
         _ => true,
       };
-      final passesPriority =
-          _priorityFilter == 'All' || task.priority == _priorityFilter;
+      final passesPriority = _filter == 'Custom'
+          ? _customPriority == 'Any' || task.priority == _customPriority
+          : _priorityFilter == 'All' || task.priority == _priorityFilter;
       return passesDate && passesPriority;
     }).toList();
+  }
+
+  // Checks a task against the completion and due-date choices in Custom.
+  bool _matchesCustomFilter(StudyTask task, DateTime now) {
+    final matchesStatus = switch (_customStatus) {
+      'Open' => task.completedAt == null,
+      'Completed' => task.completedAt != null,
+      _ => true,
+    };
+    final matchesDueDate = switch (_customDueDate) {
+      'Overdue' => task.completedAt == null && task.dueAt.isBefore(now),
+      'Today' => isSameCalendarDay(task.dueAt, now),
+      'Upcoming' => task.completedAt == null && task.dueAt.isAfter(now),
+      _ => true,
+    };
+    return matchesStatus && matchesDueDate;
+  }
+
+  // Lets people combine completion, due-date, and priority criteria.
+  Future<void> _showCustomFilterDialog() async {
+    var status = _customStatus;
+    var dueDate = _customDueDate;
+    var priority = _customPriority;
+
+    await showManagedDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (dialogContext, setDialogState) {
+            return AlertDialog(
+              title: const Text('Custom filter'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  DropdownButtonFormField<String>(
+                    initialValue: status,
+                    decoration: const InputDecoration(labelText: 'Status'),
+                    items: const [
+                      DropdownMenuItem(value: 'Any', child: Text('Any')),
+                      DropdownMenuItem(value: 'Open', child: Text('Open')),
+                      DropdownMenuItem(
+                        value: 'Completed',
+                        child: Text('Completed'),
+                      ),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) setDialogState(() => status = value);
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    initialValue: dueDate,
+                    decoration: const InputDecoration(labelText: 'Due date'),
+                    items: const [
+                      DropdownMenuItem(value: 'Any', child: Text('Any')),
+                      DropdownMenuItem(
+                        value: 'Overdue',
+                        child: Text('Overdue'),
+                      ),
+                      DropdownMenuItem(value: 'Today', child: Text('Today')),
+                      DropdownMenuItem(
+                        value: 'Upcoming',
+                        child: Text('Upcoming'),
+                      ),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) setDialogState(() => dueDate = value);
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    initialValue: priority,
+                    decoration: const InputDecoration(labelText: 'Priority'),
+                    items: const [
+                      DropdownMenuItem(value: 'Any', child: Text('Any')),
+                      DropdownMenuItem(value: 'High', child: Text('High')),
+                      DropdownMenuItem(value: 'Medium', child: Text('Medium')),
+                      DropdownMenuItem(value: 'Low', child: Text('Low')),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) setDialogState(() => priority = value);
+                    },
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      _customStatus = 'Any';
+                      _customDueDate = 'Any';
+                      _customPriority = 'Any';
+                      _filter = 'All';
+                    });
+                    Navigator.of(dialogContext).pop();
+                  },
+                  child: const Text('Clear'),
+                ),
+                FilledButton(
+                  onPressed: () {
+                    setState(() {
+                      _customStatus = status;
+                      _customDueDate = dueDate;
+                      _customPriority = priority;
+                      _filter = 'Custom';
+                    });
+                    Navigator.of(dialogContext).pop();
+                  },
+                  child: const Text('Apply'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   // Opens the create/edit form and validates the 1–50 coin task limit.

@@ -44,6 +44,78 @@ void main() {
     );
   });
 
+  testWidgets('Task filters hide completed, show overdue, and support custom', (
+    tester,
+  ) async {
+    // Creates a focused task set so every filter has a distinct visible result.
+    final snapshot = emptyStudyNestSnapshot();
+    final now = DateTime.now();
+    snapshot['tasks'] = [
+      {
+        'id': 'task.overdue',
+        'title': 'Overdue task',
+        'details': '',
+        'dueAt': now.subtract(const Duration(days: 1)).toIso8601String(),
+        'reward': 10,
+        'completedAt': null,
+        'rewardCollected': false,
+        'priority': 'High',
+      },
+      {
+        'id': 'task.future',
+        'title': 'Future task',
+        'details': '',
+        'dueAt': now.add(const Duration(days: 1)).toIso8601String(),
+        'reward': 10,
+        'completedAt': null,
+        'rewardCollected': false,
+        'priority': 'Low',
+      },
+      {
+        'id': 'task.complete',
+        'title': 'Completed task',
+        'details': '',
+        'dueAt': now.subtract(const Duration(days: 2)).toIso8601String(),
+        'reward': 10,
+        'completedAt': now.subtract(const Duration(hours: 1)).toIso8601String(),
+        'rewardCollected': false,
+        'priority': 'Medium',
+      },
+    ];
+    final state = await StudyNestState.load(
+      storage: InMemoryStudyNestStorage(snapshot: snapshot),
+    );
+    await state.completeWelcome();
+    await state.setLastDestination('tasks');
+    await tester.pumpWidget(StudyNestApp(appState: state));
+
+    await tester.ensureVisible(find.text('Hide completed'));
+    await tester.tap(find.text('Hide completed'));
+    await tester.pumpAndSettle();
+    expect(find.text('Completed task'), findsNothing);
+    expect(find.text('Overdue task'), findsOneWidget);
+    expect(find.text('Future task'), findsOneWidget);
+
+    await tester.ensureVisible(find.text('Overdue'));
+    await tester.tap(find.text('Overdue').first);
+    await tester.pumpAndSettle();
+    expect(find.text('Overdue task'), findsOneWidget);
+    expect(find.text('Future task'), findsNothing);
+    expect(find.text('Completed task'), findsNothing);
+
+    await tester.ensureVisible(find.text('Custom'));
+    await tester.tap(find.text('Custom'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(DropdownButtonFormField<String>).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Completed').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Apply'));
+    await tester.pumpAndSettle();
+    expect(find.text('Completed task'), findsOneWidget);
+    expect(find.text('Overdue task'), findsNothing);
+  });
+
   testWidgets('More destinations retain the shared bottom navigation', (
     tester,
   ) async {
