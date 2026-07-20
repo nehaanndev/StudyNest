@@ -50,8 +50,7 @@ extension StudyNestRewardsState on StudyNestState {
 
   /// Purchases the one-time task reward switch and enables it initially.
   Future<bool> buyTaskCoinRewards() async {
-    final purchaseCost = effectiveRewardShopCost(taskCoinUnlockCost);
-    if (taskCoinRewardsUnlocked || coinBalance < purchaseCost) {
+    if (taskCoinRewardsUnlocked || coinBalance < taskCoinUnlockCost) {
       return false;
     }
     final now = DateTime.now();
@@ -60,7 +59,7 @@ extension StudyNestRewardsState on StudyNestState {
       CoinTransaction(
         id: _newId('coins'),
         label: 'Unlocked task coins',
-        amount: -purchaseCost,
+        amount: -taskCoinUnlockCost,
         createdAt: now,
         sourceId: taskCoinUnlockProductId,
       ),
@@ -85,8 +84,7 @@ extension StudyNestRewardsState on StudyNestState {
 
   /// Purchases permanent access to the supported Pomodoro focus lengths.
   Future<bool> buyPomodoroDurationUnlock() async {
-    final purchaseCost = effectiveRewardShopCost(pomodoroDurationUnlockCost);
-    if (pomodoroDurationUnlocked || coinBalance < purchaseCost) {
+    if (pomodoroDurationUnlocked || coinBalance < pomodoroDurationUnlockCost) {
       return false;
     }
     final now = DateTime.now();
@@ -94,7 +92,7 @@ extension StudyNestRewardsState on StudyNestState {
       CoinTransaction(
         id: _newId('coins'),
         label: 'Unlocked custom Pomodoro lengths',
-        amount: -purchaseCost,
+        amount: -pomodoroDurationUnlockCost,
         createdAt: now,
         sourceId: pomodoroDurationUnlockProductId,
       ),
@@ -120,12 +118,11 @@ extension StudyNestRewardsState on StudyNestState {
   /// Purchases a multiplier permanently and makes it the active rate.
   Future<bool> buyCoinMultiplier(CoinMultiplierOffer offer) async {
     final catalogOffer = coinMultiplierOfferFor(offer.factor);
-    final purchaseCost = effectiveRewardShopCost(catalogOffer?.cost ?? 0);
     if (catalogOffer == null ||
         catalogOffer.id != offer.id ||
         catalogOffer.cost != offer.cost ||
         ownsCoinMultiplier(catalogOffer) ||
-        coinBalance < purchaseCost) {
+        coinBalance < catalogOffer.cost) {
       return false;
     }
     final now = DateTime.now();
@@ -134,7 +131,7 @@ extension StudyNestRewardsState on StudyNestState {
       CoinTransaction(
         id: _newId('coins'),
         label: 'Bought ${catalogOffer.label} focus multiplier',
-        amount: -purchaseCost,
+        amount: -catalogOffer.cost,
         createdAt: now,
         sourceId: catalogOffer.id,
       ),

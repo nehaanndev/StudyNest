@@ -79,7 +79,7 @@ class _ShopScreenState extends State<ShopScreen> {
             _CoinMultiplierCard(
               factor: offer.factor,
               reward: offer.cycleReward,
-              cost: effectiveRewardShopCost(offer.cost),
+              cost: offer.cost,
               active: state.activeCoinMultiplier == offer.factor,
               owned: state.ownsCoinMultiplier(offer),
               pending: _pendingActions.contains(offer.id),
@@ -165,8 +165,7 @@ class _ShopScreenState extends State<ShopScreen> {
   Future<void> _buyTaskCoinUpgrade(BuildContext context) async {
     await _runPendingAction(taskCoinUnlockProductId, () async {
       final state = StudyNestScope.read(context);
-      final missingCoins =
-          effectiveRewardShopCost(taskCoinUnlockCost) - state.coinBalance;
+      final missingCoins = taskCoinUnlockCost - state.coinBalance;
       final bought = await state.buyTaskCoinRewards();
       if (!context.mounted) return;
       _showMessage(
@@ -198,9 +197,7 @@ class _ShopScreenState extends State<ShopScreen> {
   Future<void> _buyPomodoroDurationUnlock(BuildContext context) async {
     await _runPendingAction(pomodoroDurationUnlockProductId, () async {
       final state = StudyNestScope.read(context);
-      final missingCoins =
-          effectiveRewardShopCost(pomodoroDurationUnlockCost) -
-          state.coinBalance;
+      final missingCoins = pomodoroDurationUnlockCost - state.coinBalance;
       final bought = await state.buyPomodoroDurationUnlock();
       if (!context.mounted) return;
       _showMessage(
@@ -234,8 +231,7 @@ class _ShopScreenState extends State<ShopScreen> {
     await _runPendingAction(offer.id, () async {
       final state = StudyNestScope.read(context);
       final owned = state.ownsCoinMultiplier(offer);
-      final missingCoins =
-          effectiveRewardShopCost(offer.cost) - state.coinBalance;
+      final missingCoins = offer.cost - state.coinBalance;
       final applied = owned
           ? await state.activateCoinMultiplier(offer.factor)
           : await state.buyCoinMultiplier(offer);
@@ -369,10 +365,8 @@ class _TaskCoinUpgradeCard extends StatelessWidget {
           else
             Row(
               children: [
-                CozyTag(
-                  label: rewardShopFreeTestMode
-                      ? 'Free (test)'
-                      : '$taskCoinUnlockCost coins',
+                const CozyTag(
+                  label: '$taskCoinUnlockCost coins',
                   icon: Icons.savings,
                 ),
                 const Spacer(),

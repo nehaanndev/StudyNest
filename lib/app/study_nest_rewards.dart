@@ -1,16 +1,6 @@
 /// Base coins awarded when one Pomodoro focus cycle finishes naturally.
 const int pomodoroBaseCoinReward = 15;
 
-/// Makes reward-system upgrades free only in explicitly configured test builds.
-const bool rewardShopFreeTestMode = bool.fromEnvironment(
-  'REWARD_SHOP_FREE_TEST_MODE',
-);
-
-/// Returns a free test-build price without changing the production catalog.
-int effectiveRewardShopCost(int productionCost) {
-  return rewardShopFreeTestMode ? 0 : productionCost;
-}
-
 /// Highest configurable and payable reward for a completed task.
 const int maximumTaskCoinReward = 50;
 

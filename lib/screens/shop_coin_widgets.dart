@@ -64,10 +64,8 @@ class _PomodoroDurationCard extends StatelessWidget {
             const SizedBox(height: 12),
             Row(
               children: [
-                CozyTag(
-                  label: rewardShopFreeTestMode
-                      ? 'Free (test)'
-                      : '$pomodoroDurationUnlockCost coins',
+                const CozyTag(
+                  label: '$pomodoroDurationUnlockCost coins',
                   icon: Icons.savings,
                 ),
                 const Spacer(),
@@ -245,8 +243,6 @@ class _CoinMultiplierCard extends StatelessWidget {
                     ? 'Working…'
                     : owned
                     ? 'Use'
-                    : cost == 0
-                    ? 'Free'
                     : '🪙 ${cost ?? 0}',
               ),
             ),

@@ -6,27 +6,6 @@ import 'package:studynest/app/study_nest_storage.dart';
 
 // Verifies Pomodoro rewards, optional task coins, multipliers, and persistence.
 void main() {
-  test('reward shop test mode makes every requested upgrade free', () async {
-    final state = await StudyNestState.load(
-      storage: InMemoryStudyNestStorage(),
-    );
-
-    if (!rewardShopFreeTestMode) {
-      expect(effectiveRewardShopCost(taskCoinUnlockCost), taskCoinUnlockCost);
-      return;
-    }
-
-    expect(await state.buyTaskCoinRewards(), isTrue);
-    expect(await state.buyPomodoroDurationUnlock(), isTrue);
-    for (final offer in coinMultiplierOffers) {
-      expect(await state.buyCoinMultiplier(offer), isTrue);
-    }
-    expect(state.coinBalance, 0);
-    expect(state.taskCoinRewardsUnlocked, isTrue);
-    expect(state.pomodoroDurationUnlocked, isTrue);
-    expect(state.activeCoinMultiplier, 5);
-  });
-
   test(
     'new profiles earn fifteen coins from each unique Pomodoro cycle',
     () async {
