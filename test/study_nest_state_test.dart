@@ -40,7 +40,7 @@ void main() {
     expect(reloaded.lastDestinationId, 'habits');
   });
 
-  test('awards task completion coins only once per task', () async {
+  test('does not award tasks before the optional upgrade', () async {
     final state = await StudyNestState.load(
       storage: InMemoryStudyNestStorage(),
     );
@@ -51,22 +51,21 @@ void main() {
     await state.toggleTask(task.id);
     final secondAward = await state.toggleTask(task.id);
 
-    expect(firstAward, task.reward);
+    expect(firstAward, 0);
     expect(secondAward, 0);
-    expect(state.coinBalance, startingCoins + task.reward);
+    expect(state.coinBalance, startingCoins);
   });
 
-  test('awards the session goal once per day', () async {
+  test('completes the session goal without minting coins', () async {
     final state = await StudyNestState.load(
       storage: InMemoryStudyNestStorage(),
     );
-    final goalReward = state.sessionGoal.reward;
-
     final firstAward = await state.completeSessionGoal();
     final secondAward = await state.completeSessionGoal();
 
-    expect(firstAward, goalReward);
+    expect(firstAward, 0);
     expect(secondAward, 0);
+    expect(state.sessionGoal.isCompleteOn(DateTime.now()), isTrue);
   });
 
   test('purchases and applies an unlocked theme', () async {
@@ -77,8 +76,8 @@ void main() {
       (shopItem) => shopItem.themeId == 'gardenMatcha',
     );
 
-    for (final task in state.tasks) {
-      await state.toggleTask(task.id);
+    for (var cycle = 0; cycle < 14; cycle++) {
+      await state.awardPomodoroCycle('theme-$cycle');
     }
     final purchased = await state.buyShopItem(item);
 
@@ -101,9 +100,9 @@ void main() {
     });
 
     await state.setStudySpaceStyle('simple');
-    // Completes the seeded tasks so the lamp purchase is affordable.
-    for (final task in state.tasks) {
-      await state.toggleTask(task.id);
+    // Completes focus cycles so the lamp purchase is affordable.
+    for (var cycle = 0; cycle < 16; cycle++) {
+      await state.awardPomodoroCycle('decor-$cycle');
     }
     final purchaseResult = await state.buyDecorItem(decor);
     await state.setDecorPosition(decor.id, const Offset(0.22, 0.44));
@@ -147,7 +146,7 @@ void main() {
 
     expect(state.studySpaceStyleId, 'detail');
     expect(storage.snapshot?['studySpaceStyleId'], 'detail');
-    expect(storage.snapshot?['schemaVersion'], 2);
+    expect(storage.snapshot?['schemaVersion'], 3);
   });
 
   test(

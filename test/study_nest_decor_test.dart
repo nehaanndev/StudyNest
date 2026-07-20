@@ -68,8 +68,8 @@ void main() {
     final state = await StudyNestState.load(
       storage: InMemoryStudyNestStorage(),
     );
-    for (final task in state.tasks) {
-      await state.toggleTask(task.id);
+    for (var cycle = 0; cycle < 10; cycle++) {
+      await state.awardPomodoroCycle('placement-$cycle');
     }
     final deskItem = studyDecorItems.firstWhere((item) {
       return item.themeId == 'cozyCafe' && item.zone == DecorZone.desk;

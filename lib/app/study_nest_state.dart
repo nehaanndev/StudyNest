@@ -8,6 +8,7 @@ import 'study_nest_anonymous_limits.dart';
 import 'study_nest_auth_debug.dart';
 import 'study_nest_auth_snapshot.dart';
 import 'study_nest_catalog.dart';
+import 'study_nest_rewards.dart';
 import 'study_nest_session.dart';
 import 'study_nest_storage.dart';
 import 'study_nest_sync_service.dart';
@@ -16,6 +17,7 @@ part 'study_nest_space_state.dart';
 part 'study_nest_mutations_state.dart';
 part 'study_nest_sync_state.dart';
 part 'study_nest_snapshot_helpers.dart';
+part 'study_nest_rewards_state.dart';
 
 class StudyNestState extends ChangeNotifier {
   StudyNestState._({
@@ -36,6 +38,8 @@ class StudyNestState extends ChangeNotifier {
     required StudyNestSessionState session,
     required bool hasCompletedWelcome,
     required String lastDestinationId,
+    required bool taskCoinRewardsEnabled,
+    required double activeCoinMultiplier,
     String? ownerUserId,
     List<StudyHabit>? habits,
   }) : _storage = storage,
@@ -55,6 +59,8 @@ class StudyNestState extends ChangeNotifier {
        _session = session,
        _hasCompletedWelcome = hasCompletedWelcome,
        _lastDestinationId = lastDestinationId,
+       _taskCoinRewardsEnabled = taskCoinRewardsEnabled,
+       _activeCoinMultiplier = activeCoinMultiplier,
        _ownerUserId = ownerUserId,
        _habits = habits ?? [];
 
@@ -76,6 +82,8 @@ class StudyNestState extends ChangeNotifier {
   StudyNestSessionState _session;
   bool _hasCompletedWelcome;
   String _lastDestinationId;
+  bool _taskCoinRewardsEnabled;
+  double _activeCoinMultiplier;
   String? _ownerUserId;
   StreamSubscription<void>? _retrySubscription;
 
@@ -506,11 +514,13 @@ class StudyNestState extends ChangeNotifier {
   // Converts the current app state into the local persistence snapshot.
   Map<String, dynamic> _toSnapshot() {
     return {
-      'schemaVersion': 2,
+      'schemaVersion': 3,
       'ownerUserId': _session.userId,
       'updatedAt': _updatedAt.toIso8601String(),
       'hasCompletedWelcome': _hasCompletedWelcome,
       'lastDestinationId': _lastDestinationId,
+      'taskCoinRewardsEnabled': _taskCoinRewardsEnabled,
+      'activeCoinMultiplier': _activeCoinMultiplier,
       if (_ownerUserId != null) 'ownerUserId': _ownerUserId,
       'tasks': _tasks.map((task) => task.toJson()).toList(),
       'notes': _notes.map((note) => note.toJson()).toList(),
@@ -571,6 +581,11 @@ class StudyNestState extends ChangeNotifier {
       session: StudyNestSessionState.disabled(),
       hasCompletedWelcome: snapshot['hasCompletedWelcome'] as bool? ?? true,
       lastDestinationId: snapshot['lastDestinationId'] as String? ?? 'home',
+      taskCoinRewardsEnabled:
+          snapshot['taskCoinRewardsEnabled'] as bool? ?? false,
+      activeCoinMultiplier: normalizedCoinMultiplier(
+        snapshot['activeCoinMultiplier'],
+      ),
       ownerUserId: snapshot['ownerUserId'] as String?,
       habits: _decodeList(snapshot['habits'], StudyHabit.fromJson),
     );

@@ -1,3 +1,5 @@
+import '../app/study_nest_rewards.dart';
+
 class StudyTask {
   const StudyTask({
     required this.id,
@@ -40,7 +42,7 @@ class StudyTask {
       title: json['title'] as String,
       details: json['details'] as String? ?? '',
       dueAt: DateTime.parse(json['dueAt'] as String),
-      reward: json['reward'] as int? ?? 10,
+      reward: (json['reward'] as int? ?? 10).clamp(1, maximumTaskCoinReward),
       completedAt: json['completedAt'] == null
           ? null
           : DateTime.parse(json['completedAt'] as String),

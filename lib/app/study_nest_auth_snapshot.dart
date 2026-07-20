@@ -5,7 +5,7 @@
 Map<String, dynamic> emptyStudyNestSnapshot() {
   final now = DateTime.now().toIso8601String();
   return {
-    'schemaVersion': 2,
+    'schemaVersion': 3,
     'updatedAt': now,
     'tasks': <dynamic>[],
     'notes': <dynamic>[],
@@ -26,6 +26,8 @@ Map<String, dynamic> emptyStudyNestSnapshot() {
     'habits': <dynamic>[],
     'hasCompletedWelcome': false,
     'lastDestinationId': 'home',
+    'taskCoinRewardsEnabled': false,
+    'activeCoinMultiplier': 1.0,
   };
 }
 
@@ -87,14 +89,12 @@ Map<String, dynamic> mergeStudyNestSnapshots(
   return {
     ...secondary,
     ...preferred,
-    for (final key in const [
-      'tasks',
-      'notes',
-      'events',
-      'coinLedger',
-      'habits',
-    ])
+    for (final key in const ['tasks', 'notes', 'events', 'habits'])
       key: _mergeRecords(localSnapshot[key], remoteSnapshot[key]),
+    'coinLedger': _mergeCoinTransactions(
+      localSnapshot['coinLedger'],
+      remoteSnapshot['coinLedger'],
+    ),
     for (final key in const [
       'ownedShopItemIds',
       'ownedDecorItemIds',
@@ -102,6 +102,24 @@ Map<String, dynamic> mergeStudyNestSnapshots(
     ])
       key: _mergeStrings(localSnapshot[key], remoteSnapshot[key]),
   };
+}
+
+/// Merges ledger entries by their one-time source to prevent duplicate awards or charges.
+List<dynamic> _mergeCoinTransactions(Object? localValue, Object? remoteValue) {
+  final merged = <String, Map<String, dynamic>>{};
+  for (final record in [..._asMaps(remoteValue), ..._asMaps(localValue)]) {
+    final id = record['id'] as String?;
+    if (id == null) {
+      continue;
+    }
+    final sourceId = record['sourceId'] as String? ?? '';
+    final mergeKey = sourceId.isEmpty ? 'id:$id' : 'source:$sourceId';
+    final existing = merged[mergeKey];
+    if (existing == null || _recordIsNewer(record, existing)) {
+      merged[mergeKey] = record;
+    }
+  }
+  return merged.values.toList();
 }
 
 /// Combines record lists by id, retaining the newer version of duplicate records.
