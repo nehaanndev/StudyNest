@@ -139,15 +139,61 @@ void main() {
     expect(find.text('New task'), findsOneWidget);
   });
 
-  testWidgets('Pomodoro skips mint nothing and exact focus duration awards', (
+  testWidgets('Creating a task closes the editor without lifecycle errors', (
     tester,
   ) async {
     final state = StudyNestState.preview();
     await state.completeWelcome();
     await tester.pumpWidget(StudyNestApp(appState: state));
 
+    await tester.tap(find.byIcon(Icons.checklist_outlined));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Add New Task'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).first, 'Crash regression');
+    await tester.tap(find.text('Create'));
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('Crash regression'), findsOneWidget);
+    expect(find.text('New task'), findsNothing);
+  });
+
+  testWidgets('Saving a focus goal waits for dialog resources to detach', (
+    tester,
+  ) async {
+    final state = StudyNestState.preview();
+    await state.completeWelcome();
+    await tester.pumpWidget(StudyNestApp(appState: state));
+
+    await tester.tap(find.byTooltip('Edit goal'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).first, 'Review chemistry');
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('Review chemistry'), findsOneWidget);
+    expect(find.text('Set focus goal'), findsNothing);
+  });
+
+  testWidgets('Pomodoro skips mint nothing and exact focus duration awards', (
+    tester,
+  ) async {
+    const testFocusMinutes = int.fromEnvironment('POMODORO_TEST_MINUTES');
+    final focusMinutes = testFocusMinutes > 0
+        ? testFocusMinutes
+        : defaultPomodoroFocusMinutes;
+    final state = StudyNestState.preview();
+    await state.completeWelcome();
+    await tester.pumpWidget(StudyNestApp(appState: state));
+
     await tester.tap(find.byIcon(Icons.hourglass_empty_rounded));
     await tester.pump();
+    expect(
+      find.text('${focusMinutes.toString().padLeft(2, '0')}:00'),
+      findsOneWidget,
+    );
     final timerScroll = find.descendant(
       of: find.byType(PomodoroScreen),
       matching: find.byType(Scrollable),
@@ -161,7 +207,7 @@ void main() {
     expect(state.coinBalance, 0);
 
     await tester.tap(find.byTooltip('Start timer'));
-    await tester.pump(const Duration(minutes: 25));
+    await tester.pump(Duration(minutes: focusMinutes));
 
     expect(state.coinBalance, 5);
     expect(find.text('05:00'), findsOneWidget);

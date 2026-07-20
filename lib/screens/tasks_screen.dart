@@ -8,6 +8,7 @@ import '../app/study_nest_visuals.dart';
 import '../models/study_models.dart';
 import '../utils/date_labels.dart';
 import '../widgets/cozy_widgets.dart';
+import '../widgets/managed_dialog.dart';
 import '../widgets/study_station_banner.dart';
 
 part 'tasks_coin_widgets.dart';
@@ -162,7 +163,7 @@ class _TasksScreenState extends State<TasksScreen> {
     var priority = task?.priority ?? 'Medium';
     String? rewardError;
 
-    await showDialog<void>(
+    await showManagedDialog<void>(
       context: context,
       builder: (dialogContext) {
         return StatefulBuilder(
