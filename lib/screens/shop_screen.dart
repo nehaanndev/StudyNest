@@ -11,6 +11,8 @@ import '../widgets/decor_shop_widgets.dart';
 import '../widgets/study_photo_widgets.dart';
 import '../widgets/study_station_banner.dart';
 
+part 'shop_coin_widgets.dart';
+
 class ShopScreen extends StatefulWidget {
   const ShopScreen({super.key});
 
@@ -49,12 +51,19 @@ class _ShopScreenState extends State<ShopScreen> {
             onBuy: () => _buyTaskCoinUpgrade(context),
             onToggle: (enabled) => _toggleTaskCoins(context, enabled),
           ),
+          const SizedBox(height: 12),
+          _PomodoroDurationCard(
+            pending: _pendingActions.contains(pomodoroDurationUnlockProductId),
+            onBuy: () => _buyPomodoroDurationUnlock(context),
+            onMinutesSelected: (minutes) =>
+                _setPomodoroFocusMinutes(context, minutes),
+          ),
           const SectionHeader(title: 'Pomodoro boosts'),
           Text(
-            'Choose how many coins each completed 25-minute focus cycle earns.',
+            'Choose how many coins each completed ${state.pomodoroFocusMinutes}-minute focus cycle earns.',
             style: TextStyle(color: state.selectedTheme.muted, height: 1.35),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 14),
           _CoinMultiplierCard(
             factor: 1,
             reward: pomodoroBaseCoinReward,
@@ -63,7 +72,7 @@ class _ShopScreenState extends State<ShopScreen> {
             pending: _pendingActions.contains('multiplier.1'),
             onPressed: () => _activateMultiplier(context, 1),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 14),
           for (final offer in coinMultiplierOffers) ...[
             _CoinMultiplierCard(
               factor: offer.factor,
@@ -74,7 +83,7 @@ class _ShopScreenState extends State<ShopScreen> {
               pending: _pendingActions.contains(offer.id),
               onPressed: () => _selectMultiplier(context, offer),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 14),
           ],
           CozyCard(
             child: Row(
@@ -182,6 +191,36 @@ class _ShopScreenState extends State<ShopScreen> {
     });
   }
 
+  // Purchases permanent access to selectable Pomodoro focus lengths.
+  Future<void> _buyPomodoroDurationUnlock(BuildContext context) async {
+    await _runPendingAction(pomodoroDurationUnlockProductId, () async {
+      final state = StudyNestScope.read(context);
+      final missingCoins = pomodoroDurationUnlockCost - state.coinBalance;
+      final bought = await state.buyPomodoroDurationUnlock();
+      if (!context.mounted) return;
+      _showMessage(
+        context,
+        bought
+            ? 'Custom focus lengths unlocked.'
+            : 'You need $missingCoins more coins to customize focus length.',
+      );
+    });
+  }
+
+  // Saves the focus length used by the current idle or next Pomodoro cycle.
+  Future<void> _setPomodoroFocusMinutes(
+    BuildContext context,
+    int minutes,
+  ) async {
+    await _runPendingAction(pomodoroDurationUnlockProductId, () async {
+      final changed = await StudyNestScope.read(
+        context,
+      ).setPomodoroFocusMinutes(minutes);
+      if (!context.mounted || !changed) return;
+      _showMessage(context, 'Focus cycles are now $minutes minutes.');
+    });
+  }
+
   // Purchases an unowned boost or activates it when it is already owned.
   Future<void> _selectMultiplier(
     BuildContext context,
@@ -256,143 +295,81 @@ class _TaskCoinUpgradeCard extends StatelessWidget {
     final theme = state.selectedTheme;
     final unlocked = state.taskCoinRewardsUnlocked;
     return CozyCard(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 52,
-            height: 52,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: theme.accent.withValues(alpha: 0.16),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Icon(
-              unlocked ? Icons.task_alt : Icons.lock_outline,
-              color: theme.accent,
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  unlocked ? 'Task coins' : 'Unlock task coins',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w900,
-                  ),
+          Row(
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: theme.accent.withValues(alpha: 0.16),
+                  borderRadius: BorderRadius.circular(16),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  unlocked
-                      ? state.taskCoinRewardsEnabled
-                            ? 'Tasks and Pomodoro cycles both earn coins.'
-                            : 'Task rewards are paused; cycles still earn coins.'
-                      : 'One-time upgrade. Add task rewards alongside Pomodoro cycles.',
-                  style: TextStyle(color: theme.muted, height: 1.3),
+                child: Icon(
+                  unlocked ? Icons.task_alt : Icons.lock_outline,
+                  color: theme.accent,
                 ),
-                if (!unlocked) ...[
-                  const SizedBox(height: 8),
-                  const CozyTag(
-                    label: '$taskCoinUnlockCost coins',
-                    icon: Icons.savings,
-                  ),
-                ],
-              ],
-            ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      unlocked ? 'Task coins' : 'Unlock task coins',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      unlocked
+                          ? state.taskCoinRewardsEnabled
+                                ? 'Tasks and Pomodoro cycles both earn coins.'
+                                : 'Task rewards are paused; cycles still earn coins.'
+                          : 'One-time upgrade. Add task rewards alongside Pomodoro cycles.',
+                      style: TextStyle(color: theme.muted, height: 1.3),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 10),
+          const SizedBox(height: 12),
           if (unlocked)
-            Switch(
-              value: state.taskCoinRewardsEnabled,
-              onChanged: pending ? null : onToggle,
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    state.taskCoinRewardsEnabled
+                        ? 'Task rewards on'
+                        : 'Task rewards off',
+                    style: const TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                ),
+                Switch(
+                  value: state.taskCoinRewardsEnabled,
+                  onChanged: pending ? null : onToggle,
+                ),
+              ],
             )
           else
-            FilledButton.tonal(
-              onPressed: pending ? null : onBuy,
-              child: Text(pending ? 'Buying…' : 'Buy'),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CoinMultiplierCard extends StatelessWidget {
-  const _CoinMultiplierCard({
-    required this.factor,
-    required this.reward,
-    required this.active,
-    required this.owned,
-    required this.pending,
-    required this.onPressed,
-    this.cost,
-  });
-
-  final double factor;
-  final int reward;
-  final int? cost;
-  final bool active;
-  final bool owned;
-  final bool pending;
-  final VoidCallback onPressed;
-
-  // Builds one multiplier offer with payout, ownership, and active state.
-  @override
-  Widget build(BuildContext context) {
-    final state = StudyNestScope.watch(context);
-    final theme = state.selectedTheme;
-    final factorLabel = '${coinMultiplierLabel(factor)}x';
-    return CozyCard(
-      child: Row(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: theme.primary.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(15),
-            ),
-            child: Text(
-              factorLabel,
-              style: TextStyle(
-                color: theme.primary,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            Row(
               children: [
-                Text(
-                  factor == 1 ? 'Original rate' : '$factorLabel boost',
-                  style: const TextStyle(fontWeight: FontWeight.w900),
+                const CozyTag(
+                  label: '$taskCoinUnlockCost coins',
+                  icon: Icons.savings,
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  '$reward coins per completed cycle',
-                  style: TextStyle(color: theme.muted),
+                const Spacer(),
+                FilledButton.tonal(
+                  onPressed: pending ? null : onBuy,
+                  child: Text(pending ? 'Buying…' : 'Buy'),
                 ),
               ],
-            ),
-          ),
-          if (active)
-            const CozyTag(label: 'Active', icon: Icons.check_circle)
-          else
-            FilledButton.tonal(
-              onPressed: pending ? null : onPressed,
-              child: Text(
-                pending
-                    ? 'Working…'
-                    : owned
-                    ? 'Use'
-                    : '🪙 ${cost ?? 0}',
-              ),
             ),
         ],
       ),

@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
+import '../app/study_nest_rewards.dart';
 import '../app/study_nest_scope.dart';
 import '../app/study_nest_state.dart';
 import '../app/study_nest_visuals.dart';
@@ -25,20 +26,36 @@ class PomodoroScreen extends StatefulWidget {
 }
 
 class _PomodoroScreenState extends State<PomodoroScreen> {
-  static const _focusMinutes = 25;
   static const _breakMinutes = 5;
 
+  int _focusMinutes = defaultPomodoroFocusMinutes;
   int _cyclesCompleted = 0;
   bool _isRunning = false;
   bool _isBreak = false;
-  int _secondsLeft = _focusMinutes * 60;
+  int _secondsLeft = defaultPomodoroFocusMinutes * 60;
   Timer? _timer;
   int _quoteIndex = 0;
   String _focusCycleId = _newFocusCycleId();
+  bool _loadedSavedFocusMinutes = false;
 
   // Creates a source token that prevents duplicate awards for one focus cycle.
   static String _newFocusCycleId() {
     return DateTime.now().microsecondsSinceEpoch.toString();
+  }
+
+  // Applies saved focus-length changes while an idle focus cycle can reset safely.
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final savedMinutes = StudyNestScope.read(context).pomodoroFocusMinutes;
+    if (!_loadedSavedFocusMinutes || (!_isRunning && !_isBreak)) {
+      if (savedMinutes != _focusMinutes) {
+        _focusMinutes = savedMinutes;
+        _secondsLeft = savedMinutes * 60;
+        _focusCycleId = _newFocusCycleId();
+      }
+      _loadedSavedFocusMinutes = true;
+    }
   }
 
   // Cancels the periodic timer before this screen leaves the widget tree.
@@ -78,6 +95,7 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
         _secondsLeft = _breakMinutes * 60;
         _quoteIndex = (_quoteIndex + 1) % _quotes.length;
       } else {
+        _focusMinutes = StudyNestScope.read(context).pomodoroFocusMinutes;
         _isBreak = false;
         _secondsLeft = _focusMinutes * 60;
         _focusCycleId = _newFocusCycleId();

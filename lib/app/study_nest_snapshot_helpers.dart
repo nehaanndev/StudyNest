@@ -77,6 +77,7 @@ StudyNestState _starterState(
     lastDestinationId: 'home',
     taskCoinRewardsEnabled: false,
     activeCoinMultiplier: 1,
+    pomodoroFocusMinutes: defaultPomodoroFocusMinutes,
     ownerUserId: null,
   );
 }
@@ -171,7 +172,7 @@ Map<String, dynamic>? _migrateSnapshot(Map<String, dynamic>? snapshot) {
   }
   return {
     ...snapshot,
-    'schemaVersion': 3,
+    'schemaVersion': 4,
     'updatedAt':
         snapshot['updatedAt'] as String? ?? DateTime.now().toIso8601String(),
     'hasCompletedWelcome': snapshot['hasCompletedWelcome'] as bool? ?? true,
@@ -180,6 +181,9 @@ Map<String, dynamic>? _migrateSnapshot(Map<String, dynamic>? snapshot) {
         snapshot['taskCoinRewardsEnabled'] as bool? ?? false,
     'activeCoinMultiplier': normalizedCoinMultiplier(
       snapshot['activeCoinMultiplier'],
+    ),
+    'pomodoroFocusMinutes': normalizedPomodoroFocusMinutes(
+      snapshot['pomodoroFocusMinutes'],
     ),
     'studySpaceStyleId': _normalizedStyleId(
       snapshot['studySpaceStyleId'] as String?,

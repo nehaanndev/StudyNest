@@ -145,6 +145,9 @@ extension StudyNestSyncState on StudyNestState {
     _activeCoinMultiplier = normalizedCoinMultiplier(
       migrated['activeCoinMultiplier'],
     );
+    _pomodoroFocusMinutes = normalizedPomodoroFocusMinutes(
+      migrated['pomodoroFocusMinutes'],
+    );
     _ownerUserId = migrated['ownerUserId'] as String?;
   }
 }

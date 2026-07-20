@@ -13,6 +13,16 @@ extension StudyNestRewardsState on StudyNestState {
     return taskCoinRewardsUnlocked && _taskCoinRewardsEnabled;
   }
 
+  /// Reports whether selectable Pomodoro focus lengths have been purchased.
+  bool get pomodoroDurationUnlocked {
+    return _coinLedger.any(
+      (transaction) => transaction.sourceId == pomodoroDurationUnlockProductId,
+    );
+  }
+
+  /// Returns the saved focus length used for new Pomodoro cycles.
+  int get pomodoroFocusMinutes => _pomodoroFocusMinutes;
+
   /// Reports whether a completed task has a matching positive payout entry.
   bool taskCoinRewardWasPaid(String taskId) {
     return _coinLedger.any(
@@ -68,6 +78,40 @@ extension StudyNestRewardsState on StudyNestState {
       return true;
     }
     _taskCoinRewardsEnabled = enabled;
+    await _commitChanges();
+    return true;
+  }
+
+  /// Purchases permanent access to the supported Pomodoro focus lengths.
+  Future<bool> buyPomodoroDurationUnlock() async {
+    if (pomodoroDurationUnlocked || coinBalance < pomodoroDurationUnlockCost) {
+      return false;
+    }
+    final now = DateTime.now();
+    _coinLedger = [
+      CoinTransaction(
+        id: _newId('coins'),
+        label: 'Unlocked custom Pomodoro lengths',
+        amount: -pomodoroDurationUnlockCost,
+        createdAt: now,
+        sourceId: pomodoroDurationUnlockProductId,
+      ),
+      ..._coinLedger,
+    ];
+    await _commitChanges();
+    return true;
+  }
+
+  /// Saves one supported focus length after the upgrade has been purchased.
+  Future<bool> setPomodoroFocusMinutes(int minutes) async {
+    if (!pomodoroDurationUnlocked ||
+        !pomodoroFocusMinuteOptions.contains(minutes)) {
+      return false;
+    }
+    if (_pomodoroFocusMinutes == minutes) {
+      return true;
+    }
+    _pomodoroFocusMinutes = minutes;
     await _commitChanges();
     return true;
   }

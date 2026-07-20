@@ -5,7 +5,7 @@
 Map<String, dynamic> emptyStudyNestSnapshot() {
   final now = DateTime.now().toIso8601String();
   return {
-    'schemaVersion': 3,
+    'schemaVersion': 4,
     'updatedAt': now,
     'tasks': <dynamic>[],
     'notes': <dynamic>[],
@@ -28,6 +28,7 @@ Map<String, dynamic> emptyStudyNestSnapshot() {
     'lastDestinationId': 'home',
     'taskCoinRewardsEnabled': false,
     'activeCoinMultiplier': 1.0,
+    'pomodoroFocusMinutes': 25,
   };
 }
 

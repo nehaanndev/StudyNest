@@ -146,7 +146,7 @@ void main() {
 
     expect(state.studySpaceStyleId, 'detail');
     expect(storage.snapshot?['studySpaceStyleId'], 'detail');
-    expect(storage.snapshot?['schemaVersion'], 3);
+    expect(storage.snapshot?['schemaVersion'], 4);
   });
 
   test(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:studynest/app/study_nest_auth_snapshot.dart';
+import 'package:studynest/app/study_nest_rewards.dart';
 import 'package:studynest/app/study_nest_state.dart';
 import 'package:studynest/app/study_nest_storage.dart';
 import 'package:studynest/main.dart';
@@ -60,9 +61,62 @@ void main() {
     expect(find.text('Theme shelf'), findsOneWidget);
     expect(find.text('Coin earning'), findsOneWidget);
     expect(find.text('Unlock task coins'), findsOneWidget);
+    expect(find.text('Unlock focus lengths'), findsOneWidget);
+    expect(find.text('300 coins'), findsOneWidget);
     expect(find.text('Pomodoro boosts'), findsOneWidget);
     expect(find.text('8 coins per completed cycle'), findsOneWidget);
     expect(find.byType(NavigationBar), findsOneWidget);
+  });
+
+  testWidgets('Purchased focus lengths update an idle Pomodoro cycle', (
+    tester,
+  ) async {
+    final snapshot = emptyStudyNestSnapshot();
+    snapshot['coinLedger'] = [
+      {
+        'id': 'coins.duration-funding',
+        'label': 'Duration test funding',
+        'amount': pomodoroDurationUnlockCost,
+        'createdAt': DateTime.now().toIso8601String(),
+        'sourceId': 'duration-test-funding',
+      },
+    ];
+    final state = await StudyNestState.load(
+      storage: InMemoryStudyNestStorage(snapshot: snapshot),
+    );
+    await state.completeWelcome();
+    await state.buyPomodoroDurationUnlock();
+    await state.setLastDestination('shop');
+    await tester.pumpWidget(StudyNestApp(appState: state));
+
+    expect(find.text('Focus length'), findsOneWidget);
+    await tester.ensureVisible(find.text('45 min'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('45 min'));
+    await tester.pumpAndSettle();
+    expect(state.pomodoroFocusMinutes, 45);
+
+    await tester.tap(find.byIcon(Icons.hourglass_empty_rounded));
+    await tester.pump();
+    expect(find.text('45:00'), findsOneWidget);
+    expect(find.text('45 min'), findsOneWidget);
+  });
+
+  testWidgets('Shop coin upgrades fit a narrow phone viewport', (tester) async {
+    tester.view.physicalSize = const Size(360, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final state = StudyNestState.preview();
+    await state.completeWelcome();
+    await state.setLastDestination('shop');
+    await tester.pumpWidget(StudyNestApp(appState: state));
+
+    expect(tester.takeException(), isNull);
+    await tester.ensureVisible(find.text('5x'));
+    await tester.pumpAndSettle();
+    expect(find.text('🪙 475'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('Task editor explains and validates the fifty coin maximum', (
