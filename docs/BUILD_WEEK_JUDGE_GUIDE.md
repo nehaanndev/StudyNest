@@ -39,6 +39,9 @@ The APK is a universal direct-distribution build signed with a temporary
 Android debug certificate. It is intended for Build Week judging and is not a
 Google Play production artifact.
 
+The uploaded build passed a fresh-install smoke test on a physical Pixel 9 Pro
+running Android 16.
+
 ## If installation is unavailable
 
 The public demo video shows the complete product loop for judges who are not
