@@ -17,7 +17,8 @@ simple progression loop:
 The OpenAI Build Week judge build supports Android 7.0 and newer.
 
 1. Open the [latest GitHub release](https://github.com/nehaanndev/StudyNest/releases/latest).
-2. Download `StudyNest-Build-Week-2026.apk`.
+2. Download
+   [`StudyNest-Build-Week-2026.apk`](https://github.com/nehaanndev/StudyNest/releases/download/v1.0.0-build-week/StudyNest-Build-Week-2026.apk).
 3. Open the downloaded file on an Android device.
 4. If Android asks for permission to install apps from the browser or file
    manager, allow it temporarily.
@@ -80,19 +81,24 @@ The eligible product-development history contains 18 commits, with 6,262
 additions and 2,153 deletions across 53 files, followed by the release and
 documentation preparation in PR #14.
 
-### Codex-use evidence
+### Codex and GPT-5.6 evidence
 
-Codex was used throughout the eligible work for implementation, refactoring,
-debugging, responsive UI iteration, test design, regression investigation, APK
-construction, and release verification. The dated commits and pull requests
-above preserve the repository-side development timeline. The Devpost entry
-also supplies the required primary `/feedback` Codex Session ID so judges can
-associate the timestamped Codex build thread with this submission.
+The eligible extension was built through feature-specific Codex tasks using
+GPT-5.6 Sol. Codex and GPT-5.6 were used throughout the eligible work for
+implementation, refactoring, debugging, responsive UI iteration, test design,
+regression investigation, APK construction, and release verification. The
+dated commits and pull requests above preserve the repository-side development
+timeline. The Devpost entry supplies the required `/feedback` Session ID from
+the representative calendar plan-mode task so judges can associate that
+timestamped Codex task with this submission.
 
-Representative examples include using Codex to separate large screens into
-reusable controls and runners, protect local snapshots across Firebase auth
-changes, design and test the configurable reward model, implement calendar
-rescheduling behavior, and diagnose release-build and device-install issues.
+The entrant made the core product and design decisions, including connecting
+planning, focus, rewards, and customization into one experience. Codex with
+GPT-5.6 Sol helped translate those decisions into Flutter implementations,
+separate large screens into reusable controls and runners, protect local
+snapshots across Firebase auth changes, design and test the configurable reward
+model, implement calendar rescheduling behavior, identify edge cases, and
+diagnose release-build and device-install issues.
 
 ## Third-party integrations and licensing
 
@@ -110,6 +116,14 @@ content API. Its integrations and dependencies are:
 The complete SDK and package inventory is declared in `pubspec.yaml` and
 locked in `pubspec.lock`. Entrants remain responsible for maintaining the
 associated service accounts and complying with the applicable provider terms.
+
+## Repository licensing
+
+StudyNest source code is available under the [MIT License](LICENSE). Visual
+assets under `assets/` are original or project-generated works, are excluded
+from the MIT License, and remain all rights reserved under the
+[StudyNest Visual Asset License](ASSET_LICENSE.md). Third-party frameworks,
+packages, and services remain governed by their respective licenses and terms.
 
 ## Technical overview
 
