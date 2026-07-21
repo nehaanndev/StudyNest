@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:studynest/app/study_nest_scope.dart';
 import 'package:studynest/app/study_nest_state.dart';
@@ -170,6 +171,53 @@ void main() {
 
     expect(createdAt, DateTime(2026, 7, 23, 8));
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('long press dragging reschedules and preserves duration', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    final event = _event('Drag block', 10, 0, 11, 0);
+    DateTime? movedStart;
+    DateTime? movedEnd;
+
+    await tester.pumpWidget(
+      StudyNestScope(
+        state: StudyNestState.preview(),
+        child: MaterialApp(
+          home: Scaffold(
+            body: PlannerTimeline(
+              anchorDate: DateTime(2026, 7, 23),
+              view: PlannerTimelineView.day,
+              events: [event],
+              height: 700,
+              onEventTap: (_) {},
+              onEventMoved: (_, startsAt, endsAt) {
+                movedStart = startsAt;
+                movedEnd = endsAt;
+              },
+              onCreateAt: (_) {},
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final gesture = await tester.startGesture(
+      tester.getCenter(find.text('Drag block')),
+    );
+    await tester.pump(kLongPressTimeout + const Duration(milliseconds: 100));
+    await gesture.moveBy(const Offset(0, 75));
+    await tester.pump();
+    await gesture.up();
+    await tester.pumpAndSettle();
+
+    expect(movedStart, isNotNull);
+    expect(movedStart!.isAfter(event.startsAt), isTrue);
+    expect(movedStart!.minute % 15, 0);
+    expect(movedEnd!.difference(movedStart!), const Duration(hours: 1));
   });
 }
 
