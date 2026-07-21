@@ -4,7 +4,7 @@ StudyNest is a cozy, local-first study planner that brings tasks, calendar
 planning, notes, focus sessions, habits, rewards, and room customization into
 one mobile experience.
 
-**OpenAI Build Week track:** Work and Productivity
+**OpenAI Build Week track:** Apps for Your Life
 
 Instead of treating productivity as a list of chores, StudyNest creates a
 simple progression loop:
@@ -55,6 +55,12 @@ dated June 12, 2026. At that point, StudyNest already had its Flutter mobile
 foundation, core study screens, local persistence and Firebase integration,
 study-space themes, and the initial decoration collection. These parts provide
 product context but are not claimed as Build Week work.
+
+During early development before the submission period, the entrant briefly
+used Claude for one exploratory task. Claude was not used for the eligible
+Build Week extension claimed in this submission; the July 13-21 work described
+below was completed with Codex and is documented through dated commits, pull
+requests, and Codex sessions.
 
 ### New during the submission period
 
